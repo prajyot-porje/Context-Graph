@@ -1,26 +1,437 @@
 @import "tailwindcss";
+@source "../components";
+@source "../lib";
 
+/* ================================================================
+   ContextGraph Design System — globals.css
+   Source of truth: DESIGN.md
+   Dark mode = :root default. Light mode = [data-theme="light"].
+   ================================================================ */
+
+/* ----------------------------------------------------------------
+   1. DARK MODE (default)
+   ---------------------------------------------------------------- */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* ---- Accent ---- */
+  --accent: #b3ec13;
+  --accent-soft: #9fd411;
+  --accent-muted: rgba(179, 236, 19, 0.12);
+  --on-accent: #0a0a0a;
+
+  /* ---- Surfaces ---- */
+  --bg: #080808;
+  --surface: #111111;
+  --card: #181818;
+  --card-raised: #202020;
+
+  /* ---- Borders ---- */
+  --border: rgba(255, 255, 255, 0.07);
+  --border-strong: rgba(255, 255, 255, 0.14);
+
+  /* ---- Text ---- */
+  --text-primary: #f0f0f0;
+  --text-secondary: #888888;
+  --text-muted: #484848;
+  --text-disabled: #2a2a2a;
+
+  /* ---- Semantic ---- */
+  --success: #22c55e;
+  --warning: #f59e0b;
+  --error: #ef4444;
+  --on-semantic: #ffffff;
+
+  /* ---- Spacing (4px grid) ---- */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --space-16: 64px;
+  --space-20: 80px;
+  --space-24: 96px;
+  --space-32: 128px;
+
+  /* ---- Border Radius ---- */
+  --radius-xs: 4px;
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 20px;
+  --radius-xxl: 28px;
+  --radius-full: 9999px;
+
+  /* ---- Shadows (dark) ---- */
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.5);
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.5),
+    0 4px 8px rgba(0, 0, 0, 0.35);
+
+  --shadow-md: 0 2px 4px rgba(0, 0, 0, 0.5),
+    0 8px 16px rgba(0, 0, 0, 0.4),
+    0 0 0 1px rgba(255, 255, 255, 0.04);
+
+  --shadow-lg: 0 4px 8px rgba(0, 0, 0, 0.5),
+    0 16px 32px rgba(0, 0, 0, 0.5),
+    0 0 0 1px rgba(255, 255, 255, 0.05);
+
+  --shadow-xl: 0 8px 16px rgba(0, 0, 0, 0.6),
+    0 32px 64px rgba(0, 0, 0, 0.6),
+    0 0 0 1px rgba(255, 255, 255, 0.06);
+
+  --shadow-inset: inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.2);
+
+  --shadow-accent: 0 0 0 1px rgba(179, 236, 19, 0.3),
+    0 0 20px rgba(179, 236, 19, 0.08);
+
+  /* ---- Component Surface Tokens ---- */
+  --nav-backdrop: rgba(8, 8, 8, 0.85);
+  --code-surface: #0d0d0d;
+  --code-text: var(--text-primary);
+
+  /* ---- Badge Tokens ---- */
+  --badge-default-bg: rgba(255, 255, 255, 0.07);
+  --badge-success-bg: rgba(34, 197, 94, 0.12);
+  --badge-warning-bg: rgba(245, 158, 11, 0.12);
+  --badge-error-bg: rgba(239, 68, 68, 0.12);
+
+  /* ---- Page Background Gradient ---- */
+  --bg-gradient: radial-gradient(
+    ellipse at 50% 0%,
+    rgba(255, 255, 255, 0.04) 0%,
+    transparent 70%
+  );
+
+  /* ---- Graph ---- */
+  --graph-dot: rgba(255, 255, 255, 0.08);
+  --graph-edge: rgba(255, 255, 255, 0.12);
 }
 
+/* ----------------------------------------------------------------
+   2. LIGHT MODE
+   ---------------------------------------------------------------- */
+[data-theme="light"] {
+  --bg: #f8f8f8;
+  --surface: #f0f0f0;
+  --card: #ffffff;
+  --card-raised: #ffffff;
+
+  --border: rgba(0, 0, 0, 0.07);
+  --border-strong: rgba(0, 0, 0, 0.14);
+
+  --text-primary: #0a0a0a;
+  --text-secondary: #666666;
+  --text-muted: #aaaaaa;
+  --text-disabled: #d4d4d4;
+
+  /* Shadows (light) */
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.06);
+
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.08),
+    0 4px 8px rgba(0, 0, 0, 0.04);
+
+  --shadow-md: 0 2px 4px rgba(0, 0, 0, 0.08),
+    0 8px 16px rgba(0, 0, 0, 0.06);
+
+  --shadow-lg: 0 4px 8px rgba(0, 0, 0, 0.08),
+    0 16px 32px rgba(0, 0, 0, 0.08);
+
+  --shadow-xl: 0 8px 16px rgba(0, 0, 0, 0.1),
+    0 32px 64px rgba(0, 0, 0, 0.1);
+
+  --shadow-inset: inset 0 1px 0 rgba(255, 255, 255, 0.8),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.04);
+
+  --nav-backdrop: rgba(248, 248, 248, 0.85);
+  --code-surface: #f0f0f0;
+  --code-text: var(--text-primary);
+
+  --badge-default-bg: rgba(0, 0, 0, 0.06);
+
+  --bg-gradient: radial-gradient(
+    ellipse at 50% 0%,
+    rgba(0, 0, 0, 0.02) 0%,
+    transparent 70%
+  );
+
+  --graph-dot: rgba(0, 0, 0, 0.06);
+  --graph-edge: rgba(0, 0, 0, 0.10);
+}
+
+/* ----------------------------------------------------------------
+   3. TAILWIND v4 THEME BRIDGE
+   Expose design tokens as Tailwind utilities via @theme inline.
+   ---------------------------------------------------------------- */
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-card: var(--card);
+  --color-card-raised: var(--card-raised);
+  --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
+  --color-text-primary: var(--text-primary);
+  --color-text-secondary: var(--text-secondary);
+  --color-text-muted: var(--text-muted);
+  --color-text-disabled: var(--text-disabled);
+  --color-accent: var(--accent);
+  --color-accent-soft: var(--accent-soft);
+  --color-accent-muted: var(--accent-muted);
+  --color-on-accent: var(--on-accent);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-error: var(--error);
+  --color-on-semantic: var(--on-semantic);
+
+  --font-sans: var(--font-geist-sans), system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), "Fira Code", monospace;
+  --font-display: var(--font-display-fallback), "Bricolage Grotesque", sans-serif;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+/* ----------------------------------------------------------------
+   4. BASE RESETS
+   ---------------------------------------------------------------- */
+@layer base {
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
   }
+
+  html {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  /* Lenis manages smooth scrolling — never use scroll-behavior: smooth */
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background-color: var(--bg);
+  background-image: var(--bg-gradient);
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+  color: var(--text-primary);
+  font-family: var(--font-geist-sans), system-ui, sans-serif;
+  font-size: 15px;
+  line-height: 1.6;
+  min-height: 100vh;
+}
+
+/* ---- Theme transition (specific properties, never "all") ---- */
+body,
+body * {
+  transition-property: background-color, color, border-color;
+  transition-duration: 0ms;
+}
+
+[data-theme="light"],
+[data-theme="light"] * {
+  transition-duration: 200ms;
+}
+
+/* ---- Focus visible ---- */
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* ---- Selection ---- */
+::selection {
+  background-color: var(--accent-muted);
+  color: var(--text-primary);
+}
+
+/* ---- Links ---- */
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+/* ---- Lists ---- */
+ul,
+ol {
+  list-style: none;
+}
+
+/* ---- Images ---- */
+img,
+svg,
+video {
+  display: block;
+  max-width: 100%;
+}
+
+/* ---- Buttons ---- */
+button {
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  border: none;
+  background: none;
+}
+
+/* ---- Inputs ---- */
+input,
+textarea,
+select {
+  font: inherit;
+  color: inherit;
+}
+
+/* ----------------------------------------------------------------
+   5. REDUCED MOTION
+   ---------------------------------------------------------------- */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+}
+
+/* ----------------------------------------------------------------
+   6. TYPOGRAPHY UTILITY CLASSES
+   ---------------------------------------------------------------- */
+@layer utilities {
+  .text-display-xxl {
+  font-family: var(--font-display-fallback), "Bricolage Grotesque", sans-serif;
+  font-size: 96px;
+  font-weight: 700;
+  line-height: 1.0;
+  letter-spacing: -3px;
+}
+
+.text-display-xl {
+  font-family: var(--font-display-fallback), "Bricolage Grotesque", sans-serif;
+  font-size: 64px;
+  font-weight: 700;
+  line-height: 1.0;
+  letter-spacing: -2px;
+}
+
+.text-display-lg {
+  font-family: var(--font-display-fallback), "Bricolage Grotesque", sans-serif;
+  font-size: 48px;
+  font-weight: 700;
+  line-height: 1.05;
+  letter-spacing: -1.5px;
+}
+
+.text-display-md {
+  font-family: var(--font-display-fallback), "Bricolage Grotesque", sans-serif;
+  font-size: 36px;
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: -1px;
+}
+
+.text-display-sm {
+  font-family: var(--font-display-fallback), "Bricolage Grotesque", sans-serif;
+  font-size: 28px;
+  font-weight: 600;
+  line-height: 1.15;
+  letter-spacing: -0.5px;
+}
+
+.text-heading-lg {
+  font-size: 24px;
+  font-weight: 600;
+  line-height: 1.3;
+  letter-spacing: -0.4px;
+}
+
+.text-heading-md {
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 1.3;
+  letter-spacing: -0.3px;
+}
+
+.text-heading-sm {
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.4;
+  letter-spacing: -0.2px;
+}
+
+.text-body-lg {
+  font-size: 18px;
+  font-weight: 400;
+  line-height: 1.6;
+}
+
+.text-body-md {
+  font-size: 15px;
+  font-weight: 400;
+  line-height: 1.6;
+}
+
+.text-body-sm {
+  font-size: 13px;
+  font-weight: 400;
+  line-height: 1.5;
+}
+
+.text-label {
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.4;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.text-button-md {
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.0;
+  letter-spacing: -0.1px;
+}
+
+.text-button-sm {
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.0;
+}
+
+.text-code-md {
+  font-family: var(--font-geist-mono), "Fira Code", monospace;
+  font-size: 13px;
+  font-weight: 400;
+  line-height: 1.6;
+}
+
+.text-code-sm {
+  font-family: var(--font-geist-mono), "Fira Code", monospace;
+  font-size: 11px;
+  font-weight: 400;
+  line-height: 1.5;
+}
+
+/* ----------------------------------------------------------------
+   7. RESPONSIVE DISPLAY TYPE SCALING
+   ---------------------------------------------------------------- */
+@media (max-width: 1279px) {
+  .text-display-xxl { font-size: 64px; letter-spacing: -2px; }
+  .text-display-xl  { font-size: 48px; letter-spacing: -1.5px; }
+  .text-display-lg  { font-size: 36px; letter-spacing: -1px; }
+}
+
+@media (max-width: 1023px) {
+  .text-display-xxl { font-size: 48px; letter-spacing: -1.5px; }
+  .text-display-xl  { font-size: 36px; letter-spacing: -1px; }
+  .text-display-lg  { font-size: 28px; letter-spacing: -0.5px; }
+}
+
+@media (max-width: 639px) {
+    .text-display-xxl { font-size: 36px; letter-spacing: -1px; }
+    .text-display-xl  { font-size: 28px; letter-spacing: -0.5px; }
+  }
 }

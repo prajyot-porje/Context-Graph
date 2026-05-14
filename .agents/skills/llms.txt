@@ -1,0 +1,28 @@
+ContextGraph LLM Quick Start
+
+Canonical repo instructions:
+- /AGENTS.md
+
+Primary project docs:
+- /PRD.md
+- /DESIGN.md
+
+Supporting skills:
+- /.agent/skills/component-patterns.md
+- /.agent/skills/animations.md
+- /.agent/skills/api-patterns.md
+- /.agent/skills/database-patterns.md
+
+GSAP reference skills:
+- /.agent/skills/gsap-core/SKILL.md
+- /.agent/skills/gsap-react/SKILL.md
+- /.agent/skills/gsap-scrolltrigger/SKILL.md
+- /.agent/skills/gsap-timeline/SKILL.md
+
+Project rules summary:
+- Better Auth is the auth source of truth.
+- Supabase is server-side for private data.
+- Use CSS custom properties for component visuals.
+- Default to dark mode.
+- Keep spacing on the 4px grid.
+- Use GSAP for entrance animation and Lenis for smooth scrolling.
