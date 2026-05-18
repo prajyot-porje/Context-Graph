@@ -2,19 +2,23 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
+import { signIn } from '@/lib/auth-client'
 import { AuthLayout } from '@/components/auth/AuthLayout'
 import { Input } from '@/components/ui/Input'
 import { PasswordInput } from '@/components/auth/PasswordInput'
 import { Button } from '@/components/ui/Button'
-import { Loader2 } from 'lucide-react'
+import { Loader2, ArrowRight } from 'lucide-react'
 
 export default function LoginPage() {
+  const router = useRouter()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [errors, setErrors] = useState<{ email?: string; password?: string }>({})
+  const [error, setError] = useState('')
   const [isLoading, setIsLoading] = useState(false)
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     
     // Client-side validation
@@ -33,11 +37,22 @@ export default function LoginPage() {
 
     setErrors({})
     setIsLoading(true)
+    setError('')
 
-    // Simulate API call
-    setTimeout(() => {
-      setIsLoading(false)
-    }, 1500)
+    const result = await signIn.email({
+      email,
+      password,
+    })
+
+    setIsLoading(false)
+
+    if (result.error) {
+      setError(result.error.message ?? 'Invalid email or password')
+      return
+    }
+
+    router.push('/dashboard')
+    router.refresh()
   }
 
   return (
@@ -74,23 +89,30 @@ export default function LoginPage() {
             />
           </div>
 
-          <Button
-            type="submit"
-            variant="primary"
-            className="cg-submit mt-6 w-full"
-            disabled={isLoading}
-          >
-            {isLoading ? <Loader2 className="animate-spin" size={16} /> : 'Sign in'}
-          </Button>
+          <div className="cg-submit mt-6 w-full">
+            <Button
+              type="submit"
+              variant="primary"
+              className="w-full"
+              disabled={isLoading}
+            >
+              {isLoading ? <Loader2 className="animate-spin" size={16} /> : 'Sign in'}
+            </Button>
+          </div>
+          {error && (
+            <p className="mt-2 text-center text-[13px] text-[var(--error)]">
+              {error}
+            </p>
+          )}
         </form>
 
         <p className="cg-subtext mt-6 text-center text-[14px] text-[var(--text-secondary)]">
           Don&apos;t have an account?{' '}
           <Link
             href="/signup"
-            className="text-[var(--accent)] transition-colors hover:underline"
+            className="text-[var(--accent)] transition-colors hover:underline inline-flex items-center"
           >
-            Sign up →
+            Sign up <ArrowRight size={16} className="ml-1" />
           </Link>
         </p>
       </div>

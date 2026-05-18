@@ -9,30 +9,35 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   size?: ButtonSize
 }
 
-/**
- * Design-system Button.
- *
- * All variants use --radius-md (10px). Never pill-shaped.
- * Every size guarantees a minimum 44px hit target (DESIGN.md rule).
- *
- * Hover transitions target specific properties — never `transition: all`.
- */
-
 const variantStyles: Record<ButtonVariant, string> = {
-  primary:
-    'bg-[var(--text-primary)] text-[var(--bg)] hover:opacity-90 active:opacity-80',
-  secondary:
-    'border border-[var(--border-strong)] bg-transparent text-[var(--text-primary)] hover:bg-[var(--card)] active:bg-[var(--card-raised)]',
-  ghost:
-    'bg-transparent text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--card)] active:bg-[var(--card-raised)]',
-  accent:
-    'bg-[var(--accent)] text-[var(--on-accent)] hover:bg-[var(--accent-soft)] active:opacity-90',
+  primary: [
+    'bg-[var(--text-primary)] text-[var(--bg)]',
+    'hover:opacity-90 active:opacity-80',
+    'shadow-[var(--shadow-xs)]',
+    'hover:shadow-[var(--shadow-sm)]',
+  ].join(' '),
+  secondary: [
+    'border border-[var(--border-strong)] bg-transparent text-[var(--text-primary)]',
+    'hover:border-[rgba(255,255,255,0.28)] hover:bg-[rgba(255,255,255,0.04)]',
+    'active:bg-[var(--card-raised)]',
+  ].join(' '),
+  ghost: [
+    'bg-transparent text-[var(--text-secondary)]',
+    'hover:text-[var(--text-primary)] hover:bg-[rgba(255,255,255,0.05)]',
+    'active:bg-[var(--card-raised)]',
+  ].join(' '),
+  accent: [
+    'bg-[var(--accent)] text-[var(--on-accent)]',
+    'hover:bg-[var(--accent-soft)] active:opacity-90',
+    'shadow-[0_0_0_1px_rgba(179,236,19,0.2)]',
+    'hover:shadow-[0_0_16px_rgba(179,236,19,0.15),0_0_0_1px_rgba(179,236,19,0.3)]',
+  ].join(' '),
 }
 
 const sizeStyles: Record<ButtonSize, string> = {
-  sm: 'min-h-[44px] px-4 text-[12px]',
-  md: 'min-h-[44px] px-5 text-[14px]',
-  lg: 'min-h-[44px] px-6 text-[14px]',
+  sm: 'min-h-[44px] px-[var(--space-4)] text-[12px]',
+  md: 'min-h-[44px] px-[var(--space-5)] text-[14px]',
+  lg: 'min-h-[44px] px-[var(--space-6)] text-[14px]',
 }
 
 export function Button({
@@ -44,17 +49,13 @@ export function Button({
   return (
     <button
       className={cn(
-        /* base */
-        'inline-flex items-center justify-center gap-2',
+        'inline-flex items-center justify-center gap-[var(--space-2)]',
         'rounded-[var(--radius-md)] font-medium',
         'cursor-pointer select-none whitespace-nowrap',
-        /* transition — specific properties only */
-        'transition-[background-color,color,border-color,box-shadow,opacity] duration-100 ease-out',
-        /* focus-visible ring */
+        'transition-[background-color,color,border-color,box-shadow,opacity,transform] duration-100 ease-out',
+        (variant === 'primary' || variant === 'accent') && 'hover:-translate-y-[1px] active:translate-y-0',
         'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bg)]',
-        /* disabled */
         'disabled:pointer-events-none disabled:opacity-40',
-        /* variant + size */
         variantStyles[variant],
         sizeStyles[size],
         className

@@ -3,94 +3,121 @@
 import { useRef } from 'react'
 import { useGSAP } from '@gsap/react'
 import { gsap, prefersReducedMotion } from '@/lib/gsap'
+import { Users, Clock, Share2 } from 'lucide-react'
+
+const FEATURES = [
+  {
+    icon: Users,
+    title: 'Build once, use everywhere',
+    description:
+      'Set up your context graph once. Every MCP-compatible AI reads it automatically — Claude, ChatGPT, Codex, Cursor.',
+    accent: false,
+  },
+  {
+    icon: Clock,
+    title: 'Auto-updates after every session',
+    description:
+      'Type /save at the end of any session. AI judges what is worth keeping and appends it to the right node automatically.',
+    accent: true,
+  },
+  {
+    icon: Share2,
+    title: 'See your context as a living graph',
+    description:
+      'Watch your context grow over time. Relevance scores decay automatically so stale context never pollutes new sessions.',
+    accent: false,
+  },
+]
 
 export function Features() {
   const container = useRef<HTMLElement>(null)
 
-  useGSAP(() => {
-    if (prefersReducedMotion()) {
-      gsap.set('.feature-card', { opacity: 1, y: 0 })
-      return
-    }
-
-    gsap.from('.feature-card', {
-      opacity: 0,
-      y: 32,
-      duration: 0.35,
-      ease: 'cg-out',
-      stagger: 0.08,
-      scrollTrigger: {
-        trigger: container.current,
-        start: 'top 88%',
-        once: true,
+  useGSAP(
+    () => {
+      if (prefersReducedMotion()) {
+        gsap.set('.feature-header, .feature-card', { opacity: 1, y: 0 })
+        return
       }
-    })
-  }, { scope: container })
+
+      gsap.from('.feature-header', {
+        opacity: 0,
+        y: 24,
+        duration: 0.4,
+        ease: 'cg-out',
+        scrollTrigger: {
+          trigger: container.current,
+          start: 'top 88%',
+          once: true,
+        },
+      })
+
+      gsap.from('.feature-card', {
+        opacity: 0,
+        y: 40,
+        duration: 0.45,
+        ease: 'cg-out',
+        stagger: 0.1,
+        clearProps: 'all',
+        scrollTrigger: {
+          trigger: '.feature-grid',
+          start: 'top 88%',
+          once: true,
+        },
+      })
+    },
+    { scope: container }
+  )
 
   return (
-    <section ref={container} className="py-[96px]">
-      <div className="mx-auto max-w-[1200px] px-[24px]">
-        <div className="mb-[64px]">
-          <div className="mb-4 text-[11px] font-semibold uppercase tracking-[0.08em]" style={{ color: 'var(--accent)' }}>
+    <section ref={container} className="relative py-[var(--space-24)]">
+      <div className="mx-auto max-w-[1200px] px-[var(--space-6)]">
+        {/* Section Header */}
+        <div className="feature-header mb-[var(--space-16)]">
+          <div className="mb-[var(--space-4)] text-label text-[var(--accent)]">
             How it works
           </div>
-          <h2 className="max-w-[600px] font-display text-[36px] font-bold leading-[1.05] tracking-[-1.5px] md:text-[48px]" style={{ color: 'var(--text-primary)' }}>
+          <h2 className="text-display-lg max-w-[600px] text-[var(--text-primary)]">
             Context that travels with you
           </h2>
+          <p className="mt-[var(--space-4)] max-w-[500px] text-body-md text-[var(--text-secondary)]">
+            Build your personal context graph once. Every AI you work with reads from the same source of truth.
+          </p>
         </div>
 
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-          {/* Card 1 */}
-          <div className="feature-card flex flex-col rounded-[var(--radius-lg)] border border-[var(--border)] bg-gradient-to-b from-[var(--card-raised)] to-[var(--card)] p-[28px] [box-shadow:var(--shadow-sm),var(--shadow-inset)] transition-[border-color,box-shadow] duration-200 hover:border-[var(--border-strong)] hover:[box-shadow:var(--shadow-md),var(--shadow-inset)]">
-            <div className="flex h-8 w-8 items-center justify-center rounded-md bg-[var(--accent-muted)]">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M18 21a8 8 0 0 0-16 0" />
-                <circle cx="10" cy="8" r="5" />
-                <path d="M22 20c0-3.37-2-6.5-4-8a5 5 0 0 0-.45-8.3" />
-              </svg>
-            </div>
-            <h3 className="mt-5 font-geist text-[20px] font-semibold text-[var(--text-primary)]">
-              Build once, use everywhere
-            </h3>
-            <p className="mt-2 font-geist text-[15px] leading-[1.6] text-[var(--text-secondary)]">
-              Set up your context graph once. Every MCP-compatible AI reads it automatically — Claude, ChatGPT, Codex, Cursor.
-            </p>
-          </div>
+        {/* Feature Cards */}
+        <div className="feature-grid grid grid-cols-1 gap-[var(--space-4)] md:grid-cols-3">
+          {FEATURES.map((feature, i) => {
+            const Icon = feature.icon
+            return (
+              <div
+                key={i}
+                className="feature-card card-shine group relative flex flex-col rounded-[var(--radius-lg)] border border-[var(--border)] bg-gradient-to-b from-[var(--card-raised)] to-[var(--card)] p-[var(--space-6)] [box-shadow:var(--shadow-sm),var(--shadow-inset)] transition-[border-color,box-shadow] duration-200 hover:border-[var(--border-strong)] hover:[box-shadow:var(--shadow-md),var(--shadow-inset)]"
+              >
+                {/* Icon */}
+                <div className="icon-glow flex h-[40px] w-[40px] items-center justify-center rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--surface)]">
+                  <Icon
+                    size={20}
+                    className="text-[var(--accent)] transition-transform duration-200 group-hover:scale-110"
+                  />
+                </div>
 
-          {/* Card 2 */}
-          <div className="feature-card flex flex-col rounded-[var(--radius-lg)] border border-[var(--border)] bg-gradient-to-b from-[var(--card-raised)] to-[var(--card)] p-[28px] [box-shadow:var(--shadow-sm),var(--shadow-inset)] transition-[border-color,box-shadow] duration-200 hover:border-[var(--border-strong)] hover:[box-shadow:var(--shadow-md),var(--shadow-inset)]">
-            <div className="flex h-8 w-8 items-center justify-center rounded-md bg-[var(--accent-muted)]">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="12" cy="12" r="10" />
-                <polyline points="12 6 12 12 16 14" />
-              </svg>
-            </div>
-            <h3 className="mt-5 font-geist text-[20px] font-semibold text-[var(--text-primary)]">
-              Auto-updates after every session
-            </h3>
-            <p className="mt-2 font-geist text-[15px] leading-[1.6] text-[var(--text-secondary)]">
-              Type /save at the end of any session. AI judges what is worth keeping and appends it to the right node automatically.
-            </p>
-          </div>
+                {/* Title */}
+                <h3 className="mt-[var(--space-5)] text-heading-md text-[var(--text-primary)]">
+                  {feature.title}
+                </h3>
 
-          {/* Card 3 */}
-          <div className="feature-card flex flex-col rounded-[var(--radius-lg)] border border-[var(--border)] bg-gradient-to-b from-[var(--card-raised)] to-[var(--card)] p-[28px] [box-shadow:var(--shadow-sm),var(--shadow-inset)] transition-[border-color,box-shadow] duration-200 hover:border-[var(--border-strong)] hover:[box-shadow:var(--shadow-md),var(--shadow-inset)]">
-            <div className="flex h-8 w-8 items-center justify-center rounded-md bg-[var(--accent-muted)]">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="18" cy="5" r="3" />
-                <circle cx="6" cy="12" r="3" />
-                <circle cx="18" cy="19" r="3" />
-                <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
-                <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
-              </svg>
-            </div>
-            <h3 className="mt-5 font-geist text-[20px] font-semibold text-[var(--text-primary)]">
-              See your context as a living graph
-            </h3>
-            <p className="mt-2 font-geist text-[15px] leading-[1.6] text-[var(--text-secondary)]">
-              Watch your context grow over time. Relevance scores decay automatically so stale context never pollutes new sessions.
-            </p>
-          </div>
+                {/* Description */}
+                <p className="mt-[var(--space-2)] text-body-md text-[var(--text-secondary)]">
+                  {feature.description}
+                </p>
+
+                {/* Bottom accent line — only on the middle card */}
+                {feature.accent && (
+                  <div className="absolute bottom-0 left-[var(--space-6)] right-[var(--space-6)] h-[2px] rounded-[var(--radius-full)] bg-gradient-to-r from-transparent via-[var(--accent)] to-transparent opacity-40" />
+                )}
+              </div>
+            )
+          })}
         </div>
       </div>
     </section>

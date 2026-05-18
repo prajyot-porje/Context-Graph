@@ -4,6 +4,7 @@ import { useRef } from 'react'
 import { useGSAP } from '@gsap/react'
 import { gsap, DUR, prefersReducedMotion } from '@/lib/gsap'
 import { Button } from '@/components/ui/Button'
+import { ArrowRight } from 'lucide-react'
 
 export function Hero() {
   const containerRef = useRef<HTMLElement>(null)
@@ -11,98 +12,94 @@ export function Hero() {
   useGSAP(
     () => {
       if (prefersReducedMotion()) {
-        gsap.set('.hero-anim, .hero-word, .hero-node, .hero-edge', {
-          opacity: 1,
-          y: 0,
-          scale: 1,
-        })
+        gsap.set(
+          '.hero-eyebrow, .hero-word, .hero-subtitle, .hero-cta, .hero-graph-bg, .hero-node-root, .hero-node-branch, .hero-edge, .hero-status',
+          { opacity: 1, y: 0, x: 0, scale: 1 }
+        )
         return
       }
 
-      const tl = gsap.timeline({ delay: 0.15 })
-
-      // Left side
-      tl.from('.hero-eyebrow', {
+      // Eyebrow badge
+      gsap.from('.hero-eyebrow', {
         opacity: 0,
-        y: 10,
+        y: 12,
         duration: DUR.normal,
         ease: 'cg-out',
+        delay: 0.15,
       })
-        .from(
-          '.hero-word',
-          {
-            opacity: 0,
-            y: 36,
-            duration: DUR.slow,
-            ease: 'cg-out',
-            stagger: 0.04,
-          },
-          '-=0.1'
-        )
-        .from(
-          '.hero-subtitle',
-          {
-            opacity: 0,
-            y: 16,
-            duration: DUR.moderate,
-            ease: 'cg-out',
-          },
-          '-=0.25'
-        )
-        .from(
-          '.hero-cta > *',
-          {
-            opacity: 0,
-            y: 12,
-            duration: DUR.normal,
-            ease: 'cg-spring',
-            stagger: 0.08,
-          },
-          '-=0.2'
-        )
 
-      // Right side graph nodes
-      tl.from(
-        '.hero-graph-bg',
-        {
-          opacity: 0,
-          duration: DUR.normal,
-          ease: 'cg-out',
-        },
-        '-=0.4'
-      )
-        .from(
-          '.hero-node-root',
-          {
-            opacity: 0,
-            scale: 0.88,
-            duration: DUR.moderate,
-            ease: 'cg-spring',
-          },
-          '-=0.2'
-        )
-        .from(
-          '.hero-node-branch',
-          {
-            opacity: 0,
-            scale: 0.92,
-            y: 10,
-            duration: DUR.normal,
-            ease: 'cg-out',
-            stagger: 0.07,
-          },
-          '-=0.1'
-        )
-        .from(
-          '.hero-edge',
-          {
-            opacity: 0,
-            duration: DUR.moderate,
-            ease: 'cg-soft',
-            stagger: 0.03,
-          },
-          '-=0.2'
-        )
+      // Word-by-word headline reveal
+      gsap.from('.hero-word', {
+        opacity: 0,
+        y: 40,
+        rotateX: 12,
+        duration: DUR.slow,
+        ease: 'cg-out',
+        stagger: 0.06,
+        delay: 0.2,
+      })
+
+      // Subtitle
+      gsap.from('.hero-subtitle', {
+        opacity: 0,
+        y: 16,
+        duration: DUR.moderate,
+        ease: 'cg-out',
+        delay: 0.5,
+      })
+
+      // CTA buttons
+      gsap.from('.hero-cta', {
+        opacity: 0,
+        y: 14,
+        duration: DUR.moderate,
+        ease: 'cg-spring',
+        delay: 0.6,
+      })
+
+      // Graph panel
+      gsap.from('.hero-graph-bg', {
+        opacity: 0,
+        scale: 0.96,
+        y: 20,
+        duration: DUR.moderate,
+        ease: 'cg-out',
+        delay: 0.3,
+      })
+
+      gsap.from('.hero-node-root', {
+        opacity: 0,
+        scale: 0.85,
+        duration: DUR.moderate,
+        ease: 'cg-spring',
+        delay: 0.5,
+      })
+
+      gsap.from('.hero-node-branch', {
+        opacity: 0,
+        scale: 0.9,
+        y: 12,
+        duration: DUR.normal,
+        ease: 'cg-out',
+        stagger: 0.08,
+        delay: 0.6,
+      })
+
+      gsap.from('.hero-edge', {
+        opacity: 0,
+        duration: DUR.moderate,
+        ease: 'cg-soft',
+        stagger: 0.04,
+        delay: 0.65,
+      })
+
+      gsap.from('.hero-status', {
+        opacity: 0,
+        y: 8,
+        duration: DUR.normal,
+        ease: 'cg-out',
+        delay: 0.75,
+      })
     },
     { scope: containerRef }
   )
@@ -110,13 +107,19 @@ export function Hero() {
   return (
     <section
       ref={containerRef}
-      className="relative flex min-h-[calc(100vh-60px)] w-full items-center justify-center overflow-hidden bg-[var(--bg)]"
+      className="section-glow relative flex min-h-[calc(100vh-60px)] w-full items-center justify-center overflow-hidden bg-[var(--bg)]"
     >
-      {/* Radial Gradient Background */}
-      <div className="pointer-events-none absolute inset-0 z-0 bg-[var(--bg-gradient)]" />
+      {/* Ambient Radial Glow — top center */}
+      <div
+        className="pointer-events-none absolute inset-0 z-0"
+        style={{
+          background:
+            'radial-gradient(ellipse 80% 50% at 50% -5%, rgba(179, 236, 19, 0.06) 0%, transparent 60%)',
+        }}
+      />
 
       {/* Noise Texture Overlay */}
-      <svg className="pointer-events-none absolute inset-0 z-0 h-full w-full opacity-5 mix-blend-overlay">
+      <svg className="pointer-events-none absolute inset-0 z-0 h-full w-full opacity-[0.03] mix-blend-overlay">
         <filter id="hero-noise">
           <feTurbulence
             type="fractalNoise"
@@ -128,16 +131,26 @@ export function Hero() {
         <rect width="100%" height="100%" filter="url(#hero-noise)" />
       </svg>
 
+      {/* Vignette edges */}
+      <div
+        className="pointer-events-none absolute inset-0 z-0"
+        style={{
+          background:
+            'radial-gradient(ellipse at center, transparent 50%, var(--ambient-vignette) 100%)',
+        }}
+      />
+
       <div className="relative z-10 mx-auto grid w-full max-w-7xl grid-cols-1 items-center gap-[var(--space-16)] px-[var(--space-6)] py-[var(--space-24)] lg:grid-cols-2">
         {/* Left Side: Copy */}
         <div className="flex flex-col items-start text-left">
-          <div className="hero-anim hero-eyebrow mb-[var(--space-6)] rounded-[var(--radius-full)] bg-[var(--badge-default-bg)] px-3 py-1">
+          <div className="hero-anim hero-eyebrow mb-[var(--space-6)] flex items-center gap-[var(--space-2)] rounded-[var(--radius-full)] border border-[var(--border)] bg-[var(--badge-default-bg)] px-[var(--space-3)] py-[6px] [box-shadow:var(--shadow-xs)]">
+            <div className="h-[6px] w-[6px] rounded-[var(--radius-full)] bg-[var(--accent)] cg-pulse-glow" />
             <span className="text-label text-[var(--text-secondary)]">
               Context Engine v1.0
             </span>
           </div>
 
-          <h1 className="text-display-xxl text-[var(--text-primary)]">
+          <h1 className="text-display-xxl text-[var(--text-primary)]" style={{ perspective: '800px' }}>
             <span className="hero-word mr-[var(--space-3)] inline-block">
               Structured
             </span>
@@ -148,20 +161,21 @@ export function Hero() {
             <span className="hero-word mr-[var(--space-3)] inline-block">
               made
             </span>
-            <span className="hero-word inline-block text-[var(--accent)]">
+            <span className="hero-word inline-block text-gradient-accent">
               visible.
             </span>
           </h1>
 
           <p className="hero-anim hero-subtitle mt-[var(--space-6)] max-w-lg text-body-lg text-[var(--text-secondary)]">
             ContextGraph is a cross-AI personal context engine. Store your
-            identity, agency, and project context as a graph accessible to any
+            identity, agency, and project context as a graph — accessible to any
             MCP-compatible AI.
           </p>
 
-          <div className="hero-anim hero-cta mt-[var(--space-10)] flex flex-wrap items-center gap-[var(--space-4)]">
-            <Button variant="primary" size="lg">
+          <div className="hero-cta mt-[var(--space-10)] flex flex-wrap items-center gap-[var(--space-4)]">
+            <Button variant="accent" size="lg">
               Start Building
+              <ArrowRight size={16} />
             </Button>
             <Button variant="secondary" size="lg">
               Read Docs
@@ -171,13 +185,22 @@ export function Hero() {
 
         {/* Right Side: Graph Preview */}
         <div className="relative flex w-full items-center justify-center lg:justify-end">
-          <div className="hero-graph-bg relative flex h-full min-h-[480px] w-full max-w-[480px] flex-col items-center justify-center rounded-[var(--radius-xl)] border border-[var(--border)] bg-gradient-to-b from-[var(--card-raised)] to-[var(--card)] p-[var(--space-6)] [box-shadow:var(--shadow-lg),var(--shadow-inset)]">
+          <div className="hero-graph-bg cg-float relative flex h-full min-h-[480px] w-full max-w-[480px] flex-col items-center justify-center rounded-[var(--radius-xl)] border border-[var(--border)] bg-gradient-to-b from-[var(--card-raised)] to-[var(--card)] p-[var(--space-6)] [box-shadow:var(--shadow-lg),var(--shadow-inset)]">
             {/* Background Grid Pattern */}
             <div
               className="absolute inset-0 z-0 rounded-[var(--radius-xl)]"
               style={{
                 backgroundImage: `radial-gradient(var(--graph-dot) 1px, transparent 1px)`,
                 backgroundSize: '24px 24px',
+              }}
+            />
+
+            {/* Ambient top highlight */}
+            <div
+              className="pointer-events-none absolute inset-0 z-0 rounded-[var(--radius-xl)]"
+              style={{
+                background:
+                  'linear-gradient(180deg, rgba(255,255,255,0.03) 0%, transparent 40%)',
               }}
             />
 
@@ -193,7 +216,7 @@ export function Hero() {
                 </div>
               </div>
 
-              {/* Gap 1 with Edge SVG */}
+              {/* Edge SVG layer 1 */}
               <div className="relative z-0 -my-[var(--space-1)] h-[var(--space-16)] w-full">
                 <svg
                   className="hero-edge absolute inset-0 h-full w-full"
@@ -207,6 +230,7 @@ export function Hero() {
                     strokeWidth="2"
                     strokeDasharray="4 4"
                     vectorEffect="non-scaling-stroke"
+                    className="cg-dash-flow"
                   />
                   <path
                     d="M 50 0 C 50 50, 75 50, 75 100"
@@ -215,6 +239,7 @@ export function Hero() {
                     strokeWidth="2"
                     strokeDasharray="4 4"
                     vectorEffect="non-scaling-stroke"
+                    className="cg-dash-flow"
                   />
                 </svg>
               </div>
@@ -223,7 +248,7 @@ export function Hero() {
               <div className="z-10 grid w-full grid-cols-2 gap-[var(--space-4)] px-[var(--space-4)]">
                 {/* Branch 1 */}
                 <div className="flex justify-center">
-                  <div className="hero-node-branch hero-node relative flex w-full max-w-[140px] flex-col items-center rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--card)] p-[var(--space-3)] [box-shadow:var(--shadow-sm),var(--shadow-inset)]">
+                  <div className="hero-node-branch hero-node card-shine relative flex w-full max-w-[140px] flex-col items-center rounded-[var(--radius-md)] border border-[var(--border)] bg-gradient-to-b from-[var(--card-raised)] to-[var(--card)] p-[var(--space-3)] [box-shadow:var(--shadow-sm),var(--shadow-inset)]">
                     <span className="text-heading-sm text-[var(--text-secondary)]">
                       Projects
                     </span>
@@ -235,7 +260,7 @@ export function Hero() {
 
                 {/* Branch 2 (Selected) */}
                 <div className="flex justify-center">
-                  <div className="hero-node-branch hero-node relative flex w-full max-w-[140px] flex-col items-center rounded-[var(--radius-md)] border border-[var(--accent)] bg-[var(--card)] p-[var(--space-3)] [box-shadow:var(--shadow-accent),var(--shadow-md)]">
+                  <div className="hero-node-branch hero-node relative flex w-full max-w-[140px] flex-col items-center rounded-[var(--radius-md)] border border-[var(--accent)] bg-gradient-to-b from-[var(--card-raised)] to-[var(--card)] p-[var(--space-3)] [box-shadow:var(--shadow-accent),var(--shadow-md)]">
                     <span className="text-heading-sm text-[var(--text-primary)]">
                       Identity
                     </span>
@@ -246,7 +271,7 @@ export function Hero() {
                 </div>
               </div>
 
-              {/* Gap 2 with Edge SVG */}
+              {/* Edge SVG layer 2 */}
               <div className="relative z-0 -my-[var(--space-1)] h-[var(--space-16)] w-full">
                 <svg
                   className="hero-edge absolute inset-0 h-full w-full"
@@ -260,6 +285,7 @@ export function Hero() {
                     strokeWidth="2"
                     strokeDasharray="4 4"
                     vectorEffect="non-scaling-stroke"
+                    className="cg-dash-flow"
                   />
                 </svg>
               </div>
@@ -276,8 +302,8 @@ export function Hero() {
             </div>
 
             {/* Status bar */}
-            <div className="hero-anim hero-node-branch absolute bottom-[var(--space-4)] z-20 flex items-center gap-[var(--space-2)] rounded-[var(--radius-full)] border border-[var(--border)] bg-[var(--surface)] px-[var(--space-3)] py-1.5 [box-shadow:var(--shadow-sm)]">
-              <div className="h-2 w-2 rounded-[var(--radius-full)] bg-[var(--accent)] [box-shadow:0_0_8px_var(--accent)]" />
+            <div className="hero-status absolute bottom-[var(--space-4)] z-20 flex items-center gap-[var(--space-2)] rounded-[var(--radius-full)] border border-[var(--border)] bg-[var(--surface)] px-[var(--space-3)] py-1.5 [box-shadow:var(--shadow-sm)]">
+              <div className="h-2 w-2 rounded-[var(--radius-full)] bg-[var(--accent)] cg-pulse-glow" />
               <span className="text-code-sm uppercase tracking-wider text-[var(--text-secondary)]">
                 MCP Server Active
               </span>

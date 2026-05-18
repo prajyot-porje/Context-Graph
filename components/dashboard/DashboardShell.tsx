@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { usePathname } from 'next/navigation'
 import { gsap } from '@/lib/gsap'
 import { TopBar } from './TopBar'
 import { Sidebar } from './Sidebar'
@@ -9,6 +10,8 @@ import { prefersReducedMotion } from '@/lib/gsap'
 export function DashboardShell({ children }: { children: React.ReactNode }) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
   const [selectedNodeId, setSelectedNodeId] = useState('1') // Default to 'ME' node
+  const pathname = usePathname()
+  const isSettings = pathname === '/settings'
 
   useEffect(() => {
     if (prefersReducedMotion()) return
@@ -19,38 +22,44 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
       { opacity: 0, y: -8 },
       { opacity: 1, y: 0, duration: 0.25, ease: 'cg-out' }
     )
-    .fromTo('.cg-sidebar',
-      { opacity: 0, x: -16 },
-      { opacity: 1, x: 0, duration: 0.3, ease: 'cg-out' },
-      0.05
-    )
-    .fromTo('.cg-main',
+    if (!isSettings) {
+      tl.fromTo('.cg-sidebar',
+        { opacity: 0, x: -16 },
+        { opacity: 1, x: 0, duration: 0.3, ease: 'cg-out' },
+        0.05
+      )
+    }
+    tl.fromTo('.cg-main',
       { opacity: 0 },
       { opacity: 1, duration: 0.3 },
       0.15
     )
-    .fromTo('.cg-sidebar-node',
-      { opacity: 0, x: -8 },
-      { opacity: 1, x: 0, duration: 0.2, stagger: 0.04, ease: 'cg-out' },
-      0.2
-    )
+    if (!isSettings) {
+      tl.fromTo('.cg-sidebar-node',
+        { opacity: 0, x: -8 },
+        { opacity: 1, x: 0, duration: 0.2, stagger: 0.04, ease: 'cg-out' },
+        0.2
+      )
+    }
 
     return () => {
       tl.kill()
     }
-  }, [])
+  }, [isSettings])
 
   return (
     <div className="flex h-screen w-full flex-col overflow-hidden bg-[var(--bg)] text-[var(--text-primary)]">
       <TopBar onToggleSidebar={() => setIsSidebarOpen(prev => !prev)} />
       
       <div className="flex flex-1 overflow-hidden">
-        <Sidebar
-          isOpen={isSidebarOpen}
-          onClose={() => setIsSidebarOpen(false)}
-          selectedNodeId={selectedNodeId}
-          onSelectNode={setSelectedNodeId}
-        />
+        {!isSettings && (
+          <Sidebar
+            isOpen={isSidebarOpen}
+            onClose={() => setIsSidebarOpen(false)}
+            selectedNodeId={selectedNodeId}
+            onSelectNode={setSelectedNodeId}
+          />
+        )}
         
         {/* Main Area */}
         <main className="cg-main relative flex flex-1 flex-col overflow-hidden">

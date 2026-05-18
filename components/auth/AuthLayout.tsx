@@ -1,7 +1,10 @@
+'use client'
+
 import { useRef } from 'react'
 import Link from 'next/link'
 import { useGSAP } from '@gsap/react'
 import { gsap, DUR, prefersReducedMotion } from '@/lib/gsap'
+import { ArrowLeft } from 'lucide-react'
 
 export function AuthLayout({ children }: { children: React.ReactNode }) {
   const containerRef = useRef<HTMLDivElement>(null)
@@ -21,7 +24,8 @@ export function AuthLayout({ children }: { children: React.ReactNode }) {
 
       tl.from('.cg-back-link', {
         opacity: 0,
-        duration: 0.2,
+        x: -8,
+        duration: 0.25,
         ease: 'cg-out',
       })
         .from(
@@ -29,7 +33,7 @@ export function AuthLayout({ children }: { children: React.ReactNode }) {
           {
             opacity: 0,
             y: 20,
-            duration: 0.35,
+            duration: DUR.moderate,
             ease: 'cg-out',
           },
           0
@@ -69,8 +73,8 @@ export function AuthLayout({ children }: { children: React.ReactNode }) {
           '.cg-right-panel',
           {
             opacity: 0,
-            x: 20,
-            duration: 0.5,
+            x: 24,
+            duration: DUR.slow,
             ease: 'cg-out',
           },
           0.1
@@ -82,27 +86,56 @@ export function AuthLayout({ children }: { children: React.ReactNode }) {
   return (
     <div ref={containerRef} className="flex min-h-screen w-full flex-row bg-[var(--bg)]">
       {/* Left panel */}
-      <div className="relative flex flex-1 flex-col items-center justify-center p-[48px_40px]">
+      <div className="relative flex flex-1 flex-col items-center justify-center px-[var(--space-10)] py-[var(--space-12)]">
+        {/* Background gradient */}
+        <div
+          className="pointer-events-none absolute inset-0 z-0"
+          style={{
+            background:
+              'radial-gradient(ellipse 60% 40% at 30% 40%, rgba(179, 236, 19, 0.03) 0%, transparent 60%)',
+          }}
+        />
+
         <Link
           href="/"
-          className="cg-back-link absolute left-8 top-8 text-[14px] font-medium text-[var(--text-secondary)] transition-[color] duration-150 hover:text-[var(--text-primary)]"
+          className="cg-back-link absolute left-[var(--space-8)] top-[var(--space-8)] z-10 flex items-center gap-[var(--space-2)] text-[14px] font-medium text-[var(--text-secondary)] transition-colors duration-150 hover:text-[var(--text-primary)]"
         >
-          ← ContextGraph
+          <ArrowLeft size={14} />
+          ContextGraph
         </Link>
-        <div className="w-full max-w-[360px]">
+
+        <div className="relative z-10 w-full max-w-[360px]">
           {children}
         </div>
       </div>
 
       {/* Right panel */}
-      <div className="cg-right-panel hidden w-[480px] min-h-screen flex-col items-center justify-center border-l border-[var(--border)] bg-[var(--surface)] p-8 lg:flex">
-        <div className="relative flex h-[480px] w-full max-w-[480px] flex-col items-center justify-center rounded-[var(--radius-xl)] border border-[var(--border)] bg-gradient-to-b from-[var(--card-raised)] to-[var(--card)] p-[var(--space-6)] [box-shadow:var(--shadow-lg),var(--shadow-inset)]">
+      <div className="cg-right-panel hidden w-[480px] min-h-screen flex-col items-center justify-center border-l border-[var(--border)] bg-[var(--surface)] p-[var(--space-8)] lg:flex">
+        {/* Subtle background pattern */}
+        <div
+          className="pointer-events-none absolute inset-0"
+          style={{
+            backgroundImage: 'radial-gradient(var(--graph-dot) 1px, transparent 1px)',
+            backgroundSize: '32px 32px',
+            opacity: 0.3,
+          }}
+        />
+
+        <div className="cg-float relative flex h-[480px] w-full max-w-[480px] flex-col items-center justify-center rounded-[var(--radius-xl)] border border-[var(--border)] bg-gradient-to-b from-[var(--card-raised)] to-[var(--card)] p-[var(--space-6)] [box-shadow:var(--shadow-lg),var(--shadow-inset)]">
           {/* Background Grid Pattern */}
           <div
             className="absolute inset-0 z-0 rounded-[var(--radius-xl)]"
             style={{
               backgroundImage: `radial-gradient(var(--graph-dot) 1px, transparent 1px)`,
               backgroundSize: '24px 24px',
+            }}
+          />
+
+          {/* Top highlight */}
+          <div
+            className="pointer-events-none absolute inset-0 z-0 rounded-[var(--radius-xl)]"
+            style={{
+              background: 'linear-gradient(180deg, rgba(255,255,255,0.03) 0%, transparent 40%)',
             }}
           />
 
@@ -118,7 +151,7 @@ export function AuthLayout({ children }: { children: React.ReactNode }) {
               </div>
             </div>
 
-            {/* Gap 1 with Edge SVG */}
+            {/* Edge SVG */}
             <div className="relative z-0 -my-[var(--space-1)] h-[var(--space-16)] w-full">
               <svg
                 className="absolute inset-0 h-full w-full"
@@ -132,6 +165,7 @@ export function AuthLayout({ children }: { children: React.ReactNode }) {
                   strokeWidth="2"
                   strokeDasharray="4 4"
                   vectorEffect="non-scaling-stroke"
+                  className="cg-dash-flow"
                 />
                 <path
                   d="M 50 0 C 50 50, 75 50, 75 100"
@@ -140,15 +174,15 @@ export function AuthLayout({ children }: { children: React.ReactNode }) {
                   strokeWidth="2"
                   strokeDasharray="4 4"
                   vectorEffect="non-scaling-stroke"
+                  className="cg-dash-flow"
                 />
               </svg>
             </div>
 
             {/* Branch Nodes Row */}
             <div className="z-10 grid w-full grid-cols-2 gap-[var(--space-4)] px-[var(--space-4)]">
-              {/* Branch 1 */}
               <div className="flex justify-center">
-                <div className="relative flex w-full max-w-[140px] flex-col items-center rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--card)] p-[var(--space-3)] [box-shadow:var(--shadow-sm),var(--shadow-inset)]">
+                <div className="relative flex w-full max-w-[140px] flex-col items-center rounded-[var(--radius-md)] border border-[var(--border)] bg-gradient-to-b from-[var(--card-raised)] to-[var(--card)] p-[var(--space-3)] [box-shadow:var(--shadow-sm),var(--shadow-inset)]">
                   <span className="text-heading-sm text-[var(--text-secondary)]">
                     Projects
                   </span>
@@ -158,9 +192,8 @@ export function AuthLayout({ children }: { children: React.ReactNode }) {
                 </div>
               </div>
 
-              {/* Branch 2 (Selected) */}
               <div className="flex justify-center">
-                <div className="relative flex w-full max-w-[140px] flex-col items-center rounded-[var(--radius-md)] border border-[var(--accent)] bg-[var(--card)] p-[var(--space-3)] [box-shadow:var(--shadow-accent),var(--shadow-md)]">
+                <div className="relative flex w-full max-w-[140px] flex-col items-center rounded-[var(--radius-md)] border border-[var(--accent)] bg-gradient-to-b from-[var(--card-raised)] to-[var(--card)] p-[var(--space-3)] [box-shadow:var(--shadow-accent),var(--shadow-md)]">
                   <span className="text-heading-sm text-[var(--text-primary)]">
                     Identity
                   </span>
@@ -171,7 +204,7 @@ export function AuthLayout({ children }: { children: React.ReactNode }) {
               </div>
             </div>
 
-            {/* Gap 2 with Edge SVG */}
+            {/* Edge SVG 2 */}
             <div className="relative z-0 -my-[var(--space-1)] h-[var(--space-16)] w-full">
               <svg
                 className="absolute inset-0 h-full w-full"
@@ -185,6 +218,7 @@ export function AuthLayout({ children }: { children: React.ReactNode }) {
                   strokeWidth="2"
                   strokeDasharray="4 4"
                   vectorEffect="non-scaling-stroke"
+                  className="cg-dash-flow"
                 />
               </svg>
             </div>
@@ -202,14 +236,14 @@ export function AuthLayout({ children }: { children: React.ReactNode }) {
 
           {/* Status bar */}
           <div className="absolute bottom-[var(--space-4)] z-20 flex items-center gap-[var(--space-2)] rounded-[var(--radius-full)] border border-[var(--border)] bg-[var(--surface)] px-[var(--space-3)] py-1.5 [box-shadow:var(--shadow-sm)]">
-            <div className="h-2 w-2 rounded-[var(--radius-full)] bg-[var(--accent)] [box-shadow:0_0_8px_var(--accent)]" />
+            <div className="h-2 w-2 rounded-[var(--radius-full)] bg-[var(--accent)] cg-pulse-glow" />
             <span className="text-code-sm uppercase tracking-wider text-[var(--text-secondary)]">
               MCP Server Active
             </span>
           </div>
         </div>
 
-        <p className="mt-8 text-center text-[14px] text-[var(--text-secondary)]">
+        <p className="relative z-10 mt-[var(--space-8)] text-center text-body-sm text-[var(--text-muted)]">
           Your context. Always ready.
         </p>
       </div>

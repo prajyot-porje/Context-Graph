@@ -109,6 +109,24 @@
   /* ---- Graph ---- */
   --graph-dot: rgba(255, 255, 255, 0.08);
   --graph-edge: rgba(255, 255, 255, 0.12);
+
+  /* ---- Atmosphere (section transitions) ---- */
+  --section-glow: rgba(179, 236, 19, 0.03);
+  --ambient-light: rgba(255, 255, 255, 0.02);
+  --ambient-vignette: rgba(0, 0, 0, 0.4);
+
+  /* ---- 404 Page Atmosphere ---- */
+  --not-found-ambient: radial-gradient(
+    ellipse 80% 48% at 66% 18%,
+    rgba(179, 236, 19, 0.06) 0%,
+    transparent 62%
+  );
+  --not-found-panel-light: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.04) 0%,
+    transparent 46%
+  );
+  --not-found-accent-readable-shadow: none;
 }
 
 /* ----------------------------------------------------------------
@@ -160,6 +178,25 @@
 
   --graph-dot: rgba(0, 0, 0, 0.06);
   --graph-edge: rgba(0, 0, 0, 0.10);
+
+  --section-glow: rgba(179, 236, 19, 0.02);
+  --ambient-light: rgba(0, 0, 0, 0.01);
+  --ambient-vignette: rgba(255, 255, 255, 0.3);
+
+  --not-found-ambient: radial-gradient(
+    ellipse 80% 48% at 66% 18%,
+    rgba(179, 236, 19, 0.08) 0%,
+    transparent 64%
+  );
+  --not-found-panel-light: linear-gradient(
+    180deg,
+    rgba(0, 0, 0, 0.025) 0%,
+    transparent 48%
+  );
+  --not-found-accent-readable-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.9),
+    0 12px 32px rgba(179, 236, 19, 0.18),
+    0 24px 56px rgba(0, 0, 0, 0.08);
 }
 
 /* ----------------------------------------------------------------
@@ -204,234 +241,440 @@
   }
 
   html {
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  text-rendering: optimizeLegibility;
-  /* Lenis manages smooth scrolling — never use scroll-behavior: smooth */
-}
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+    /* Lenis manages smooth scrolling — never use scroll-behavior: smooth */
+  }
 
-body {
-  background-color: var(--bg);
-  background-image: var(--bg-gradient);
-  background-repeat: no-repeat;
-  background-attachment: fixed;
-  color: var(--text-primary);
-  font-family: var(--font-geist-sans), system-ui, sans-serif;
-  font-size: 15px;
-  line-height: 1.6;
-  min-height: 100vh;
-}
+  body {
+    background-color: var(--bg);
+    background-image: var(--bg-gradient);
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+    color: var(--text-primary);
+    font-family: var(--font-geist-sans), system-ui, sans-serif;
+    font-size: 15px;
+    line-height: 1.6;
+    min-height: 100vh;
+  }
 
-/* ---- Theme transition (specific properties, never "all") ---- */
-body,
-body * {
-  transition-property: background-color, color, border-color;
-  transition-duration: 0ms;
-}
+  /* ---- Theme transition (specific properties, never "all") ---- */
+  body,
+  body * {
+    transition-property: background-color, color, border-color;
+    transition-duration: 0ms;
+  }
 
-[data-theme="light"],
-[data-theme="light"] * {
-  transition-duration: 200ms;
-}
+  [data-theme="light"],
+  [data-theme="light"] * {
+    transition-duration: 200ms;
+  }
 
-/* ---- Focus visible ---- */
-:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
-}
+  /* ---- Focus visible ---- */
+  :focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
 
-/* ---- Selection ---- */
-::selection {
-  background-color: var(--accent-muted);
-  color: var(--text-primary);
-}
+  /* ---- Selection ---- */
+  ::selection {
+    background-color: var(--accent-muted);
+    color: var(--text-primary);
+  }
 
-/* ---- Links ---- */
-a {
-  color: inherit;
-  text-decoration: none;
-}
+  /* ---- Links ---- */
+  a {
+    color: inherit;
+    text-decoration: none;
+  }
 
-/* ---- Lists ---- */
-ul,
-ol {
-  list-style: none;
-}
+  /* ---- Lists ---- */
+  ul,
+  ol {
+    list-style: none;
+  }
 
-/* ---- Images ---- */
-img,
-svg,
-video {
-  display: block;
-  max-width: 100%;
-}
+  /* ---- Images ---- */
+  img,
+  svg,
+  video {
+    display: block;
+    max-width: 100%;
+  }
 
-/* ---- Buttons ---- */
-button {
-  font: inherit;
-  color: inherit;
-  cursor: pointer;
-  border: none;
-  background: none;
-}
+  /* ---- Buttons ---- */
+  button {
+    font: inherit;
+    color: inherit;
+    cursor: pointer;
+    border: none;
+    background: none;
+  }
 
-/* ---- Inputs ---- */
-input,
-textarea,
-select {
-  font: inherit;
-  color: inherit;
-}
+  /* ---- Inputs ---- */
+  input,
+  textarea,
+  select {
+    font: inherit;
+    color: inherit;
+  }
 
-/* ----------------------------------------------------------------
-   5. REDUCED MOTION
-   ---------------------------------------------------------------- */
-@media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
+  /* ---- Reduced Motion ---- */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
   }
 }
-}
 
 /* ----------------------------------------------------------------
-   6. TYPOGRAPHY UTILITY CLASSES
+   5. TYPOGRAPHY UTILITY CLASSES
    ---------------------------------------------------------------- */
 @layer utilities {
   .text-display-xxl {
-  font-family: var(--font-display-fallback), "Bricolage Grotesque", sans-serif;
-  font-size: 96px;
-  font-weight: 700;
-  line-height: 1.0;
-  letter-spacing: -3px;
-}
+    font-family: var(--font-display-fallback), "Bricolage Grotesque", sans-serif;
+    font-size: 96px;
+    font-weight: 700;
+    line-height: 1.0;
+    letter-spacing: -3px;
+  }
 
-.text-display-xl {
-  font-family: var(--font-display-fallback), "Bricolage Grotesque", sans-serif;
-  font-size: 64px;
-  font-weight: 700;
-  line-height: 1.0;
-  letter-spacing: -2px;
-}
+  .text-display-xl {
+    font-family: var(--font-display-fallback), "Bricolage Grotesque", sans-serif;
+    font-size: 64px;
+    font-weight: 700;
+    line-height: 1.0;
+    letter-spacing: -2px;
+  }
 
-.text-display-lg {
-  font-family: var(--font-display-fallback), "Bricolage Grotesque", sans-serif;
-  font-size: 48px;
-  font-weight: 700;
-  line-height: 1.05;
-  letter-spacing: -1.5px;
-}
+  .text-display-lg {
+    font-family: var(--font-display-fallback), "Bricolage Grotesque", sans-serif;
+    font-size: 48px;
+    font-weight: 700;
+    line-height: 1.05;
+    letter-spacing: -1.5px;
+  }
 
-.text-display-md {
-  font-family: var(--font-display-fallback), "Bricolage Grotesque", sans-serif;
-  font-size: 36px;
-  font-weight: 700;
-  line-height: 1.1;
-  letter-spacing: -1px;
-}
+  .text-display-md {
+    font-family: var(--font-display-fallback), "Bricolage Grotesque", sans-serif;
+    font-size: 36px;
+    font-weight: 700;
+    line-height: 1.1;
+    letter-spacing: -1px;
+  }
 
-.text-display-sm {
-  font-family: var(--font-display-fallback), "Bricolage Grotesque", sans-serif;
-  font-size: 28px;
-  font-weight: 600;
-  line-height: 1.15;
-  letter-spacing: -0.5px;
-}
+  .text-display-sm {
+    font-family: var(--font-display-fallback), "Bricolage Grotesque", sans-serif;
+    font-size: 28px;
+    font-weight: 600;
+    line-height: 1.15;
+    letter-spacing: -0.5px;
+  }
 
-.text-heading-lg {
-  font-size: 24px;
-  font-weight: 600;
-  line-height: 1.3;
-  letter-spacing: -0.4px;
-}
+  .text-heading-lg {
+    font-size: 24px;
+    font-weight: 600;
+    line-height: 1.3;
+    letter-spacing: -0.4px;
+  }
 
-.text-heading-md {
-  font-size: 20px;
-  font-weight: 600;
-  line-height: 1.3;
-  letter-spacing: -0.3px;
-}
+  .text-heading-md {
+    font-size: 20px;
+    font-weight: 600;
+    line-height: 1.3;
+    letter-spacing: -0.3px;
+  }
 
-.text-heading-sm {
-  font-size: 16px;
-  font-weight: 600;
-  line-height: 1.4;
-  letter-spacing: -0.2px;
-}
+  .text-heading-sm {
+    font-size: 16px;
+    font-weight: 600;
+    line-height: 1.4;
+    letter-spacing: -0.2px;
+  }
 
-.text-body-lg {
-  font-size: 18px;
-  font-weight: 400;
-  line-height: 1.6;
-}
+  .text-body-lg {
+    font-size: 18px;
+    font-weight: 400;
+    line-height: 1.6;
+  }
 
-.text-body-md {
-  font-size: 15px;
-  font-weight: 400;
-  line-height: 1.6;
-}
+  .text-body-md {
+    font-size: 15px;
+    font-weight: 400;
+    line-height: 1.6;
+  }
 
-.text-body-sm {
-  font-size: 13px;
-  font-weight: 400;
-  line-height: 1.5;
-}
+  .text-body-sm {
+    font-size: 13px;
+    font-weight: 400;
+    line-height: 1.5;
+  }
 
-.text-label {
-  font-size: 11px;
-  font-weight: 600;
-  line-height: 1.4;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
+  .text-label {
+    font-size: 11px;
+    font-weight: 600;
+    line-height: 1.4;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
 
-.text-button-md {
-  font-size: 14px;
-  font-weight: 500;
-  line-height: 1.0;
-  letter-spacing: -0.1px;
-}
+  .text-button-md {
+    font-size: 14px;
+    font-weight: 500;
+    line-height: 1.0;
+    letter-spacing: -0.1px;
+  }
 
-.text-button-sm {
-  font-size: 12px;
-  font-weight: 500;
-  line-height: 1.0;
-}
+  .text-button-sm {
+    font-size: 12px;
+    font-weight: 500;
+    line-height: 1.0;
+  }
 
-.text-code-md {
-  font-family: var(--font-geist-mono), "Fira Code", monospace;
-  font-size: 13px;
-  font-weight: 400;
-  line-height: 1.6;
-}
+  .text-code-md {
+    font-family: var(--font-geist-mono), "Fira Code", monospace;
+    font-size: 13px;
+    font-weight: 400;
+    line-height: 1.6;
+  }
 
-.text-code-sm {
-  font-family: var(--font-geist-mono), "Fira Code", monospace;
-  font-size: 11px;
-  font-weight: 400;
-  line-height: 1.5;
-}
+  .text-code-sm {
+    font-family: var(--font-geist-mono), "Fira Code", monospace;
+    font-size: 11px;
+    font-weight: 400;
+    line-height: 1.5;
+  }
 
-/* ----------------------------------------------------------------
-   7. RESPONSIVE DISPLAY TYPE SCALING
-   ---------------------------------------------------------------- */
-@media (max-width: 1279px) {
-  .text-display-xxl { font-size: 64px; letter-spacing: -2px; }
-  .text-display-xl  { font-size: 48px; letter-spacing: -1.5px; }
-  .text-display-lg  { font-size: 36px; letter-spacing: -1px; }
-}
+  /* ----------------------------------------------------------------
+     6. RESPONSIVE DISPLAY TYPE SCALING
+     ---------------------------------------------------------------- */
+  @media (max-width: 1279px) {
+    .text-display-xxl { font-size: 64px; letter-spacing: -2px; }
+    .text-display-xl  { font-size: 48px; letter-spacing: -1.5px; }
+    .text-display-lg  { font-size: 36px; letter-spacing: -1px; }
+  }
 
-@media (max-width: 1023px) {
-  .text-display-xxl { font-size: 48px; letter-spacing: -1.5px; }
-  .text-display-xl  { font-size: 36px; letter-spacing: -1px; }
-  .text-display-lg  { font-size: 28px; letter-spacing: -0.5px; }
-}
+  @media (max-width: 1023px) {
+    .text-display-xxl { font-size: 48px; letter-spacing: -1.5px; }
+    .text-display-xl  { font-size: 36px; letter-spacing: -1px; }
+    .text-display-lg  { font-size: 28px; letter-spacing: -0.5px; }
+  }
 
-@media (max-width: 639px) {
+  @media (max-width: 639px) {
     .text-display-xxl { font-size: 36px; letter-spacing: -1px; }
     .text-display-xl  { font-size: 28px; letter-spacing: -0.5px; }
   }
+}
+
+/* ----------------------------------------------------------------
+   7. COMPONENT SURFACES & ATMOSPHERE
+   Scoped to specific components — not global utilities.
+   ---------------------------------------------------------------- */
+
+/* Ambient glow behind hero and CTA sections */
+.section-glow {
+  position: relative;
+}
+
+.section-glow::before {
+  content: "";
+  position: absolute;
+  top: -20%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 80%;
+  height: 60%;
+  background: radial-gradient(
+    ellipse at center,
+    var(--section-glow) 0%,
+    transparent 70%
+  );
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Floating animation — used for hero graph and auth panel */
+@keyframes cg-float {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+.cg-float {
+  animation: cg-float 6s ease-in-out infinite;
+}
+
+/* Gradient text helper */
+.text-gradient-accent {
+  background: linear-gradient(
+    135deg,
+    var(--accent) 0%,
+    #d4ff55 50%,
+    var(--accent) 100%
+  ) !important;
+  background-clip: text !important;
+  -webkit-background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+  color: transparent !important;
+}
+
+/* 404 page atmosphere */
+.not-found-ambient {
+  background: var(--not-found-ambient);
+}
+
+.not-found-grid {
+  background-image: radial-gradient(var(--graph-dot) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+
+.not-found-panel-light {
+  background: var(--not-found-panel-light);
+}
+
+.not-found-number {
+  background: linear-gradient(
+    135deg,
+    var(--accent) 0%,
+    var(--accent-soft) 46%,
+    var(--accent) 100%
+  );
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+  text-shadow: var(--not-found-accent-readable-shadow);
+}
+
+/* Section divider with gradient fade */
+.section-divider {
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    var(--border) 20%,
+    var(--border-strong) 50%,
+    var(--border) 80%,
+    transparent 100%
+  );
+}
+
+/* Pulse glow on accent elements */
+@keyframes cg-pulse-glow {
+  0%, 100% {
+    box-shadow: 0 0 8px var(--accent), 0 0 0 rgba(179, 236, 19, 0);
+  }
+  50% {
+    box-shadow: 0 0 12px var(--accent), 0 0 24px rgba(179, 236, 19, 0.15);
+  }
+}
+
+.cg-pulse-glow {
+  animation: cg-pulse-glow 3s ease-in-out infinite;
+}
+
+/* Edge dash animation for graph edges */
+@keyframes cg-dash-flow {
+  to {
+    stroke-dashoffset: -16;
+  }
+}
+
+.cg-dash-flow {
+  animation: cg-dash-flow 1.5s linear infinite;
+}
+
+/* Icon container with glow */
+.icon-glow {
+  position: relative;
+}
+
+.icon-glow::after {
+  content: "";
+  position: absolute;
+  inset: -4px;
+  background: radial-gradient(
+    circle,
+    var(--accent-muted) 0%,
+    transparent 70%
+  );
+  border-radius: inherit;
+  z-index: -1;
+  opacity: 0;
+  transition: opacity 200ms ease-out;
+}
+
+.icon-glow:hover::after {
+  opacity: 1;
+}
+
+/* Card shine effect on hover */
+.card-shine {
+  position: relative;
+  overflow: hidden;
+}
+
+.card-shine::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.03) 50%,
+    transparent 100%
+  );
+  transition: left 600ms ease-out;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.card-shine:hover::before {
+  left: 100%;
+}
+
+/* ----------------------------------------------------------------
+   8. REACT FLOW OVERRIDES
+   Override default React Flow styles with design tokens.
+   ---------------------------------------------------------------- */
+
+.react-flow__node {
+  background: transparent !important;
+  border: none !important;
+  padding: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+
+.react-flow__controls {
+  background: var(--card) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: var(--radius-md) !important;
+  box-shadow: var(--shadow-sm) !important;
+}
+
+.react-flow__controls-button {
+  background: transparent !important;
+  border-bottom: 1px solid var(--border) !important;
+  color: var(--text-secondary) !important;
+}
+
+.react-flow__controls-button:hover {
+  background: var(--card-raised) !important;
+  color: var(--text-primary) !important;
+}
+
+.react-flow__controls-button svg {
+  fill: currentColor !important;
 }

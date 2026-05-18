@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Textarea } from '@/components/ui/Textarea'
 import { Pill } from '@/components/ui/Pill'
+import { ArrowLeft, ArrowRight } from 'lucide-react'
 
 type Project = { name: string; type: string; description: string; status: string; tech: string }
 
@@ -445,14 +446,14 @@ export default function OnboardingPage() {
           <div className="w-[100px]">
             {currentStep > 1 && (
               <Button variant="ghost" onClick={handleBack} disabled={isAnimating || isBuilding}>
-                ← Back
+                <ArrowLeft size={16} /> Back
               </Button>
             )}
           </div>
           <div>
             {currentStep < 4 ? (
               <Button variant="primary" onClick={handleNext} disabled={isAnimating}>
-                Continue →
+                Continue <ArrowRight size={16} />
               </Button>
             ) : (
               <Button variant="accent" onClick={handleNext} disabled={isAnimating || isBuilding} className="h-11">

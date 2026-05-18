@@ -1,3 +1,4 @@
+import { User, Folder, FileText } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 interface SidebarNodeProps {
@@ -19,24 +20,26 @@ export function SidebarNode({ node, isSelected, onClick }: SidebarNodeProps) {
     <div
       onClick={onClick}
       className={cn(
-        "cg-sidebar-node flex cursor-pointer items-center gap-2 rounded-[var(--radius-sm)] py-2 pr-[10px]",
+        "cg-sidebar-node flex cursor-pointer items-center gap-2.5 rounded-[var(--radius-sm)] py-2 pr-[10px]",
         "transition-[background-color,color] duration-150",
         isSelected
-          ? "border-l-2 border-[var(--accent)] bg-[var(--accent-muted)] text-[var(--accent)]"
-          : "border-l-2 border-transparent bg-transparent text-[var(--text-secondary)] hover:bg-white/5"
+          ? "border-l-2 border-[var(--accent)] bg-[var(--accent-muted)] text-[var(--text-primary)]"
+          : "border-l-2 border-transparent bg-transparent text-[var(--text-secondary)] hover:bg-white/5 hover:text-[var(--text-primary)]"
       )}
       style={{
-        paddingLeft: `${8 + node.depth * 16}px`, // Adjusted base padding to 8px since there's a 2px border
+        paddingLeft: `${8 + node.depth * 14}px`, // Adjusted base padding
       }}
     >
       <div
         className={cn(
-          "shrink-0 rounded-full",
-          isMe && "h-2 w-2 bg-[var(--accent)]",
-          isAgency && "h-[6px] w-[6px] bg-[var(--text-secondary)]",
-          isProject && "h-1 w-1 bg-[var(--text-muted)]"
+          "shrink-0 flex items-center justify-center",
+          isSelected ? "text-[var(--accent)]" : "text-[var(--text-muted)]"
         )}
-      />
+      >
+        {isMe && <User size={14} />}
+        {isAgency && <Folder size={14} />}
+        {isProject && <FileText size={14} />}
+      </div>
       <span className="text-[13px] font-medium">{node.title}</span>
     </div>
   )

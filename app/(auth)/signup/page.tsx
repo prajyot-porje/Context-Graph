@@ -2,20 +2,24 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
+import { signUp } from '@/lib/auth-client'
 import { AuthLayout } from '@/components/auth/AuthLayout'
 import { Input } from '@/components/ui/Input'
 import { PasswordInput } from '@/components/auth/PasswordInput'
 import { Button } from '@/components/ui/Button'
-import { Loader2 } from 'lucide-react'
+import { Loader2, ArrowRight } from 'lucide-react'
 
 export default function SignupPage() {
+  const router = useRouter()
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [errors, setErrors] = useState<{ name?: string; email?: string; password?: string }>({})
+  const [error, setError] = useState('')
   const [isLoading, setIsLoading] = useState(false)
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     
     // Client-side validation
@@ -37,11 +41,24 @@ export default function SignupPage() {
 
     setErrors({})
     setIsLoading(true)
+    setError('')
 
-    // Simulate API call
-    setTimeout(() => {
-      setIsLoading(false)
-    }, 1500)
+    const result = await signUp.email({
+      email,
+      password,
+      name,
+    })
+
+    setIsLoading(false)
+
+    if (result.error) {
+      setError(result.error.message ?? 'Could not create account')
+      return
+    }
+
+    // New user always goes to onboarding
+    router.push('/onboarding')
+    router.refresh()
   }
 
   return (
@@ -90,23 +107,30 @@ export default function SignupPage() {
             />
           </div>
 
-          <Button
-            type="submit"
-            variant="primary"
-            className="cg-submit mt-6 w-full"
-            disabled={isLoading}
-          >
-            {isLoading ? <Loader2 className="animate-spin" size={16} /> : 'Create account'}
-          </Button>
+          <div className="cg-submit mt-6 w-full">
+            <Button
+              type="submit"
+              variant="primary"
+              className="w-full"
+              disabled={isLoading}
+            >
+              {isLoading ? <Loader2 className="animate-spin" size={16} /> : 'Create account'}
+            </Button>
+          </div>
+          {error && (
+            <p className="mt-2 text-center text-[13px] text-[var(--error)]">
+              {error}
+            </p>
+          )}
         </form>
 
         <p className="cg-subtext mt-6 text-center text-[14px] text-[var(--text-secondary)]">
           Already have an account?{' '}
           <Link
             href="/login"
-            className="text-[var(--accent)] transition-colors hover:underline"
+            className="text-[var(--accent)] transition-colors hover:underline inline-flex items-center"
           >
-            Sign in →
+            Sign in <ArrowRight size={16} className="ml-1" />
           </Link>
         </p>
       </div>

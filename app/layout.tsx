@@ -27,10 +27,24 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      data-theme="dark"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
       suppressHydrationWarning
     >
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              try {
+                if (localStorage.theme === 'light') {
+                  document.documentElement.setAttribute('data-theme', 'light');
+                } else {
+                  document.documentElement.removeAttribute('data-theme');
+                }
+              } catch (_) {}
+            `,
+          }}
+        />
+      </head>
       <body className="flex min-h-full flex-col">
         <LenisProvider>{children}</LenisProvider>
       </body>

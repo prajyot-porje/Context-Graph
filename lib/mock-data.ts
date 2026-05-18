@@ -1,4 +1,14 @@
-export const mockNodes = [
+export interface MockNode {
+  id: string
+  scope: string
+  title: string
+  content: string
+  relevance: number
+  parent_scope: string | null
+  depth: number
+}
+
+export const mockNodes: MockNode[] = [
   {
     id: '1',
     scope: 'me',
