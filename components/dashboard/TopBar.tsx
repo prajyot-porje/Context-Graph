@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation'
 import { signOut, useSession } from '@/lib/auth-client'
 import { cn } from '@/lib/utils'
 import { ThemeToggle } from '@/components/ui/ThemeToggle'
+import Link from 'next/link'
 
 export function TopBar({ onToggleSidebar }: { onToggleSidebar: () => void }) {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false)
@@ -46,7 +47,20 @@ export function TopBar({ onToggleSidebar }: { onToggleSidebar: () => void }) {
           <Menu size={20} />
         </button>
 
-        <div className="flex items-center gap-[var(--space-2)]">
+        <Link
+          href="/dashboard"
+          className={cn(
+            'inline-flex items-center gap-0',
+            'font-display text-[18px] font-bold tracking-tight',
+            'text-[var(--text-primary)]',
+            'transition-opacity duration-100 ease-out hover:opacity-80'
+          )}
+        >
+          Context
+          <span className="text-[var(--accent)]">Graph</span>
+        </Link>
+
+        <div className="hidden sm:flex items-center gap-[var(--space-2)] border-l border-[var(--border)] pl-[var(--space-4)] ml-[var(--space-1)]">
           <div className="h-[6px] w-[6px] rounded-[var(--radius-full)] bg-[var(--accent)]" />
           <span className="text-body-sm font-medium text-[var(--text-secondary)]">
             All contexts

@@ -1,5 +1,5 @@
 import type { Node, Edge } from 'reactflow'
-import type { MockNode } from './mock-data'
+import type { ContextNode } from '@/types'
 
 export interface ContextNodeData {
   scope: string
@@ -10,19 +10,25 @@ export interface ContextNodeData {
 }
 
 /**
- * Converts mock nodes into React Flow nodes + edges with a static layout.
+ * Converts context nodes into React Flow nodes + edges with a static layout.
  *
  * Layout strategy (no auto-layout library):
  *   - depth 0 (ME): centered at (320, 40)
  *   - depth 1:      horizontal row at y: 200, starting at x: 120, spaced 400px
  *   - depth 2:      grouped under their parent at y: 360, spaced 160px apart
  */
-export function convertNodesToFlow(nodes: MockNode[]): {
+export function convertNodesToFlow(nodes: ContextNode[]): {
   nodes: Node<ContextNodeData>[]
   edges: Edge[]
 } {
   const flowNodes: Node<ContextNodeData>[] = []
   const flowEdges: Edge[] = []
+
+  // ---- Map scope to node ----
+  const scopeMap = new Map<string, ContextNode>()
+  for (const node of nodes) {
+    scopeMap.set(node.scope, node)
+  }
 
   // ---- Build a map of scope → id for resolving parent_scope → parent id ----
   const scopeToId = new Map<string, string>()
@@ -30,15 +36,39 @@ export function convertNodesToFlow(nodes: MockNode[]): {
     scopeToId.set(node.scope, node.id)
   }
 
-  // ---- Group depth-2 nodes under their parent scope ----
-  const depth1Nodes = nodes.filter((n) => n.depth === 1)
-  const depth2Nodes = nodes.filter((n) => n.depth === 2)
+  // ---- Compute depth for each node dynamically ----
+  const memo = new Map<string, number>()
+  function getDepth(node: ContextNode): number {
+    if (node.parent_scope === null || !node.parent_scope || node.parent_scope === '') {
+      return 0
+    }
+    if (memo.has(node.id)) {
+      return memo.get(node.id)!
+    }
+    const parent = scopeMap.get(node.parent_scope)
+    if (!parent) {
+      return 1 // Fallback to level 1 if parent is missing
+    }
+    const depth = getDepth(parent) + 1
+    memo.set(node.id, depth)
+    return depth
+  }
+
+  const nodesWithDepth = nodes.map((n) => ({
+    ...n,
+    depth: getDepth(n),
+  }))
+
+  // ---- Group by depth ----
+  const depth0Nodes = nodesWithDepth.filter((n) => n.depth === 0)
+  const depth1Nodes = nodesWithDepth.filter((n) => n.depth === 1)
+  const depth2Nodes = nodesWithDepth.filter((n) => n.depth === 2)
 
   // Track depth-1 x positions so children can be centered under them
   const depth1Positions = new Map<string, number>()
 
   // ---- Position depth 0 ----
-  const meNode = nodes.find((n) => n.depth === 0)
+  const meNode = depth0Nodes[0] || nodesWithDepth.find((n) => n.depth === 0)
   if (meNode) {
     flowNodes.push({
       id: meNode.id,
@@ -78,7 +108,7 @@ export function convertNodesToFlow(nodes: MockNode[]): {
 
   // ---- Position depth 2 ----
   // Group children by their parent_scope
-  const childrenByParent = new Map<string, MockNode[]>()
+  const childrenByParent = new Map<string, typeof nodesWithDepth>()
   for (const node of depth2Nodes) {
     if (!node.parent_scope) continue
     const group = childrenByParent.get(node.parent_scope) ?? []
@@ -108,7 +138,7 @@ export function convertNodesToFlow(nodes: MockNode[]): {
   }
 
   // ---- Create edges ----
-  for (const node of nodes) {
+  for (const node of nodesWithDepth) {
     if (!node.parent_scope) continue
 
     const parentId = scopeToId.get(node.parent_scope)

@@ -1,7 +1,7 @@
 import Link from 'next/link'
 
 const FOOTER_LINKS = [
-  { label: 'GitHub', href: 'https://github.com' },
+  { label: 'GitHub', href: 'https://github.com/prajyot-porje/Context-Graph' },
   { label: 'Docs', href: '/docs' },
   { label: 'Privacy', href: '/privacy' },
   { label: 'Twitter', href: 'https://twitter.com' },
@@ -36,6 +36,8 @@ export function Footer() {
               <Link
                 key={link.label}
                 href={link.href}
+                target={link.href.startsWith('http') ? '_blank' : undefined}
+                rel={link.href.startsWith('http') ? 'noopener noreferrer' : undefined}
                 className="text-[14px] text-[var(--text-secondary)] transition-colors duration-150 hover:text-[var(--text-primary)]"
               >
                 {link.label}

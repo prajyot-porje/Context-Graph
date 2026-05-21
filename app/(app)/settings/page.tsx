@@ -1,7 +1,8 @@
 'use client'
 
-import { useState } from 'react'
-import { Copy, Check, Eye, EyeOff, RotateCcw, Trash2 } from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { Copy, Check, Eye, RotateCcw, Trash2, ArrowLeft, Loader2 } from 'lucide-react'
+import Link from 'next/link'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
@@ -12,7 +13,7 @@ import { Toast } from '@/components/ui/Toast'
 type Tab = 'Claude' | 'Claude Code' | 'ChatGPT' | 'Codex'
 const TABS: Tab[] = ['Claude', 'Claude Code', 'ChatGPT', 'Codex']
 
-const SNIPPETS: Record<Tab, { title: string; code: string }> = {
+const getSnippets = (prefix: string) => ({
   Claude: {
     title: 'claude_desktop_config.json',
     code: `{
@@ -20,7 +21,7 @@ const SNIPPETS: Record<Tab, { title: string; code: string }> = {
     "context-engine": {
       "url": "https://your-cf-worker.workers.dev/mcp",
       "headers": {
-        "x-api-key": "ctx_a3f2xxxx"
+        "x-api-key": "${prefix}••••••••"
       }
     }
   }
@@ -33,7 +34,7 @@ const SNIPPETS: Record<Tab, { title: string; code: string }> = {
     "context-engine": {
       "url": "https://your-cf-worker.workers.dev/mcp",
       "headers": {
-        "x-api-key": "ctx_a3f2xxxx"
+        "x-api-key": "${prefix}••••••••"
       }
     }
   }
@@ -46,7 +47,7 @@ const SNIPPETS: Record<Tab, { title: string; code: string }> = {
     "context-engine": {
       "url": "https://your-cf-worker.workers.dev/mcp",
       "headers": {
-        "x-api-key": "ctx_a3f2xxxx"
+        "x-api-key": "${prefix}••••••••"
       }
     }
   }
@@ -56,9 +57,9 @@ const SNIPPETS: Record<Tab, { title: string; code: string }> = {
     title: 'Codex Desktop — Streamable HTTP',
     code: `Name: context-engine
 URL: https://your-cf-worker.workers.dev/mcp
-Header: x-api-key: ctx_a3f2xxxx`
+Header: x-api-key: ${prefix}••••••••`
   }
-}
+})
 
 type SettingsTab = 'API Key' | 'Account' | 'Danger Zone'
 const SETTINGS_TABS: SettingsTab[] = ['API Key', 'Account', 'Danger Zone']
@@ -67,11 +68,7 @@ export default function SettingsPage() {
   const { toast, showToast, hideToast } = useToast()
 
   const [settingsTab, setSettingsTab] = useState<SettingsTab>('API Key')
-  
-  const [keyVisible, setKeyVisible] = useState(false)
-  const [keyCopied, setKeyCopied] = useState(false)
   const [showRegenerateConfirm, setShowRegenerateConfirm] = useState(false)
-  
   const [activeTab, setActiveTab] = useState<Tab>('Claude')
 
   const [showDeleteInput, setShowDeleteInput] = useState(false)
@@ -79,13 +76,74 @@ export default function SettingsPage() {
 
   const [passwordVisible, setPasswordVisible] = useState(false)
 
-  const handleCopyKey = async () => {
+  // API Key States
+  const [apiKeyInfo, setApiKeyInfo] = useState<{ prefix: string; last_used: string | null } | null>(null)
+  const [isLoadingKey, setIsLoadingKey] = useState(true)
+  const [isRegenerating, setIsRegenerating] = useState(false)
+  const [newRawKey, setNewRawKey] = useState<string | null>(null)
+  const [copiedNewKey, setCopiedNewKey] = useState(false)
+  const [showCloseWarning, setShowCloseWarning] = useState(false)
+
+  // Fetch API key info on mount
+  useEffect(() => {
+    setIsLoadingKey(true)
+    fetch('/api/apikey')
+      .then((r) => {
+        if (r.ok) return r.json()
+        throw new Error('Failed to load key info')
+      })
+      .then((data) => {
+        if (data && data.prefix) {
+          setApiKeyInfo(data)
+        } else {
+          setApiKeyInfo(null)
+        }
+        setIsLoadingKey(false)
+      })
+      .catch((err) => {
+        console.error(err)
+        setIsLoadingKey(false)
+      })
+  }, [])
+
+  const handleRegenerate = async () => {
+    setIsRegenerating(true)
+    setShowRegenerateConfirm(false)
     try {
-      await navigator.clipboard.writeText('ctx_a3f2xxxxxxxxxfullkeyhere')
-      setKeyCopied(true)
-      setTimeout(() => setKeyCopied(false), 2000)
+      // First revoke existing key
+      await fetch('/api/apikey', { method: 'DELETE' })
+      
+      // Then generate new key
+      const res = await fetch('/api/apikey', { method: 'POST' })
+      if (res.ok) {
+        const data = await res.json()
+        setNewRawKey(data.key)
+        setCopiedNewKey(false)
+        
+        // Update local key info state immediately
+        setApiKeyInfo({
+          prefix: data.prefix,
+          last_used: null,
+        })
+        
+        showToast({ message: 'New API key generated', type: 'success' })
+      } else {
+        showToast({ message: 'Failed to generate new key', type: 'error' })
+      }
     } catch (err) {
-      console.error('Failed to copy', err)
+      console.error(err)
+      showToast({ message: 'An error occurred', type: 'error' })
+    } finally {
+      setIsRegenerating(false)
+    }
+  }
+
+  const handleCloseNewKeyModal = () => {
+    if (!copiedNewKey) {
+      setShowCloseWarning(true)
+    } else {
+      setNewRawKey(null)
+      setShowCloseWarning(false)
     }
   }
 
@@ -93,13 +151,43 @@ export default function SettingsPage() {
     showToast({ message: 'Changes saved', type: 'success' })
   }
 
+  const formatDate = (dateStr: string) => {
+    try {
+      const d = new Date(dateStr)
+      return d.toLocaleDateString(undefined, { 
+        month: 'short', 
+        day: 'numeric', 
+        year: 'numeric', 
+        hour: '2-digit', 
+        minute: '2-digit' 
+      })
+    } catch {
+      return dateStr
+    }
+  }
+
+  const activePrefix = apiKeyInfo?.prefix || 'ctx_a3f2'
+  const snippets = getSnippets(activePrefix)
+
   return (
     <div className="w-full h-full overflow-y-auto" data-lenis-prevent="true">
-      <div className="mx-auto max-w-[680px] px-6 py-10">
+      <div className="mx-auto max-w-[680px] px-6 py-10 relative">
         
-        <h1 className="font-['rb-freigeist-neue','Bricolage_Grotesque',sans-serif] text-[28px] font-semibold leading-none tracking-[-0.5px] text-[var(--text-primary)] mb-6">
-          Settings
-        </h1>
+        <div className="relative flex flex-col items-start gap-3 lg:block mb-6">
+          <div className="lg:absolute lg:-left-[150px] xl:-left-[200px] 2xl:-left-[260px] lg:top-1/2 lg:-translate-y-1/2">
+            <Link
+              href="/dashboard"
+              className="group inline-flex items-center gap-1.5 font-sans text-[13px] font-medium text-[var(--text-secondary)] transition-colors hover:text-[var(--text-primary)] focus-visible:outline-none"
+            >
+              <ArrowLeft size={14} className="transition-transform duration-150 group-hover:-translate-x-0.5" />
+              Back to dashboard
+            </Link>
+          </div>
+          
+          <h1 className="font-['rb-freigeist-neue','Bricolage_Grotesque',sans-serif] text-[28px] font-semibold leading-none tracking-[-0.5px] text-[var(--text-primary)]">
+            Settings
+          </h1>
+        </div>
 
         <div className="mb-8 flex gap-2 border-b border-[var(--border)] pb-2">
           {SETTINGS_TABS.map(tab => (
@@ -126,29 +214,18 @@ export default function SettingsPage() {
             Use this key to connect any MCP-compatible AI to your context graph.
           </p>
 
-          <div className="flex items-center gap-2.5 rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--bg)] px-3.5 py-2.5">
-            <span className="flex-1 font-mono text-[13px] text-[var(--text-primary)]">
-              {keyVisible ? 'ctx_a3f2xxxxxxxxxfullkeyhere' : 'ctx_a3f2xxxx••••••••••••••••••••'}
-            </span>
-            <div className="flex gap-1">
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-8 w-8 rounded-full p-0 flex items-center justify-center text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[rgba(255,255,255,0.05)]"
-                onClick={handleCopyKey}
-              >
-                {keyCopied ? <Check className="h-4 w-4 text-[var(--success)]" /> : <Copy className="h-4 w-4" />}
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-8 w-8 rounded-full p-0 flex items-center justify-center text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[rgba(255,255,255,0.05)]"
-                onClick={() => setKeyVisible(!keyVisible)}
-              >
-                {keyVisible ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-              </Button>
+          {isLoadingKey ? (
+            <div className="flex items-center justify-center p-6 border border-[var(--border)] rounded-[var(--radius-md)] bg-[var(--bg)] animate-pulse">
+              <Loader2 className="animate-spin h-5 w-5 text-[var(--accent)] mr-2" />
+              <span className="text-[13px] text-[var(--text-muted)]">Fetching API key configuration...</span>
             </div>
-          </div>
+          ) : (
+            <div className="flex items-center gap-2.5 rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--bg)] px-3.5 py-2.5">
+              <span className="flex-1 font-mono text-[13px] text-[var(--text-primary)]">
+                {apiKeyInfo ? `${apiKeyInfo.prefix}••••••••••••••••••••••••` : 'No API key generated yet'}
+              </span>
+            </div>
+          )}
 
           <div className="mt-4 flex items-center justify-between">
             <div>
@@ -162,14 +239,16 @@ export default function SettingsPage() {
                   variant="primary" 
                   size="sm" 
                   className="h-8 bg-[var(--warning)] text-black hover:bg-[var(--warning)]/90 px-3"
-                  onClick={() => setShowRegenerateConfirm(false)}
+                  disabled={isRegenerating}
+                  onClick={handleRegenerate}
                 >
-                  Yes, regenerate
+                  {isRegenerating ? <Loader2 className="animate-spin h-3.5 w-3.5 mr-1" /> : 'Yes, regenerate'}
                 </Button>
                 <Button 
                   variant="ghost" 
                   size="sm" 
                   className="h-8 px-3"
+                  disabled={isRegenerating}
                   onClick={() => setShowRegenerateConfirm(false)}
                 >
                   Cancel
@@ -180,6 +259,7 @@ export default function SettingsPage() {
                 variant="ghost"
                 size="sm"
                 className="h-8 border border-[rgba(245,158,11,0.2)] text-[var(--warning)] hover:bg-[rgba(245,158,11,0.05)] hover:text-[var(--warning)] px-3"
+                disabled={isLoadingKey}
                 onClick={() => setShowRegenerateConfirm(true)}
               >
                 <RotateCcw className="mr-1.5 h-3 w-3" />
@@ -187,6 +267,15 @@ export default function SettingsPage() {
               </Button>
             )}
           </div>
+
+          {!isLoadingKey && (
+            <div className="mt-2 flex items-center justify-between border-t border-[var(--border)] pt-3.5">
+              <span className="text-[11px] text-[var(--text-muted)]">Last used</span>
+              <span className="text-[11px] text-[var(--text-secondary)] font-mono">
+                {apiKeyInfo?.last_used ? formatDate(apiKeyInfo.last_used) : 'Never'}
+              </span>
+            </div>
+          )}
 
           <div className="mt-6 border-t border-[var(--border)] pt-5">
             <p className="mb-3 text-[10px] font-semibold uppercase tracking-[0.08em] text-[var(--text-muted)]">
@@ -211,8 +300,8 @@ export default function SettingsPage() {
             </div>
 
             <CodeBlock 
-              title={SNIPPETS[activeTab].title}
-              code={SNIPPETS[activeTab].code}
+              title={snippets[activeTab].title}
+              code={snippets[activeTab].code}
             />
           </div>
         </section>
@@ -236,34 +325,6 @@ export default function SettingsPage() {
             <Button variant="primary" className="h-9 px-4" onClick={handleSaveAccount}>
               Save changes
             </Button>
-          </div>
-
-          <div className="mt-5 border-t border-[var(--border)] pt-5">
-            <h3 className="mb-4 font-sans text-[14px] font-semibold text-[var(--text-primary)]">Change password</h3>
-            
-            <div className="flex flex-col gap-4">
-              <div className="relative">
-                <Input label="Current password" type={passwordVisible ? 'text' : 'password'} defaultValue="••••••••" />
-                <button 
-                  className="absolute right-3 top-[34px] text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
-                  onClick={() => setPasswordVisible(!passwordVisible)}
-                >
-                  {passwordVisible ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                </button>
-              </div>
-              <div className="relative">
-                <Input label="New password" type={passwordVisible ? 'text' : 'password'} />
-              </div>
-              <div className="relative">
-                <Input label="Confirm new password" type={passwordVisible ? 'text' : 'password'} />
-              </div>
-            </div>
-
-            <div className="mt-4">
-              <Button variant="secondary" className="h-9 px-4">
-                Update password
-              </Button>
-            </div>
           </div>
         </section>
         )}
@@ -322,6 +383,87 @@ export default function SettingsPage() {
         )}
         
       </div>
+
+      {/* ONE-TIME API KEY VIEW MODAL */}
+      {newRawKey && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-[fadeIn_0.2s_ease-out]">
+          <div className="w-full max-w-[500px] rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--surface)] p-6 shadow-2xl relative flex flex-col gap-5">
+            <div>
+              <h3 className="font-['rb-freigeist-neue','Bricolage_Grotesque',sans-serif] text-[24px] font-bold leading-none tracking-tight text-[var(--text-primary)]">
+                Your new API key
+              </h3>
+              <p className="mt-2 text-[13px] text-[var(--warning)] font-medium leading-relaxed">
+                Copy this key now. It will not be shown again.
+              </p>
+            </div>
+
+            <div className="flex items-center gap-2.5 rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--bg)] px-3.5 py-3 font-mono text-[13px] text-[var(--text-primary)]">
+              <span className="flex-1 break-all select-all font-mono">
+                {newRawKey}
+              </span>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 w-8 rounded-full p-0 flex items-center justify-center text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[rgba(255,255,255,0.05)]"
+                onClick={async () => {
+                  try {
+                    await navigator.clipboard.writeText(newRawKey)
+                    setCopiedNewKey(true)
+                    showToast({ message: 'API key copied to clipboard!', type: 'success' })
+                  } catch (err) {
+                    console.error('Failed to copy', err)
+                  }
+                }}
+              >
+                {copiedNewKey ? <Check className="h-4 w-4 text-[var(--success)]" /> : <Copy className="h-4 w-4" />}
+              </Button>
+            </div>
+
+            <div className="flex gap-3 justify-end mt-2">
+              <Button
+                variant="primary"
+                onClick={handleCloseNewKeyModal}
+                className="h-9 px-4 font-medium"
+              >
+                I have copied it
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL CLOSE SAFEGUARD WARNING */}
+      {showCloseWarning && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/90 p-4">
+          <div className="w-full max-w-[420px] rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--surface)] p-6 shadow-2xl flex flex-col gap-4">
+            <h4 className="font-['rb-freigeist-neue','Bricolage_Grotesque',sans-serif] text-[18px] font-bold text-[var(--text-primary)]">
+              Are you sure you want to close?
+            </h4>
+            <p className="text-[13px] text-[var(--text-secondary)] leading-relaxed">
+              You have not copied your new API key. If you close this window now, you will never be able to view this key again and will have to regenerate a new one.
+            </p>
+            <div className="flex gap-2 justify-end mt-2">
+              <Button
+                variant="ghost"
+                className="h-9 px-4 text-[var(--error)] border border-[rgba(239,68,68,0.2)] hover:bg-[rgba(239,68,68,0.05)]"
+                onClick={() => {
+                  setNewRawKey(null)
+                  setShowCloseWarning(false)
+                }}
+              >
+                Close anyway
+              </Button>
+              <Button
+                variant="primary"
+                className="h-9 px-4"
+                onClick={() => setShowCloseWarning(false)}
+              >
+                Go back & copy
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {toast && <Toast message={toast.message} type={toast.type} onClose={hideToast} />}
     </div>

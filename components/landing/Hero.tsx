@@ -5,6 +5,7 @@ import { useGSAP } from '@gsap/react'
 import { gsap, DUR, prefersReducedMotion } from '@/lib/gsap'
 import { Button } from '@/components/ui/Button'
 import { ArrowRight } from 'lucide-react'
+import Link from 'next/link'
 
 export function Hero() {
   const containerRef = useRef<HTMLElement>(null)
@@ -173,10 +174,12 @@ export function Hero() {
           </p>
 
           <div className="hero-cta mt-[var(--space-10)] flex flex-wrap items-center gap-[var(--space-4)]">
-            <Button variant="accent" size="lg">
-              Start Building
-              <ArrowRight size={16} />
-            </Button>
+            <Link href="/dashboard" passHref className="inline-block">
+              <Button variant="accent" size="lg">
+                Start Building
+                <ArrowRight size={16} />
+              </Button>
+            </Link>
             <Button variant="secondary" size="lg">
               Read Docs
             </Button>

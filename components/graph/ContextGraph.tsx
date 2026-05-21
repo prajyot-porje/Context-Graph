@@ -12,26 +12,27 @@ import ReactFlow, {
 import 'reactflow/dist/style.css'
 import { useGSAP } from '@gsap/react'
 import { gsap, prefersReducedMotion, ScrollTrigger } from '@/lib/gsap'
-import { mockNodes } from '@/lib/mock-data'
+import type { ContextNode } from '@/types'
 import { convertNodesToFlow, type ContextNodeData } from '@/lib/graph-utils'
-import { ContextNode } from './ContextNode'
+import { ContextNode as GraphContextNode } from './ContextNode'
 
 /* ---- Register custom node types (stable reference) ---- */
-const nodeTypes = { contextNode: ContextNode }
+const nodeTypes = { contextNode: GraphContextNode }
 
 interface ContextGraphProps {
+  nodes: ContextNode[]
   selectedNodeId: string | null
   onNodeSelect: (id: string | null) => void
 }
 
-export function ContextGraph({ selectedNodeId, onNodeSelect }: ContextGraphProps) {
+export function ContextGraph({ nodes: dbNodes, selectedNodeId, onNodeSelect }: ContextGraphProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const [flowReady, setFlowReady] = useState(false)
 
   /* ---- Convert mock data to React Flow format ---- */
   const { nodes: initialNodes, edges: initialEdges } = useMemo(
-    () => convertNodesToFlow(mockNodes),
-    []
+    () => convertNodesToFlow(dbNodes),
+    [dbNodes]
   )
 
   /* ---- Inject selected state into nodes ---- */

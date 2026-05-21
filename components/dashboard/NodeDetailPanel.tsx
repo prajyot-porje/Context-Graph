@@ -1,20 +1,19 @@
 'use client'
 
 import { useRef, useState, useEffect } from 'react'
-import { X, Pencil, Trash2 } from 'lucide-react'
+import { X, Pencil, Trash2, Loader2 } from 'lucide-react'
 import { gsap } from '@/lib/gsap'
 import { prefersReducedMotion } from '@/lib/gsap'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/Button'
-import type { MockNode } from '@/lib/mock-data'
-import { mockEntries } from '@/lib/mock-entries'
+import type { ContextNode, ContextEntry } from '@/types'
 
 interface NodeDetailPanelProps {
-  node: MockNode
+  node: ContextNode
   isClosing?: boolean
   onClose: () => void
   onClosed?: () => void
-  onNodeUpdate: (id: string, updates: Partial<MockNode>) => void
+  onNodeUpdate: (id: string, updates: Partial<ContextNode>) => void
   onNodeDelete: (id: string) => void
 }
 
@@ -30,8 +29,13 @@ export function NodeDetailPanel({
   const barRef = useRef<HTMLDivElement>(null)
 
   const [isEditing, setIsEditing] = useState(false)
+  const [isSaving, setIsSaving] = useState(false)
   const [editContent, setEditContent] = useState(node.content)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  const [isDeleting, setIsDeleting] = useState(false)
+  
+  const [entries, setEntries] = useState<ContextEntry[]>([])
+  const [isLoadingEntries, setIsLoadingEntries] = useState(true)
 
   // Reset states when node changes
   useEffect(() => {
@@ -39,6 +43,21 @@ export function NodeDetailPanel({
     setEditContent(node.content)
     setShowDeleteConfirm(false)
   }, [node.id, node.content])
+
+  // Fetch entries for selected node
+  useEffect(() => {
+    setIsLoadingEntries(true)
+    fetch(`/api/context/${node.id}/entries`)
+      .then((r) => r.json())
+      .then((data) => {
+        setEntries(data.entries || [])
+        setIsLoadingEntries(false)
+      })
+      .catch((err) => {
+        console.error('Failed to load entries:', err)
+        setIsLoadingEntries(false)
+      })
+  }, [node.id])
 
   // Mount/Unmount Animations
   useEffect(() => {
@@ -68,7 +87,7 @@ export function NodeDetailPanel({
     }
   }, [isClosing, onClosed])
 
-  // Relevance Bar & Entries Animation (Only on mount/change)
+  // Relevance Bar & Entries Animation
   useEffect(() => {
     if (isClosing || !barRef.current) return
 
@@ -83,15 +102,33 @@ export function NodeDetailPanel({
       { width: `${node.relevance * 100}%`, duration: 0.8, ease: 'cg-out', delay: 0.3 }
     )
 
-    gsap.fromTo('.entry-item',
-      { opacity: 0, y: 8 },
-      { opacity: 1, y: 0, duration: 0.2, ease: 'cg-out', stagger: 0.04, delay: 0.25 }
-    )
-  }, [node.id, node.relevance, isClosing])
+    if (!isLoadingEntries) {
+      gsap.fromTo('.entry-item',
+        { opacity: 0, y: 8 },
+        { opacity: 1, y: 0, duration: 0.2, ease: 'cg-out', stagger: 0.04, delay: 0.25 }
+      )
+    }
+  }, [node.id, node.relevance, isClosing, isLoadingEntries])
 
-  const handleSave = () => {
-    onNodeUpdate(node.id, { content: editContent })
-    setIsEditing(false)
+  const handleSave = async () => {
+    setIsSaving(true)
+    try {
+      const res = await fetch(`/api/context/${node.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ content: editContent })
+      })
+      if (res.ok) {
+        onNodeUpdate(node.id, { content: editContent })
+        setIsEditing(false)
+      } else {
+        console.error('Failed to save context updates')
+      }
+    } catch (err) {
+      console.error('Failed to save node:', err)
+    } finally {
+      setIsSaving(false)
+    }
   }
 
   const handleCancelEdit = () => {
@@ -99,7 +136,32 @@ export function NodeDetailPanel({
     setIsEditing(false)
   }
 
-  const entries = mockEntries[node.id] || []
+  const handleDeleteNode = async () => {
+    setIsDeleting(true)
+    try {
+      const res = await fetch(`/api/context/${node.id}`, {
+        method: 'DELETE'
+      })
+      if (res.ok) {
+        onNodeDelete(node.id)
+      } else {
+        console.error('Failed to delete node')
+      }
+    } catch (err) {
+      console.error('Failed to delete node:', err)
+    } finally {
+      setIsDeleting(false)
+    }
+  }
+
+  const formatDate = (dateStr: string) => {
+    try {
+      const d = new Date(dateStr)
+      return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })
+    } catch {
+      return dateStr
+    }
+  }
 
   return (
     <div
@@ -147,7 +209,7 @@ export function NodeDetailPanel({
 
         <div className="mt-2 flex items-center justify-between">
           <span className="text-[11px] text-[var(--text-muted)]">Last updated</span>
-          <span className="text-[11px] text-[var(--text-secondary)]">2 days ago</span>
+          <span className="text-[11px] text-[var(--text-secondary)]">{formatDate(node.last_updated)}</span>
         </div>
       </div>
 
@@ -176,13 +238,14 @@ export function NodeDetailPanel({
               className="min-h-[100px] w-full resize-y rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--bg)] p-2.5 text-[13px] text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:border-[var(--accent)] focus:outline-none focus:ring-1 focus:ring-[var(--accent)] transition-colors"
               value={editContent}
               onChange={(e) => setEditContent(e.target.value)}
+              disabled={isSaving}
               autoFocus
             />
             <div className="flex gap-2">
-              <Button variant="primary" size="sm" onClick={handleSave} className="h-8">
-                Save
+              <Button variant="primary" size="sm" onClick={handleSave} disabled={isSaving} className="h-8">
+                {isSaving ? <Loader2 className="animate-spin h-4 w-4" /> : 'Save'}
               </Button>
-              <Button variant="ghost" size="sm" onClick={handleCancelEdit} className="h-8">
+              <Button variant="ghost" size="sm" onClick={handleCancelEdit} disabled={isSaving} className="h-8">
                 Cancel
               </Button>
             </div>
@@ -201,8 +264,13 @@ export function NodeDetailPanel({
         </p>
 
         <div className="flex flex-col">
-          {entries.length === 0 ? (
-            <p className="text-[13px] text-[var(--text-muted)]">No recent decisions.</p>
+          {isLoadingEntries ? (
+            <div className="flex items-center gap-2 text-[13px] text-[var(--text-muted)] py-4 animate-pulse">
+              <Loader2 className="animate-spin h-3.5 w-3.5 text-[var(--accent)]" />
+              Loading entries...
+            </div>
+          ) : entries.length === 0 ? (
+            <p className="text-[13px] text-[var(--text-muted)] py-2">No recent decisions.</p>
           ) : (
             entries.map((entry, idx) => {
               const isAccent = entry.score >= 0.8
@@ -225,7 +293,7 @@ export function NodeDetailPanel({
                       {entry.score.toFixed(2)}
                     </span>
                     <span className="text-[11px] text-[var(--text-muted)]">
-                      {entry.created_at}
+                      {formatDate(entry.created_at)}
                     </span>
                   </div>
                   <p className="mt-1 text-[13px] leading-[1.5] text-[var(--text-secondary)]">
@@ -248,17 +316,16 @@ export function NodeDetailPanel({
                 variant="primary"
                 size="sm"
                 className="flex-1 bg-[var(--error)] text-white hover:bg-[var(--error)]/90"
-                onClick={() => {
-                  onNodeDelete(node.id)
-                  // The parent handles closing after deletion
-                }}
+                disabled={isDeleting}
+                onClick={handleDeleteNode}
               >
-                Yes, delete
+                {isDeleting ? <Loader2 className="animate-spin h-4 w-4" /> : 'Yes, delete'}
               </Button>
               <Button
                 variant="ghost"
                 size="sm"
                 className="flex-1"
+                disabled={isDeleting}
                 onClick={() => setShowDeleteConfirm(false)}
               >
                 Cancel
