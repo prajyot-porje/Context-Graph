@@ -4,18 +4,23 @@ import { Plus, Settings } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
-import { mockNodes } from '@/lib/mock-data'
 import { SidebarNode } from './SidebarNode'
+import { useGraph } from '@/components/providers/GraphProvider'
+import { computeDepths, sortNodesHierarchically } from '@/lib/graph-utils'
 
 interface SidebarProps {
   isOpen: boolean
   onClose: () => void
-  selectedNodeId: string
-  onSelectNode: (id: string) => void
+  selectedNodeId: string | null
+  onSelectNode: (id: string | null) => void
 }
 
 export function Sidebar({ isOpen, onClose, selectedNodeId, onSelectNode }: SidebarProps) {
   const pathname = usePathname()
+  const { nodes, isLoading } = useGraph()
+
+  // Compute depths and sort them hierarchically
+  const sortedNodes = sortNodesHierarchically(computeDepths(nodes))
 
   return (
     <>
@@ -55,17 +60,27 @@ export function Sidebar({ isOpen, onClose, selectedNodeId, onSelectNode }: Sideb
           </div>
           
           <div className="flex flex-col gap-[2px]">
-            {mockNodes.map((node) => (
-              <SidebarNode
-                key={node.id}
-                node={node}
-                isSelected={selectedNodeId === node.id}
-                onClick={() => {
-                  onSelectNode(node.id)
-                  if (typeof window !== 'undefined' && window.innerWidth < 1024) onClose()
-                }}
-              />
-            ))}
+            {isLoading ? (
+              <div className="px-4 py-3 text-[12px] text-[var(--text-muted)] animate-pulse">
+                Loading nodes...
+              </div>
+            ) : sortedNodes.length === 0 ? (
+              <div className="px-4 py-3 text-[12px] text-[var(--text-muted)]">
+                No nodes found
+              </div>
+            ) : (
+              sortedNodes.map((node) => (
+                <SidebarNode
+                  key={node.id}
+                  node={node}
+                  isSelected={selectedNodeId === node.id}
+                  onClick={() => {
+                    onSelectNode(node.id)
+                    if (typeof window !== 'undefined' && window.innerWidth < 1024) onClose()
+                  }}
+                />
+              ))
+            )}
           </div>
         </div>
 

@@ -40,6 +40,26 @@ export interface ApiKey {
   last_used: string | null
 }
 
+export interface OnboardingAnswers {
+  name: string
+  roles?: string[]
+  role?: string[]
+  location: string
+  description: string
+  skills: string[]
+  stack: string[]
+  projects: {
+    name: string
+    type: string
+    description: string
+    status: string
+    tech: string
+  }[]
+  goals: string
+  constraints: string
+}
+
+
 export type Json =
   | string
   | number

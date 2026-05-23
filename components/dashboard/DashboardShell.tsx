@@ -6,14 +6,21 @@ import { gsap } from '@/lib/gsap'
 import { TopBar } from './TopBar'
 import { Sidebar } from './Sidebar'
 import { prefersReducedMotion } from '@/lib/gsap'
+import { useGraph } from '@/components/providers/GraphProvider'
 
 export function DashboardShell({ children }: { children: React.ReactNode }) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
-  const [selectedNodeId, setSelectedNodeId] = useState('1') // Default to 'ME' node
+  const { selectedNodeId, setSelectedNodeId } = useGraph()
   const pathname = usePathname()
   const isSettings = pathname === '/settings'
+  const isOnboarding = pathname === '/onboarding'
+
+  // Derive a single stable key so the useEffect dep array never changes size
+  const shellMode = isOnboarding ? 'onboarding' : isSettings ? 'settings' : 'dashboard'
 
   useEffect(() => {
+    // Onboarding manages its own entrance animations
+    if (shellMode === 'onboarding') return
     if (prefersReducedMotion()) return
 
     const tl = gsap.timeline()
@@ -22,7 +29,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
       { opacity: 0, y: -8 },
       { opacity: 1, y: 0, duration: 0.25, ease: 'cg-out' }
     )
-    if (!isSettings) {
+    if (shellMode === 'dashboard') {
       tl.fromTo('.cg-sidebar',
         { opacity: 0, x: -16 },
         { opacity: 1, x: 0, duration: 0.3, ease: 'cg-out' },
@@ -34,7 +41,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
       { opacity: 1, duration: 0.3 },
       0.15
     )
-    if (!isSettings) {
+    if (shellMode === 'dashboard') {
       tl.fromTo('.cg-sidebar-node',
         { opacity: 0, x: -8 },
         { opacity: 1, x: 0, duration: 0.2, stagger: 0.04, ease: 'cg-out' },
@@ -45,7 +52,13 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
     return () => {
       tl.kill()
     }
-  }, [isSettings])
+  }, [shellMode])
+
+  // Onboarding bypasses the entire dashboard shell —
+  // it renders its own header, progress bar, and navigation.
+  if (isOnboarding) {
+    return <>{children}</>
+  }
 
   return (
     <div className="flex h-screen w-full flex-col overflow-hidden bg-[var(--bg)] text-[var(--text-primary)]">

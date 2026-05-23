@@ -159,3 +159,77 @@ export function convertNodesToFlow(nodes: ContextNode[]): {
 
   return { nodes: flowNodes, edges: flowEdges }
 }
+
+export interface ContextNodeWithDepth extends ContextNode {
+  depth: number
+}
+
+export function computeDepths(nodes: ContextNode[]): ContextNodeWithDepth[] {
+  const scopeMap = new Map<string, ContextNode>()
+  for (const node of nodes) {
+    scopeMap.set(node.scope, node)
+  }
+
+  const memo = new Map<string, number>()
+  function getDepth(node: ContextNode): number {
+    if (node.parent_scope === null || !node.parent_scope || node.parent_scope === '') {
+      return 0
+    }
+    if (memo.has(node.id)) {
+      return memo.get(node.id)!
+    }
+    const parent = scopeMap.get(node.parent_scope)
+    if (!parent) {
+      return 1 // Fallback to level 1 if parent is missing
+    }
+    const depth = getDepth(parent) + 1
+    memo.set(node.id, depth)
+    return depth
+  }
+
+  return nodes.map((n) => ({
+    ...n,
+    depth: getDepth(n),
+  }))
+}
+
+export function sortNodesHierarchically(nodesWithDepth: ContextNodeWithDepth[]): ContextNodeWithDepth[] {
+  const result: ContextNodeWithDepth[] = []
+  
+  // Find roots (nodes with depth === 0)
+  const roots = nodesWithDepth.filter(n => n.depth === 0)
+  
+  // Create parent to child map
+  const childrenMap = new Map<string, ContextNodeWithDepth[]>()
+  for (const node of nodesWithDepth) {
+    if (node.parent_scope) {
+      const list = childrenMap.get(node.parent_scope) || []
+      list.push(node)
+      childrenMap.set(node.parent_scope, list)
+    }
+  }
+
+  function traverse(node: ContextNodeWithDepth) {
+    result.push(node)
+    const children = childrenMap.get(node.scope) || []
+    // Sort children by title or relevance
+    children.sort((a, b) => a.title.localeCompare(b.title))
+    for (const child of children) {
+      traverse(child)
+    }
+  }
+
+  for (const root of roots) {
+    traverse(root)
+  }
+
+  // If there are any disconnected nodes (shouldn't happen, but as fallback), append them
+  const addedIds = new Set(result.map(n => n.id))
+  for (const node of nodesWithDepth) {
+    if (!addedIds.has(node.id)) {
+      result.push(node)
+    }
+  }
+
+  return result
+}

@@ -5,29 +5,21 @@ import { ContextGraph } from '@/components/graph/ContextGraph'
 import { NodeDetailPanel } from '@/components/dashboard/NodeDetailPanel'
 import { Button } from '@/components/ui/Button'
 import type { ContextNode } from '@/types'
+import { useGraph } from '@/components/providers/GraphProvider'
 
 export default function DashboardPage() {
-  const [nodes, setNodes] = useState<ContextNode[]>([])
-  const [isLoading, setIsLoading] = useState(true)
-  const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null)
+  const {
+    nodes,
+    setNodes,
+    isLoading,
+    setIsLoading,
+    selectedNodeId,
+    setSelectedNodeId,
+  } = useGraph()
   
   // Track the actual node to display so it doesn't disappear during exit animation
   const [displayedNodeId, setDisplayedNodeId] = useState<string | null>(null)
   const [isClosing, setIsClosing] = useState(false)
-
-  // Fetch nodes on mount
-  useEffect(() => {
-    fetch('/api/context')
-      .then((r) => r.json())
-      .then(({ nodes }) => {
-        setNodes(nodes || [])
-        setIsLoading(false)
-      })
-      .catch((err) => {
-        console.error('Failed to load nodes:', err)
-        setIsLoading(false)
-      })
-  }, [])
 
   // Sync selectedNodeId to displayedNodeId, but handle closing
   useEffect(() => {

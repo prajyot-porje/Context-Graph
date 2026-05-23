@@ -1,13 +1,16 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import { gsap } from 'gsap'
 import { prefersReducedMotion } from '@/lib/gsap'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Textarea } from '@/components/ui/Textarea'
 import { Pill } from '@/components/ui/Pill'
-import { ArrowLeft, ArrowRight } from 'lucide-react'
+import { ArrowLeft, ArrowRight, Copy, Check } from 'lucide-react'
+import { useToast } from '@/hooks/useToast'
+import { Toast } from '@/components/ui/Toast'
 
 type Project = { name: string; type: string; description: string; status: string; tech: string }
 
@@ -42,6 +45,9 @@ export default function OnboardingPage() {
     constraints: '',
   })
 
+  const router = useRouter()
+  const { toast, showToast, hideToast } = useToast()
+
   const [currentStep, setCurrentStep] = useState(1)
   const [renderedStep, setRenderedStep] = useState(1)
   const [isAnimating, setIsAnimating] = useState(false)
@@ -50,6 +56,12 @@ export default function OnboardingPage() {
   
   const [isBuilding, setIsBuilding] = useState(false)
   const [activeProjectIdx, setActiveProjectIdx] = useState(0)
+
+  // API Key modal states
+  const [showApiKeyModal, setShowApiKeyModal] = useState(false)
+  const [generatedApiKey, setGeneratedApiKey] = useState<string | null>(null)
+  const [copied, setCopied] = useState(false)
+  const [timerExpired, setTimerExpired] = useState(false)
 
   const contentRef = useRef<HTMLDivElement>(null)
   const indicatorRef = useRef<HTMLDivElement>(null)
@@ -76,6 +88,37 @@ export default function OnboardingPage() {
     return Object.keys(newErrors).length === 0
   }
 
+  const handleBuildGraph = async () => {
+    setIsBuilding(true)
+    try {
+      const response = await fetch('/api/onboarding', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      })
+
+      const result = await response.json()
+
+      if (!response.ok) {
+        setIsBuilding(false)
+        showToast({ message: result.error ?? 'Something went wrong', type: 'error' })
+        return
+      }
+
+      setGeneratedApiKey(result.apiKey)
+      setShowApiKeyModal(true)
+
+      // Start 10-second timer to enable continue button even if they don't copy
+      setTimeout(() => {
+        setTimerExpired(true)
+      }, 10000)
+    } catch (err) {
+      console.error(err)
+      setIsBuilding(false)
+      showToast({ message: 'Failed to build context graph. Please try again.', type: 'error' })
+    }
+  }
+
   const handleNext = () => {
     if (isAnimating) return
     if (validateStep(currentStep)) {
@@ -83,8 +126,7 @@ export default function OnboardingPage() {
         setDirection('forward')
         setCurrentStep(s => s + 1)
       } else {
-        // Build graph
-        setIsBuilding(true)
+        handleBuildGraph()
       }
     }
   }
@@ -410,18 +452,19 @@ export default function OnboardingPage() {
   }
 
   return (
-    <div className="relative flex min-h-screen flex-col bg-[var(--bg)]">
-      {/* Top bar */}
-      <header className="flex h-[60px] w-full items-center justify-between border-b border-[var(--border)] px-8">
-        <span className="font-display text-[16px] font-bold text-[var(--text-primary)]">ContextGraph</span>
-        <span className="text-[13px] text-[var(--text-secondary)]">Step {currentStep} of 4</span>
+    <div className="flex h-screen w-full flex-col bg-[var(--bg)] text-[var(--text-primary)]">
+      {/* Onboarding header — minimal, no dashboard chrome */}
+      <header className="flex h-[60px] w-full shrink-0 items-center justify-between border-b border-[var(--border)] px-6 sm:px-8">
+        <span className="font-display text-[18px] font-bold tracking-tight text-[var(--text-primary)]">
+          Context<span className="text-[var(--accent)]">Graph</span>
+        </span>
+        <span className="text-[13px] font-medium text-[var(--text-secondary)]">Step {currentStep} of 4</span>
       </header>
 
       {/* Step Indicator Bar */}
-      <div className="flex h-[2px] w-full gap-1" ref={indicatorRef}>
+      <div className="flex h-[2px] w-full shrink-0 gap-[2px]" ref={indicatorRef}>
         {[1, 2, 3, 4].map(step => (
           <div key={step} className="relative h-full flex-1 bg-[var(--border)]">
-            {/* The animated fill element */}
             <div
               className="indicator-fill absolute left-0 top-0 h-full w-0 bg-[var(--accent)]"
               style={{ width: step <= currentStep && prefersReducedMotion() ? '100%' : '0%' }}
@@ -430,20 +473,22 @@ export default function OnboardingPage() {
         ))}
       </div>
 
-      {/* Main content */}
-      <main className="mx-auto flex w-full max-w-[560px] flex-1 flex-col px-6 py-16 pb-32">
-        <div ref={contentRef} className="w-full">
-          {renderedStep === 1 && renderStep1()}
-          {renderedStep === 2 && renderStep2()}
-          {renderedStep === 3 && renderStep3()}
-          {renderedStep === 4 && renderStep4()}
+      {/* Scrollable form area */}
+      <main className="flex-1 overflow-y-auto">
+        <div className="mx-auto w-full max-w-[560px] px-6 py-12 pb-[120px] sm:py-16 sm:pb-[140px]">
+          <div ref={contentRef} className="w-full">
+            {renderedStep === 1 && renderStep1()}
+            {renderedStep === 2 && renderStep2()}
+            {renderedStep === 3 && renderStep3()}
+            {renderedStep === 4 && renderStep4()}
+          </div>
         </div>
       </main>
 
-      {/* Navigation bottom bar */}
-      <div className="fixed bottom-0 left-0 flex w-full items-center justify-center border-t border-[var(--border)] bg-[var(--bg)] p-4">
-        <div className="flex w-full max-w-[560px] items-center justify-between">
-          <div className="w-[100px]">
+      {/* Fixed bottom navigation */}
+      <div className="fixed bottom-0 left-0 right-0 z-40 border-t border-[var(--border)] bg-[var(--bg)]">
+        <div className="mx-auto flex w-full max-w-[560px] items-center justify-between px-6 py-4">
+          <div className="min-w-[100px]">
             {currentStep > 1 && (
               <Button variant="ghost" onClick={handleBack} disabled={isAnimating || isBuilding}>
                 <ArrowLeft size={16} /> Back
@@ -484,6 +529,59 @@ export default function OnboardingPage() {
           </p>
         </div>
       )}
+
+      {/* ONE-TIME API KEY VIEW MODAL */}
+      {showApiKeyModal && generatedApiKey && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-[fadeIn_0.2s_ease-out]">
+          <div className="w-full max-w-[500px] rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--surface)] p-6 shadow-2xl relative flex flex-col gap-5">
+            <div>
+              <h3 className="font-['rb-freigeist-neue','Bricolage_Grotesque',sans-serif] text-[28px] font-bold leading-none tracking-tight text-[var(--text-primary)]">
+                Your context graph is ready!
+              </h3>
+              <p className="mt-2 text-[14px] text-[var(--warning)] font-sans font-medium leading-relaxed">
+                Copy your API key — it will not be shown again.
+              </p>
+            </div>
+
+            <div className="flex items-center gap-2.5 rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--bg)] px-3.5 py-3 font-mono text-[13px] text-[var(--text-primary)]">
+              <span className="flex-1 break-all select-all font-mono">
+                {generatedApiKey}
+              </span>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 w-8 rounded-full p-0 flex items-center justify-center text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[rgba(255,255,255,0.05)]"
+                onClick={async () => {
+                  try {
+                    await navigator.clipboard.writeText(generatedApiKey)
+                    setCopied(true)
+                    showToast({ message: 'API key copied to clipboard!', type: 'success' })
+                  } catch (err) {
+                    console.error('Failed to copy', err)
+                  }
+                }}
+              >
+                {copied ? <Check className="h-4 w-4 text-[var(--success)]" /> : <Copy className="h-4 w-4" />}
+              </Button>
+            </div>
+
+            <div className="flex gap-3 justify-end mt-2">
+              <Button
+                variant="primary"
+                onClick={() => {
+                  router.push('/dashboard')
+                }}
+                disabled={!copied && !timerExpired}
+                className="h-10 px-5 font-medium flex items-center gap-1.5"
+              >
+                Go to Dashboard →
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {toast && <Toast message={toast.message} type={toast.type} onClose={hideToast} />}
     </div>
   )
 }
