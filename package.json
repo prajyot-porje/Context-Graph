@@ -24,8 +24,9 @@
     "pg": "^8.20.0",
     "react": "19.2.4",
     "react-dom": "19.2.4",
-    "reactflow": "^11.11.4",
+    "react-force-graph-3d": "^1.29.1",
     "tailwind-merge": "^3.5.0",
+    "three": "^0.184.0",
     "zod": "^4.4.3"
   },
   "devDependencies": {
@@ -33,9 +34,13 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@types/three": "^0.184.1",
     "eslint": "^9",
     "eslint-config-next": "16.2.6",
     "tailwindcss": "^4",
     "typescript": "^5"
+  },
+  "overrides": {
+    "three": "$three"
   }
 }

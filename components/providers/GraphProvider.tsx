@@ -24,6 +24,9 @@ export function GraphProvider({ children }: { children: React.ReactNode }) {
     setIsLoading(true)
     try {
       const r = await fetch('/api/context')
+      if (!r.ok) {
+        throw new Error(`API returned ${r.status}`)
+      }
       const data = await r.json()
       setNodes(data.nodes || [])
     } catch (err) {

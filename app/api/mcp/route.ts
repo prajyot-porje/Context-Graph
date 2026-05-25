@@ -18,10 +18,23 @@ export async function GET() {
   return new Response('SSE not supported on this endpoint', { status: 405, headers: CORS })
 }
 
+function extractApiKey(request: Request): string | null {
+  // Claude Code, Codex, Antigravity — pass key as header
+  const headerKey = request.headers.get("x-api-key");
+  if (headerKey) return headerKey;
+
+  // Claude.ai web, ChatGPT web — pass key as ?key= query param
+  const url = new URL(request.url);
+  const paramKey = url.searchParams.get("key");
+  if (paramKey) return paramKey;
+
+  return null;
+}
+
 async function getAuthenticatedUserId(req: NextRequest): Promise<string | null> {
-  const apiKey = req.headers.get('x-api-key')
-  if (!apiKey) return null
-  return validateApiKey(apiKey)
+  const apiKey = extractApiKey(req);
+  if (!apiKey) return null;
+  return validateApiKey(apiKey);
 }
 
 export async function POST(req: NextRequest) {

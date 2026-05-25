@@ -15,17 +15,8 @@ const TABS: Tab[] = ['Claude', 'Claude Code', 'ChatGPT', 'Codex']
 
 const getSnippets = (prefix: string) => ({
   Claude: {
-    title: 'claude_desktop_config.json',
-    code: `{
-  "mcpServers": {
-    "context-engine": {
-      "url": "https://your-cf-worker.workers.dev/mcp",
-      "headers": {
-        "x-api-key": "${prefix}••••••••"
-      }
-    }
-  }
-}`
+    title: 'Remote MCP Server URL',
+    code: `https://your-app.vercel.app/api/mcp?key=${prefix}••••••••`
   },
   'Claude Code': {
     title: '~/.claude/claude_desktop_config.json',
@@ -41,17 +32,8 @@ const getSnippets = (prefix: string) => ({
 }`
   },
   ChatGPT: {
-    title: 'ChatGPT Desktop MCP Config',
-    code: `{
-  "mcpServers": {
-    "context-engine": {
-      "url": "https://your-cf-worker.workers.dev/mcp",
-      "headers": {
-        "x-api-key": "${prefix}••••••••"
-      }
-    }
-  }
-}`
+    title: 'MCP Server URL',
+    code: `https://your-app.vercel.app/api/mcp?key=${prefix}••••••••`
   },
   Codex: {
     title: 'Codex Desktop — Streamable HTTP',
@@ -303,6 +285,10 @@ export default function SettingsPage() {
               title={snippets[activeTab].title}
               code={snippets[activeTab].code}
             />
+
+            <p className="mt-3 text-[12px] text-[var(--warning)] font-medium">
+              Replace with your full API key — the complete key was shown once during onboarding.
+            </p>
           </div>
         </section>
         )}

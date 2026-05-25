@@ -1,11 +1,12 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { ContextGraph } from '@/components/graph/ContextGraph'
+import { useState, useEffect, useMemo } from 'react'
+import ContextGraph3D from '@/components/graph/ContextGraph3D'
 import { NodeDetailPanel } from '@/components/dashboard/NodeDetailPanel'
 import { Button } from '@/components/ui/Button'
 import type { ContextNode } from '@/types'
 import { useGraph } from '@/components/providers/GraphProvider'
+import { buildGraphData, type GraphNode } from '@/lib/graph-utils'
 
 export default function DashboardPage() {
   const {
@@ -33,6 +34,14 @@ export default function DashboardPage() {
   }, [selectedNodeId, displayedNodeId])
 
   const displayedNode = displayedNodeId ? nodes.find(n => n.id === displayedNodeId) : null
+
+  // Build 3D graph data from context nodes
+  const graphData = useMemo(() => buildGraphData(nodes), [nodes])
+
+  // Handle 3D graph node click → map back to ContextNode id
+  const handleNodeClick = (graphNode: GraphNode) => {
+    setSelectedNodeId(graphNode.id)
+  }
 
   // Function to initialize first root node
   const handleCreateFirstNode = async () => {
@@ -120,11 +129,14 @@ export default function DashboardPage() {
 
   return (
     <div className="flex h-full w-full">
-      <div className="flex-1 overflow-hidden relative">
-        <ContextGraph
-          nodes={nodes}
+      <div
+        className="flex-1 overflow-hidden relative"
+        style={{ height: '100%', minHeight: 0 }}
+      >
+        <ContextGraph3D
+          data={graphData}
+          onNodeClick={handleNodeClick}
           selectedNodeId={selectedNodeId}
-          onNodeSelect={setSelectedNodeId}
         />
       </div>
       
