@@ -1,0 +1,4 @@
+OG image required at this path: 1200x630px
+Design: Dark background (#080808), ContextGraph wordmark centered,
+tagline 'Your context. Every AI.' below, electric lime accent (#b3ec13).
+Generate manually using Figma, Canva, or a similar tool.

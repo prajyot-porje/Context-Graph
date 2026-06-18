@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { validateApiKey, getUserNodes, appendEntry } from '@/lib/db'
 import { judgeContext } from '@/lib/openrouter'
 import { assembleContext } from '@/lib/context'
+import { createSupabaseServer } from '@/lib/supabase'
+import type { ContextNode } from '@/types'
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -175,8 +177,12 @@ Return ONLY JSON, no markdown:
   "reason": "one sentence",
   "entry": "if should_save: concise bullet starting with ${new Date().toISOString().split('T')[0]}, max 20 words",
   "score": 0.0 to 1.0,
-  "target_scope": "which scope to save to"
+  "target_scope": "which scope to save to",
+  "update_node_content": boolean,
+  "content_addition": string | null
 }
+
+Also determine: should this session update the node's core content field with a new permanent fact? Set update_node_content to true only if a significant permanent fact was revealed — a major architectural decision, a project pivot, a new technology adopted, a role change. Routine progress does NOT qualify. If yes, provide a 1–2 sentence addition as content_addition (written in third person, like the existing node content). If no, set update_node_content to false and content_addition to null.
 `
       try {
         const response = await judgeContext(prompt)
@@ -204,6 +210,28 @@ Return ONLY JSON, no markdown:
 
         if (targetNode) {
           await appendEntry(targetNode.id, userId, judgment.entry, judgment.score)
+        }
+
+        // Structured content update (new)
+        if (judgment.update_node_content === true && judgment.content_addition) {
+          try {
+            const nodeToUpdate = targetNode || nodes.find((n: ContextNode) => n.scope === judgment.target_scope)
+            if (nodeToUpdate) {
+              const updatedContent = judgment.content_addition.trim() + '\n\n' + nodeToUpdate.content
+              const supabase = createSupabaseServer()
+              await supabase
+                .from('context_nodes')
+                .update({
+                  content: updatedContent,
+                  relevance: Math.min(Number(nodeToUpdate.relevance) + 0.05, 1.0),
+                  last_updated: new Date().toISOString(),
+                })
+                .eq('id', nodeToUpdate.id)
+                .eq('user_id', userId)
+            }
+          } catch (err) {
+            console.error('Failed to update node core content in save_context:', err)
+          }
         }
 
         return NextResponse.json({

@@ -14,9 +14,39 @@ const geistMono = Geist_Mono({
 })
 
 export const metadata: Metadata = {
-  title: 'ContextGraph',
-  description:
-    'Your cross-AI personal context engine. Store identity, agency, and project context as a graph — accessible to any MCP-compatible AI.',
+  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL ?? 'https://contextgraph.vercel.app'),
+  title: {
+    default: 'ContextGraph — Your context. Every AI.',
+    template: '%s | ContextGraph',
+  },
+  description: 'A cross-AI personal context engine. Build your context graph once. Claude, ChatGPT, Codex — every AI reads from the same source of truth.',
+  keywords: ['AI context', 'MCP', 'Model Context Protocol', 'Claude', 'ChatGPT', 'Codex', 'persistent memory', 'developer tools', 'context graph'],
+  authors: [{ name: 'Prajyot Porje', url: 'https://github.com/prajyot-porje' }],
+  creator: 'Prajyot Porje',
+  openGraph: {
+    type: 'website',
+    siteName: 'ContextGraph',
+    title: 'ContextGraph — Your context. Every AI.',
+    description: 'Build your context graph once. Every AI you use reads from the same source of truth.',
+    images: [{
+      url: '/og-image.png',
+      width: 1200,
+      height: 630,
+      alt: 'ContextGraph — Cross-AI personal context engine',
+    }],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'ContextGraph — Your context. Every AI.',
+    description: 'Cross-AI persistent context engine with MCP support. Free to start.',
+    images: ['/og-image.png'],
+    creator: '@prajyotporje',
+  },
+  robots: { index: true, follow: true },
+  icons: {
+    icon: '/favicon.ico',
+    shortcut: '/favicon.ico',
+  },
 }
 
 export default function RootLayout({

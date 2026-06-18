@@ -112,7 +112,7 @@ export function CTASection() {
         <div className="cta-actions cta-anim mt-[var(--space-10)] flex flex-col items-center justify-center gap-[var(--space-3)] sm:flex-row">
           <Link
             href="/dashboard"
-            className="inline-flex h-[48px] items-center justify-center gap-[var(--space-2)] rounded-[var(--radius-md)] bg-[var(--accent)] px-[var(--space-8)] text-[15px] font-semibold text-[var(--on-accent)] transition-[background-color,box-shadow,transform] duration-150 hover:bg-[var(--accent-soft)] hover:-translate-y-[1px] hover:[box-shadow:0_0_16px_rgba(179,236,19,0.15)] active:translate-y-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bg)]"
+            className="cg-btn-primary inline-flex h-[48px] items-center justify-center gap-[var(--space-2)] rounded-[var(--radius-md)] bg-[var(--accent)] px-[var(--space-8)] text-[15px] font-semibold text-[var(--on-accent)] transition-[background-color] duration-150 hover:bg-[var(--accent-soft)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bg)]"
           >
             Get Started Free
             <ArrowRight size={16} />

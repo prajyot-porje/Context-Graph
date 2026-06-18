@@ -5,10 +5,10 @@ import { useGSAP } from '@gsap/react'
 import { gsap, prefersReducedMotion } from '@/lib/gsap'
 
 const STATS = [
-  { value: '5+', target: 5, hasPlus: true, label: 'AI tools supported', isNumeric: true },
-  { value: '2', target: 2, hasPlus: false, label: 'MCP tools', isNumeric: true },
-  { value: '< 1s', target: 0, hasPlus: false, label: 'Context load time', isNumeric: false },
-  { value: 'Free', target: 0, hasPlus: false, label: 'To get started', isNumeric: false },
+  { value: '7+', label: 'AI CLIENTS SUPPORTED' },
+  { value: '< 1s', label: 'CONTEXT LOAD TIME' },
+  { value: 'Free', label: 'TO GET STARTED' },
+  { value: '100%', label: 'YOUR DATA' },
 ]
 
 export function Stats() {
@@ -33,30 +33,6 @@ export function Stats() {
         once: true,
       },
     })
-
-    // Numeric counter animation
-    const numericElements = container.current?.querySelectorAll('.stat-numeric')
-    if (!numericElements) return
-
-    numericElements.forEach((el) => {
-      const targetValue = parseFloat(el.getAttribute('data-target') || '0')
-      const hasPlus = el.getAttribute('data-has-plus') === 'true'
-      
-      const counter = { val: 0 }
-      gsap.to(counter, {
-        val: targetValue,
-        duration: 1.5,
-        ease: 'power2.out',
-        scrollTrigger: {
-          trigger: container.current,
-          start: 'top 88%',
-          once: true,
-        },
-        onUpdate: () => {
-          el.innerHTML = Math.floor(counter.val) + (hasPlus ? '+' : '')
-        }
-      })
-    })
   }, { scope: container })
 
   return (
@@ -76,12 +52,8 @@ export function Stats() {
           {STATS.map((stat, i) => (
             <React.Fragment key={i}>
               <div className="stat-item flex flex-1 flex-col items-center justify-center text-center">
-                <div 
-                  className={`text-display-lg text-[var(--text-primary)] ${stat.isNumeric ? 'stat-numeric' : ''}`}
-                  data-target={stat.target}
-                  data-has-plus={stat.hasPlus}
-                >
-                  {stat.isNumeric ? '0' : stat.value}
+                <div className="text-display-lg text-[var(--text-primary)]">
+                  {stat.value}
                 </div>
                 <div className="mt-[var(--space-2)] text-label text-[var(--text-secondary)]">
                   {stat.label}

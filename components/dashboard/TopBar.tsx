@@ -1,19 +1,34 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
-import { Menu, Search, LogOut } from 'lucide-react'
+import React, { useState, useEffect, useRef } from 'react'
+import { Menu, X, Search, LogOut, Eye } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { signOut, useSession } from '@/lib/auth-client'
 import { cn } from '@/lib/utils'
 import { ThemeToggle } from '@/components/ui/ThemeToggle'
 import Link from 'next/link'
+import { useGraph } from '@/components/providers/GraphProvider'
+import { getNodePath } from '@/lib/graph-utils'
 
-export function TopBar({ onToggleSidebar }: { onToggleSidebar: () => void }) {
+export function TopBar({
+  onToggleSidebar,
+  onPreviewClick,
+  mobileSidebarOpen = false,
+  setMobileSidebarOpen,
+}: {
+  onToggleSidebar: () => void
+  onPreviewClick: () => void
+  mobileSidebarOpen?: boolean
+  setMobileSidebarOpen?: React.Dispatch<React.SetStateAction<boolean>>
+}) {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
 
   const router = useRouter()
   const { data: session } = useSession()
+
+  const { nodes, selectedNodeId, setSelectedNodeId } = useGraph()
+  const selectedNode = nodes.find(n => n.id === selectedNodeId) || null
 
   const userInitials = session?.user?.name
     ? session.user.name.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2)
@@ -40,11 +55,19 @@ export function TopBar({ onToggleSidebar }: { onToggleSidebar: () => void }) {
     )}>
       <div className="flex items-center gap-[var(--space-4)]">
         <button
-          className="flex h-[36px] w-[36px] items-center justify-center rounded-[var(--radius-md)] text-[var(--text-secondary)] transition-[background-color,color] duration-100 hover:bg-[rgba(255,255,255,0.05)] hover:text-[var(--text-primary)] lg:hidden focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]"
-          onClick={onToggleSidebar}
-          aria-label="Toggle sidebar"
+          className="cg-mobile-menu-btn"
+          onClick={() => {
+            onToggleSidebar()
+            setMobileSidebarOpen?.(prev => !prev)
+          }}
+          style={{
+            display: 'none',  // overridden by CSS on mobile
+            padding: '6px', border: 'none', background: 'transparent',
+            cursor: 'pointer', color: 'var(--text-primary)',
+          }}
+          aria-label="Toggle mobile menu"
         >
-          <Menu size={20} />
+          {mobileSidebarOpen ? <X size={20} /> : <Menu size={20} />}
         </button>
 
         <Link
@@ -61,10 +84,40 @@ export function TopBar({ onToggleSidebar }: { onToggleSidebar: () => void }) {
         </Link>
 
         <div className="hidden sm:flex items-center gap-[var(--space-2)] border-l border-[var(--border)] pl-[var(--space-4)] ml-[var(--space-1)]">
-          <div className="h-[6px] w-[6px] rounded-[var(--radius-full)] bg-[var(--accent)]" />
-          <span className="text-body-sm font-medium text-[var(--text-secondary)]">
-            All contexts
-          </span>
+          {selectedNode === null ? (
+            <span style={{ fontSize:'12px', letterSpacing:'0.05em', color:'var(--text-muted-dark, var(--text-secondary))' }}>
+              All Contexts
+            </span>
+          ) : (
+            <div style={{ display:'flex', alignItems:'center', gap:'6px' }}>
+              {getNodePath(nodes, selectedNode).map((n, i, arr) => (
+                <React.Fragment key={n.id}>
+                  {i < arr.length - 1 ? (
+                    <>
+                      <button
+                        onClick={() => setSelectedNodeId(n.id)}
+                        style={{
+                          fontSize:'12px',
+                          color:'var(--text-muted-dark, var(--text-secondary))',
+                          background:'none',
+                          border:'none',
+                          cursor:'pointer',
+                          padding:0,
+                        }}
+                      >
+                        {n.title}
+                      </button>
+                      <span style={{ fontSize:'12px', color:'var(--text-muted-dark, var(--text-secondary))' }}>→</span>
+                    </>
+                  ) : (
+                    <span style={{ fontSize:'12px', color:'var(--text-primary-dark, var(--text-primary))', fontWeight:600 }}>
+                      {n.title}
+                    </span>
+                  )}
+                </React.Fragment>
+              ))}
+            </div>
+          )}
         </div>
       </div>
 
@@ -81,6 +134,38 @@ export function TopBar({ onToggleSidebar }: { onToggleSidebar: () => void }) {
         >
           <Search size={16} />
         </button>
+
+        <button
+          onClick={onPreviewClick}
+          className={cn(
+            'flex h-[36px] items-center justify-center gap-1.5 rounded-[var(--radius-md)] border border-[var(--border-strong)] bg-transparent px-3',
+            'text-[13px] font-medium text-[var(--text-primary)] hover:bg-[rgba(255,255,255,0.05)] hover:border-[var(--border-strong)]',
+            'transition-[background-color,border-color] duration-100',
+            'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]'
+          )}
+          title="Preview Context"
+        >
+          <Eye size={15} />
+          <span className="hidden md:inline">Preview Context</span>
+          <span className="md:hidden">Preview</span>
+        </button>
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+          <span style={{
+            width: '6px',
+            height: '6px',
+            borderRadius: '50%',
+            background: '#b3ec13',
+            display: 'inline-block',
+            animation: 'livePulse 2s ease-in-out infinite'
+          }} />
+          <span style={{
+            fontSize: '11px',
+            letterSpacing: '0.05em',
+            color: 'var(--text-muted-dark)',
+            fontFamily: 'var(--font-geist)'
+          }}>Live</span>
+        </div>
 
         <ThemeToggle />
 

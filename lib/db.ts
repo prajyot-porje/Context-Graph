@@ -1,6 +1,7 @@
 import { createHash } from 'crypto'
 import { createSupabaseServer } from '@/lib/supabase'
-import type { ContextNode, ContextEntry, ApiKey } from '@/types'
+import type { ContextNode, ContextEntry, ApiKey, ContextEdge } from '@/types'
+import type { SupabaseClient } from '@supabase/supabase-js'
 
 export async function getUserNodes(userId: string): Promise<ContextNode[]> {
   const supabase = createSupabaseServer()
@@ -249,4 +250,70 @@ export async function getApiKeyInfo(userId: string): Promise<{ prefix: string, l
     prefix: data.key_prefix,
     last_used: data.last_used,
   }
+}
+
+export async function getUserEdges(
+  supabaseOrUserId: SupabaseClient | string,
+  userId?: string
+): Promise<ContextEdge[]> {
+  const supabase = typeof supabaseOrUserId === 'string' ? createSupabaseServer() : supabaseOrUserId
+  const actualUserId = typeof supabaseOrUserId === 'string' ? supabaseOrUserId : userId!
+
+  const { data, error } = await supabase
+    .from('context_edges')
+    .select('*')
+    .eq('user_id', actualUserId)
+    .order('created_at', { ascending: true })
+
+  if (error) {
+    console.error('getUserEdges error:', error)
+    return []
+  }
+  return data ?? []
+}
+
+export async function createEdge(
+  supabaseOrUserId: SupabaseClient | string,
+  userIdOrSourceNodeId: string,
+  sourceNodeIdOrTargetNodeId?: string,
+  targetNodeIdOrEdgeType?: string,
+  edgeTypeParam?: string
+): Promise<ContextEdge | null> {
+  let supabase: SupabaseClient
+  let userId: string
+  let sourceNodeId: string
+  let targetNodeId: string
+  let edgeType: string = 'part_of'
+
+  if (typeof supabaseOrUserId === 'string') {
+    supabase = createSupabaseServer()
+    userId = supabaseOrUserId
+    sourceNodeId = userIdOrSourceNodeId
+    targetNodeId = sourceNodeIdOrTargetNodeId!
+    edgeType = targetNodeIdOrEdgeType ?? 'part_of'
+  } else {
+    supabase = supabaseOrUserId
+    userId = userIdOrSourceNodeId
+    sourceNodeId = sourceNodeIdOrTargetNodeId!
+    targetNodeId = targetNodeIdOrEdgeType!
+    edgeType = edgeTypeParam ?? 'part_of'
+  }
+
+  const { data, error } = await supabase
+    .from('context_edges')
+    .insert({
+      user_id: userId,
+      source_node_id: sourceNodeId,
+      target_node_id: targetNodeId,
+      edge_type: edgeType,
+    })
+    .select()
+    .single()
+
+  if (error) {
+    if (error.code === '23505') return null
+    console.error('createEdge error:', error)
+    return null
+  }
+  return data
 }

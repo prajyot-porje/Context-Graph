@@ -42,7 +42,7 @@ export function CodeBlock({ code, title }: CodeBlockProps) {
         </div>
       )}
       <pre className="overflow-x-auto p-5">
-        <code className="font-mono text-[13px] leading-[1.6] text-[var(--text-primary)]">
+        <code className="font-mono text-[13px] leading-[1.6] text-[var(--text-primary)]" style={{ fontFamily: 'var(--font-mono)' }}>
           {code}
         </code>
       </pre>

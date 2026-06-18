@@ -22,6 +22,15 @@ export interface ContextNode {
   created_at: string
 }
 
+export interface ContextEdge {
+  id: string
+  user_id: string
+  source_node_id: string
+  target_node_id: string
+  edge_type: string
+  created_at: string
+}
+
 export interface ContextEntry {
   id: string
   node_id: string
@@ -147,6 +156,55 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "user"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      context_edges: {
+        Row: {
+          id: string
+          user_id: string
+          source_node_id: string
+          target_node_id: string
+          edge_type: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          source_node_id: string
+          target_node_id: string
+          edge_type?: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          source_node_id?: string
+          target_node_id?: string
+          edge_type?: string
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "context_edges_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "user"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "context_edges_source_node_id_fkey"
+            columns: ["source_node_id"]
+            isOneToOne: false
+            referencedRelation: "context_nodes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "context_edges_target_node_id_fkey"
+            columns: ["target_node_id"]
+            isOneToOne: false
+            referencedRelation: "context_nodes"
             referencedColumns: ["id"]
           }
         ]

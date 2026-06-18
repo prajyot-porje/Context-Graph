@@ -1,4 +1,5 @@
-import type { ContextNode } from '@/types'
+import type { ContextNode, ContextEdge } from '@/types'
+export type { ContextEdge }
 
 /* ------------------------------------------------------------------ */
 /*  3D Force-Graph data types                                         */
@@ -12,6 +13,7 @@ export interface GraphNode {
   scope: string
   tags?: string[]
   content: string
+  last_updated?: string
 }
 
 export interface GraphLink {
@@ -82,6 +84,7 @@ export function buildGraphData(nodes: ContextNode[]): GraphData {
     scope: n.scope,
     tags: n.tags,
     content: n.content,
+    last_updated: n.last_updated,
   }))
 
   const graphLinks: GraphLink[] = []
@@ -142,3 +145,57 @@ export function sortNodesHierarchically(nodesWithDepth: ContextNodeWithDepth[]):
 
   return result
 }
+
+export interface TreeNode {
+  node: ContextNode
+  children: TreeNode[]
+  depth: number
+}
+
+export function buildNodeTree(nodes: ContextNode[]): TreeNode[] {
+  const nodeMap = new Map<string, ContextNode>()
+  for (const n of nodes) nodeMap.set(n.scope, n)
+
+  const roots: TreeNode[] = []
+
+  function buildSubtree(node: ContextNode, depth: number): TreeNode {
+    const children = nodes
+      .filter(n => n.parent_scope === node.scope)
+      .sort((a, b) => a.title.localeCompare(b.title))
+      .map(child => buildSubtree(child, depth + 1))
+    return { node, children, depth }
+  }
+
+  const rootNodes = nodes
+    .filter(n => n.parent_scope === null || !nodeMap.has(n.parent_scope ?? ''))
+    .sort((a, b) => {
+      // ME always first, then alphabetical
+      if (a.scope === 'me') return -1
+      if (b.scope === 'me') return 1
+      return a.title.localeCompare(b.title)
+    })
+
+  for (const root of rootNodes) {
+    roots.push(buildSubtree(root, 0))
+  }
+  return roots
+}
+
+export function getNodePath(
+  nodes: ContextNode[],
+  selectedNode: ContextNode | null
+): ContextNode[] {
+  if (!selectedNode) return []
+  const path: ContextNode[] = [selectedNode]
+  let current = selectedNode
+  let safety = 0
+  while (current.parent_scope && safety < 10) {
+    const parent = nodes.find(n => n.scope === current.parent_scope)
+    if (!parent) break
+    path.unshift(parent)
+    current = parent
+    safety++
+  }
+  return path
+}
+
