@@ -3,13 +3,14 @@
 import { useState, useRef } from 'react'
 import { useGSAP } from '@gsap/react'
 import { gsap } from '@/lib/gsap'
+import { cn } from '@/lib/utils'
 
 const DEMO_SCOPES = [
-  { label: 'ME', scope: 'me' },
-  { label: 'Dev Studio', scope: 'agency' },
-  { label: 'ContextGraph', scope: 'personal/context-graph' },
+  { label: 'Me', scope: 'me' },
+  { label: 'Freelance Studio', scope: 'agency' },
+  { label: 'TaskFlow SaaS', scope: 'personal/taskflow' },
   { label: 'Skills', scope: 'personal/skills-frontend' },
-  { label: 'cResults', scope: 'agency/cresults' },
+  { label: 'AlphaCorp CRM', scope: 'agency/alphacorp' },
 ]
 
 const DEMO_CONTEXT: Record<string, { assembled: string; withContext: string; withoutContext: string }> = {
@@ -18,123 +19,102 @@ const DEMO_CONTEXT: Record<string, { assembled: string; withContext: string; wit
 
 **Scope:** me
 **Relevance:** 95% | **Last updated:** Jun 14, 2026
-**Tags:** developer, student, founder
+**Tags:** developer, founder, fullstack
 
-Prajyot Porje is a 3rd-year B.E. student in AI & ML at PES Modern
-College of Engineering, Pune (graduating 2027). Full-stack developer
-specializing in Next.js, TypeScript, React, Tailwind CSS, GSAP, and
-Supabase. Founder of Dev Studio — a solo web development agency.
+Alex Rivera is a full-stack engineer and SaaS founder. Specializes in Next.js, TypeScript, Supabase, and Tailwind CSS. Builder of TaskFlow, a real-time collaborative task manager.
 
-Primary goal: land an SDE or Full-Stack role at Google, Meta, Flipkart,
-or Razorpay (12 LPA+) in the 2026-27 placement season.
+Primary goal: launch TaskFlow SaaS public beta and optimize edge latency for active users.
 
-Prefers concise, direct technical communication. Makes independent
-architectural decisions confidently without over-deliberating.`,
-    withoutContext: `Sure, I'd be help! Could you tell me more about yourself and what you're working on? What's your tech stack, what have you built so far, and what are you trying to accomplish?`,
-    withContext: `Got it. Since you're targeting SDE roles at Google, Meta, or Razorpay in the 2026-27 cycle, and you're currently building ContextGraph as your flagship project — what do you want to tackle today? DSA prep, a system design deep-dive for the project, or continuing the build?`,
+Prefers structured TypeScript codebases, strict type-safety, and minimal external dependencies.`,
+    withoutContext: `Sure, I can help! Could you tell me more about your background, the tech stack you are using, what you have built so far, and what goals you are trying to achieve?`,
+    withContext: `Got it. Since you are targeting the TaskFlow SaaS public beta launch and need to optimize edge database query times: would you like to focus on setting up indexing in Supabase or caching queries on Vercel Edge today?`,
   },
   'agency': {
     assembled: `# ME
 
 **Scope:** me | **Relevance:** 95%
-Prajyot Porje — full-stack developer, Dev Studio founder,
-targeting SDE placement 2026-27.
+Alex Rivera, full-stack engineer and TaskFlow founder.
 
 ---
 
-# Dev Studio
+# Freelance Studio
 
 **Scope:** agency | **Relevance:** 88%
-**Tags:** agency, webdev, business
+**Tags:** agency, webdev, client-work
 
-Dev Studio is a solo web development agency founded April 2026 in
-Pune, India. Active retainer client: cResults (US-based, WordPress
-+ SEO). Commission-based collaborator: Chaitanya. Stack: Next.js,
-WordPress, Tailwind CSS, GSAP.`,
-    withoutContext: `I can help with your agency work! What kind of agency is it, who are your clients, and what are you working on right now?`,
-    withContext: `For the Dev Studio cResults retainer — are you working on this month's SEO audit, a WordPress update, or something new? I know Chaitanya handles some of the execution, so should I frame this for you to delegate or to do yourself?`,
+Freelance development studio handling web projects. Active retainer client: AlphaCorp (custom CRM build). Stack: Next.js, PostgreSQL, Tailwind CSS. Collaborators: Sarah (UI designer).`,
+    withoutContext: `I'd love to help with your freelance work! What kind of agency is it, who are your clients, and what are you working on right now?`,
+    withContext: `For the AlphaCorp custom CRM retainer: are you working on the contact database synchronization, Sarah's design handoff, or the automated reporting module today?`,
   },
-  'personal/context-graph': {
+  'personal/taskflow': {
     assembled: `# ME
 
 **Scope:** me | **Relevance:** 95%
-Prajyot Porje — full-stack developer, placement 2026-27.
+Alex Rivera, full-stack engineer and TaskFlow founder.
 
 ---
 
-# ContextGraph
+# TaskFlow SaaS
 
-**Scope:** personal/context-graph | **Relevance:** 98%
-**Tags:** nextjs, typescript, saas, mcp
+**Scope:** personal/taskflow | **Relevance:** 98%
+**Tags:** nextjs, typescript, supabase, websockets
 
-Cross-AI personal context engine. Stack: Next.js 16, TypeScript,
-Supabase, Better Auth, react-force-graph-3d, GSAP, OpenRouter.
-MCP endpoint: /api/mcp — get_context and save_context tools.
-Deployed on Vercel. Build prompts P01-P13 complete.
+Collaborative task management engine. Stack: Next.js, TS, Supabase, Better Auth, Socket.io, Tailwind CSS. MCP endpoint: /api/mcp for context sync. Deployed on Vercel.
 
 ## Decisions Log
-- Jun 14: Migrated 3D graph from React Flow to react-force-graph-3d
-- Jun 01: Built MCP endpoint with dual auth (session + SHA-256 key)
-- May 19: Implemented Better Auth — chose over Clerk for resume value
-- May 10: Switched to OpenRouter model cascade for zero-cost AI`,
+- Jun 14: Switched to WebSocket sync for instant task updates
+- Jun 01: Configured dual auth with Better Auth and API keys
+- May 20: Chose Better Auth over next-auth for database simplicity`,
     withoutContext: `Happy to help with your SaaS project! What tech stack are you using, what does the product do, and where are you currently stuck?`,
-    withContext: `ContextGraph — I can see P01-P13 are complete and the 3D graph is live. You migrated from React Flow to react-force-graph-3d on Jun 14. What's next — the edge table upgrade to support many-to-many node relationships, or something else?`,
+    withContext: `TaskFlow SaaS: I see the Socket.io WebSocket sync is live and Better Auth is configured. Since you migrated to WebSockets on Jun 14, what's next: optimizing the real-time presence cursor broadcast, or setting up DB transactions?`,
   },
   'personal/skills-frontend': {
     assembled: `# ME
 
 **Scope:** me | **Relevance:** 95%
-Prajyot Porje — full-stack developer, 2026-27 placement.
+Alex Rivera, full-stack engineer and TaskFlow founder.
 
 ---
 
 # Frontend Skills
 
 **Scope:** personal/skills-frontend | **Relevance:** 90%
-**Tags:** nextjs, react, typescript, gsap, tailwind
+**Tags:** nextjs, react, typescript, tailwind, state-management
 
-Expert in Next.js 16 (App Router), React 19, TypeScript strict mode,
-Tailwind CSS v4, GSAP v3 with ScrollTrigger and custom Bezier easing,
-Lenis smooth scroll, react-force-graph-3d, Three.js basics.
+Expert in Next.js (App Router), React Server Components, TypeScript, Tailwind CSS, Zustand, Framer Motion, and CSS Grid.
 
-Strong design sensibility. Builds design systems, not just components.
-Preferred animation approach: GSAP tweens, never CSS keyframes for
-entrance animations.`,
+Emphasizes clean typography, proper layout spacing, and WCAG AA accessibility compliance.`,
     withoutContext: `Sure! What kind of frontend help do you need? What framework and tools are you working with?`,
-    withContext: `You're on Next.js 16 App Router with GSAP and Lenis. Since you avoid CSS keyframes for entrances and use cg-out/cg-spring easing — what's the animation or component you're trying to build?`,
+    withContext: `You are using Next.js App Router, Zustand, and Tailwind. Since you focus on clean typography, responsive layouts, and strict type-safety: what frontend component or layout are we designing?`,
   },
-  'agency/cresults': {
+  'agency/alphacorp': {
     assembled: `# ME
 
 **Scope:** me | **Relevance:** 95%
-Prajyot Porje — Dev Studio founder, placement 2026-27.
+Alex Rivera, Dev Studio founder.
 
 ---
 
-# Dev Studio
+# Freelance Studio
 
 **Scope:** agency | **Relevance:** 88%
-Solo web dev agency, Pune. Active retainer: cResults.
+Active retainer: AlphaCorp custom CRM.
 
 ---
 
-# cResults
+# AlphaCorp CRM
 
-**Scope:** agency/cresults | **Relevance:** 82%
-**Tags:** wordpress, seo, retainer
+**Scope:** agency/alphacorp | **Relevance:** 82%
+**Tags:** crm, postgresql, dashboards
 
-US client on an active monthly retainer. WordPress website with
-on-page SEO optimization. Monthly deliverables: content updates,
-SEO audits, performance monitoring.`,
+US enterprise client on custom CRM build. Deliverables: contact management, lead funnel, PostgreSQL schema migrations, and client analytics dashboard.`,
     withoutContext: `I can help with that! Who is this client, what platform is their site on, and what are you trying to do for them?`,
-    withContext: `For cResults — US retainer client, WordPress + SEO. Are you working on this month's SEO audit, a performance report, or a content update? I can draft the deliverable directly if you give me the specifics.`,
+    withContext: `For the AlphaCorp CRM retainer: since you are building custom contact management and database reports, are we writing Postgres queries, building analytics widgets, or preparing a client release today?`,
   },
 }
 
 export default function WhatAIKnowsSection() {
   const [activeScope, setActiveScope] = useState('me')
-  const [, setPrevScope] = useState('me')
-
   const contentRef = useRef<HTMLDivElement>(null)
   const sectionRef = useRef<HTMLElement>(null)
 
@@ -142,7 +122,6 @@ export default function WhatAIKnowsSection() {
 
   function handleScopeChange(scope: string) {
     if (scope === activeScope) return
-    // Animate out current content, then switch, then animate in
     if (contentRef.current) {
       gsap.to(contentRef.current, {
         opacity: 0,
@@ -150,7 +129,6 @@ export default function WhatAIKnowsSection() {
         duration: 0.2,
         ease: 'cg-in',
         onComplete: () => {
-          setPrevScope(activeScope)
           setActiveScope(scope)
           gsap.fromTo(contentRef.current,
             { opacity: 0, y: -8 },
@@ -163,7 +141,6 @@ export default function WhatAIKnowsSection() {
     }
   }
 
-  // Section entrance ScrollTrigger animation
   useGSAP(() => {
     if (!sectionRef.current) return
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
@@ -188,108 +165,40 @@ export default function WhatAIKnowsSection() {
   return (
     <section
       ref={sectionRef}
-      style={{
-        padding: '100px 0',
-        background: 'var(--surface, #111111)',
-        borderTop: '1px solid var(--border, rgba(255,255,255,0.07))',
-        borderBottom: '1px solid var(--border, rgba(255,255,255,0.07))',
-      }}
+      className="relative py-[var(--space-24)] bg-[var(--surface)] border-y border-[var(--border)]"
     >
-      <div style={{ maxWidth: '1100px', margin: '0 auto', padding: '0 24px' }}>
+      <div className="mx-auto max-w-[1100px] px-[var(--space-6)]">
         
         {/* HEADER */}
-        <div className="animate-in" style={{ marginBottom: '48px' }}>
-          <p
-            style={{
-              fontSize: '11px',
-              letterSpacing: '0.12em',
-              textTransform: 'uppercase',
-              color: '#b3ec13',
-              marginBottom: '10px',
-              fontFamily: 'var(--font-geist)',
-              fontWeight: 600,
-            }}
-          >
-            HOW IT WORKS
-          </p>
-          <h2
-            style={{
-              fontSize: 'clamp(28px, 4vw, 40px)',
-              fontWeight: 700,
-              fontFamily: "var(--font-display)",
-              color: 'var(--text-primary, #f0f0f0)',
-              marginBottom: '12px',
-              lineHeight: 1.2,
-            }}
-          >
+        <div className="animate-in mb-[var(--space-12)]">
+          <h2 className="text-display-lg text-[var(--text-primary)] font-bold mb-[var(--space-3)]">
             See what your AI will know
           </h2>
-          <p
-            style={{
-              fontSize: '15px',
-              color: 'var(--text-secondary, #888888)',
-              maxWidth: '500px',
-              lineHeight: 1.6,
-            }}
-          >
+          <p className="text-body-md text-[var(--text-secondary)] max-w-[500px] leading-relaxed">
             Pick a context scope and see the exact knowledge your AI receives before you type a single word.
           </p>
         </div>
 
         {/* MAIN GRID — 2 columns */}
-        <div
-          className="wak-grid animate-in"
-          style={{
-            display: 'grid',
-            gridTemplateColumns: '200px 1fr',
-            gap: '24px',
-            alignItems: 'start',
-          }}
-        >
+        <div className="wak-grid animate-in grid grid-cols-1 md:grid-cols-[200px_1fr] gap-[var(--space-6)] items-start">
           
           {/* LEFT — Scope selector */}
-          <div
-            className="wak-scope-list"
-            style={{
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '4px',
-            }}
-          >
-            <p
-              style={{
-                fontSize: '10px',
-                letterSpacing: '0.1em',
-                textTransform: 'uppercase',
-                color: 'var(--text-muted, #484848)',
-                marginBottom: '8px',
-                fontFamily: 'var(--font-geist)',
-                fontWeight: 600,
-              }}
-            >
-              CONTEXT SCOPE
-            </p>
+          <div className="wak-scope-list flex flex-col gap-1">
+            <span className="text-label text-[var(--text-muted)] mb-[var(--space-2)] font-semibold tracking-[0.08em] uppercase">
+              Context Scope
+            </span>
             {DEMO_SCOPES.map(({ label, scope }) => {
               const isActive = scope === activeScope
               return (
                 <button
                   key={scope}
                   onClick={() => handleScopeChange(scope)}
-                  style={{
-                    textAlign: 'left',
-                    padding: '9px 14px',
-                    borderRadius: '6px',
-                    border: 'none',
-                    cursor: 'pointer',
-                    fontSize: '13px',
-                    fontFamily: 'var(--font-geist)',
-                    fontWeight: isActive ? 600 : 400,
-                    background: isActive ? 'rgba(179,236,19,0.12)' : 'transparent',
-                    color: isActive ? '#b3ec13' : 'var(--text-secondary, #888888)',
-                    borderLeft: isActive ? '2px solid #b3ec13' : '2px solid transparent',
-                    transition: 'all 0.15s ease',
-                    flexShrink: 0,
-                  }}
+                  className={cn(
+                    "text-left px-[var(--space-4)] py-[9px] rounded-[var(--radius-sm)] border text-[13px] font-medium transition-[color,background-color,border-color] duration-150 ease-out shrink-0",
+                    isActive
+                      ? "bg-[var(--accent-muted)] text-[var(--accent)] border-[var(--accent)]"
+                      : "bg-transparent text-[var(--text-secondary)] border-transparent hover:text-[var(--text-primary)] hover:bg-[rgba(255,255,255,0.02)]"
+                  )}
                 >
                   {label}
                 </button>
@@ -298,168 +207,66 @@ export default function WhatAIKnowsSection() {
           </div>
 
           {/* RIGHT — Content panels */}
-          <div
-            ref={contentRef}
-            style={{
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '16px',
-            }}
-          >
+          <div ref={contentRef} className="flex flex-col gap-[var(--space-4)]">
             
             {/* TOP — Assembled context code block */}
-            <div
-              style={{
-                background: '#0d0d0d',
-                border: '1px solid rgba(255,255,255,0.08)',
-                borderRadius: '12px',
-                overflow: 'hidden',
-                boxShadow: 'var(--shadow-sm)',
-              }}
-            >
+            <div className="bg-[var(--code-surface)] border border-[var(--border)] rounded-[var(--radius-lg)] overflow-hidden shadow-[var(--shadow-sm)]">
               {/* Code block header bar */}
-              <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  padding: '10px 16px',
-                  borderBottom: '1px solid rgba(255,255,255,0.06)',
-                }}
-              >
-                <div style={{ display: 'flex', gap: '6px' }}>
-                  <span style={{ width: 10, height: 10, borderRadius: '50%', background: '#ff5f57', display: 'inline-block' }} />
-                  <span style={{ width: 10, height: 10, borderRadius: '50%', background: '#febc2e', display: 'inline-block' }} />
-                  <span style={{ width: 10, height: 10, borderRadius: '50%', background: '#28c840', display: 'inline-block' }} />
+              <div className="flex items-center justify-between px-[var(--space-4)] py-[var(--space-3)] border-b border-[var(--border)] bg-[rgba(0,0,0,0.1)]">
+                <div className="flex gap-1.5">
+                  <span className="w-2.5 h-2.5 rounded-full bg-[rgba(255,255,255,0.08)] inline-block" />
+                  <span className="w-2.5 h-2.5 rounded-full bg-[rgba(255,255,255,0.08)] inline-block" />
+                  <span className="w-2.5 h-2.5 rounded-full bg-[rgba(255,255,255,0.08)] inline-block" />
                 </div>
-                <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.3)', fontFamily: 'var(--font-mono)' }}>
+                <span className="text-[11px] text-[var(--text-muted)] font-mono">
                   context assembled · {activeScope}
                 </span>
               </div>
-              <pre
-                style={{
-                  margin: 0,
-                  padding: '16px 20px',
-                  fontSize: '11.5px',
-                  lineHeight: 1.7,
-                  fontFamily: 'var(--font-mono)',
-                  color: '#d4d4d4',
-                  maxHeight: '220px',
-                  overflowY: 'auto',
-                  whiteSpace: 'pre-wrap',
-                  wordBreak: 'break-word',
-                }}
-              >
+              <pre className="m-0 p-[var(--space-5)] text-code-md text-[var(--text-primary)] max-h-[220px] overflow-y-auto whitespace-pre-wrap break-all">
                 {current.assembled}
               </pre>
             </div>
 
             {/* BOTTOM — Comparison: without vs with */}
-            <div
-              style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
-                gap: '12px',
-              }}
-            >
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-[var(--space-4)]">
               
               {/* Without ContextGraph */}
-              <div
-                style={{
-                  background: 'var(--card, #181818)',
-                  border: '1px solid var(--border, rgba(255,255,255,0.07))',
-                  borderRadius: '12px',
-                  padding: '16px',
-                  boxShadow: 'var(--shadow-sm), var(--shadow-inset)',
-                }}
-              >
-                <p
-                  style={{
-                    fontSize: '10px',
-                    letterSpacing: '0.1em',
-                    textTransform: 'uppercase',
-                    color: 'var(--text-muted, #484848)',
-                    marginBottom: '12px',
-                    fontWeight: 600,
-                  }}
-                >
-                  WITHOUT CONTEXTGRAPH
-                </p>
-                <div
-                  style={{
-                    background: 'rgba(255,255,255,0.04)',
-                    borderRadius: '8px',
-                    padding: '12px 14px',
-                    marginBottom: '8px',
-                  }}
-                >
-                  <p style={{ fontSize: '11px', color: 'var(--text-muted, #484848)', marginBottom: '6px' }}>
-                    You:
-                  </p>
-                  <p style={{ fontSize: '12px', color: 'var(--text-secondary, #888888)', lineHeight: 1.5 }}>
+              <div className="bg-[var(--card)] border border-[var(--border)] rounded-[var(--radius-lg)] p-[var(--space-5)] shadow-[var(--shadow-sm)] shadow-[var(--shadow-inset)]">
+                <span className="text-label text-[var(--text-muted)] mb-[var(--space-3)] font-semibold tracking-[0.08em] uppercase block">
+                  Without ContextGraph
+                </span>
+                
+                <div className="bg-[rgba(255,255,255,0.03)] border border-[var(--border)] rounded-[var(--radius-md)] p-[var(--space-3)] mb-[var(--space-2)]">
+                  <p className="text-[10px] font-mono text-[var(--text-muted)] mb-1 uppercase tracking-wider">You:</p>
+                  <p className="text-body-sm text-[var(--text-secondary)] leading-relaxed">
                     Help me with my project.
                   </p>
                 </div>
-                <div
-                  style={{
-                    background: 'rgba(255,255,255,0.02)',
-                    borderRadius: '8px',
-                    padding: '12px 14px',
-                  }}
-                >
-                  <p style={{ fontSize: '11px', color: 'var(--text-muted, #484848)', marginBottom: '6px' }}>Claude:</p>
-                  <p style={{ fontSize: '12px', color: '#666666', lineHeight: 1.6, fontStyle: 'italic' }}>
-                    {current.withoutContext}
+                
+                <div className="bg-[rgba(0,0,0,0.15)] border border-[var(--border)] rounded-[var(--radius-md)] p-[var(--space-3)]">
+                  <p className="text-[10px] font-mono text-[var(--text-muted)] mb-1 uppercase tracking-wider">Claude:</p>
+                  <p className="text-body-sm text-[var(--text-secondary)] leading-relaxed italic">
+                    "{current.withoutContext}"
                   </p>
                 </div>
               </div>
 
               {/* With ContextGraph */}
-              <div
-                style={{
-                  background: 'rgba(179,236,19,0.04)',
-                  border: '1px solid rgba(179,236,19,0.18)',
-                  borderRadius: '12px',
-                  padding: '16px',
-                  boxShadow: 'var(--shadow-sm)',
-                }}
-              >
-                <p
-                  style={{
-                    fontSize: '10px',
-                    letterSpacing: '0.1em',
-                    textTransform: 'uppercase',
-                    color: '#b3ec13',
-                    marginBottom: '12px',
-                    fontWeight: 600,
-                  }}
-                >
-                  WITH CONTEXTGRAPH
-                </p>
-                <div
-                  style={{
-                    background: 'rgba(255,255,255,0.04)',
-                    borderRadius: '8px',
-                    padding: '12px 14px',
-                    marginBottom: '8px',
-                  }}
-                >
-                  <p style={{ fontSize: '11px', color: 'var(--text-muted, #484848)', marginBottom: '6px' }}>
-                    You:
-                  </p>
-                  <p style={{ fontSize: '12px', color: 'var(--text-secondary, #888888)', lineHeight: 1.5 }}>
+              <div className="bg-[var(--accent-muted)] border border-[rgba(179,236,19,0.25)] rounded-[var(--radius-lg)] p-[var(--space-5)] shadow-[var(--shadow-sm)]">
+                <span className="text-label text-[var(--accent)] mb-[var(--space-3)] font-semibold tracking-[0.08em] uppercase block">
+                  With ContextGraph
+                </span>
+                
+                <div className="bg-[rgba(255,255,255,0.03)] border border-[var(--border)] rounded-[var(--radius-md)] p-[var(--space-3)] mb-[var(--space-2)]">
+                  <p className="text-[10px] font-mono text-[var(--text-muted)] mb-1 uppercase tracking-wider">You:</p>
+                  <p className="text-body-sm text-[var(--text-secondary)] leading-relaxed">
                     Help me with my project.
                   </p>
                 </div>
-                <div
-                  style={{
-                    background: 'rgba(179,236,19,0.06)',
-                    borderRadius: '8px',
-                    padding: '12px 14px',
-                  }}
-                >
-                  <p style={{ fontSize: '11px', color: 'var(--text-primary)', marginBottom: '6px' }}>Claude:</p>
-                  <p style={{ fontSize: '12px', color: 'var(--text-secondary, #888888)', lineHeight: 1.6 }}>
+                
+                <div className="bg-[rgba(179,236,19,0.06)] border border-[rgba(179,236,19,0.15)] rounded-[var(--radius-md)] p-[var(--space-3)]">
+                  <p className="text-[10px] font-mono text-[var(--accent)] mb-1 uppercase tracking-wider">Claude:</p>
+                  <p className="text-body-sm text-[var(--text-secondary)] leading-relaxed">
                     {current.withContext}
                   </p>
                 </div>

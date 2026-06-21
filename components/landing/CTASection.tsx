@@ -3,6 +3,7 @@
 import { useRef } from 'react'
 import { useGSAP } from '@gsap/react'
 import { gsap, prefersReducedMotion } from '@/lib/gsap'
+import { Button } from '@/components/ui/Button'
 import Link from 'next/link'
 import { ArrowRight } from 'lucide-react'
 
@@ -89,7 +90,7 @@ export function CTASection() {
 
       <div className="relative z-10 mx-auto max-w-[800px] px-[var(--space-6)]">
         {/* Badge */}
-        <div className="cta-badge cta-anim mx-auto mb-[var(--space-6)] flex w-max items-center gap-[var(--space-2)] rounded-[var(--radius-full)] border border-[var(--border)] bg-[var(--badge-default-bg)] px-[var(--space-3)] py-[6px] [box-shadow:var(--shadow-xs)]">
+        <div className="cta-badge cta-anim mx-auto mb-[var(--space-6)] flex w-max items-center gap-[var(--space-2)] rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--badge-default-bg)] px-[var(--space-3)] py-[6px] [box-shadow:var(--shadow-xs)]">
           <div className="h-[6px] w-[6px] rounded-[var(--radius-full)] bg-[var(--accent)] cg-pulse-glow" />
           <span className="text-label text-[var(--accent)]">
             Open beta
@@ -100,7 +101,7 @@ export function CTASection() {
         <h2 className="cta-heading cta-anim text-display-xl text-[var(--text-primary)]">
           Start building your
           <br />
-          <span className="text-gradient-accent">context graph</span>
+          <span className="text-[var(--accent)]">context graph</span>
         </h2>
 
         {/* Sub text */}
@@ -108,22 +109,23 @@ export function CTASection() {
           Free to start. Works with every major AI tool. Your context, your data.
         </p>
 
-        {/* Actions */}
-        <div className="cta-actions cta-anim mt-[var(--space-10)] flex flex-col items-center justify-center gap-[var(--space-3)] sm:flex-row">
-          <Link
-            href="/dashboard"
-            className="cg-btn-primary inline-flex h-[48px] items-center justify-center gap-[var(--space-2)] rounded-[var(--radius-md)] bg-[var(--accent)] px-[var(--space-8)] text-[15px] font-semibold text-[var(--on-accent)] transition-[background-color] duration-150 hover:bg-[var(--accent-soft)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bg)]"
-          >
-            Get Started Free
-            <ArrowRight size={16} />
+        <div className="cta-actions cta-anim mt-[var(--space-10)] flex flex-col items-center justify-center gap-[var(--space-4)] sm:flex-row">
+          <Link href="/dashboard" passHref className="inline-block">
+            <Button variant="accent" size="lg" className="text-button-md min-h-[48px] px-8">
+              Start Building
+              <ArrowRight size={16} className="ml-1" />
+            </Button>
           </Link>
           <Link
             href="https://github.com/prajyot-porje/Context-Graph"
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex h-[48px] items-center justify-center rounded-[var(--radius-md)] border border-[var(--border-strong)] bg-transparent px-[var(--space-8)] text-[15px] font-medium text-[var(--text-primary)] transition-[border-color,background-color] duration-150 hover:border-[rgba(255,255,255,0.28)] hover:bg-[rgba(255,255,255,0.04)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bg)]"
+            passHref
+            className="inline-block"
           >
-            View on GitHub
+            <Button variant="secondary" size="lg" className="text-button-md min-h-[48px] px-8">
+              View on GitHub
+            </Button>
           </Link>
         </div>
       </div>

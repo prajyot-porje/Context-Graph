@@ -1,7 +1,11 @@
 import type { Metadata } from 'next'
-import { Geist, Geist_Mono } from 'next/font/google'
+import { Geist, Geist_Mono, Outfit } from 'next/font/google'
 import { LenisProvider } from '@/components/providers/LenisProvider'
+import { MaintenanceScene } from '@/components/landing/MaintenanceScene'
 import './globals.css'
+
+const MAINTENANCE_MODE = process.env.NEXT_PUBLIC_MAINTENANCE_MODE !== 'false'
+
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -10,6 +14,11 @@ const geistSans = Geist({
 
 const geistMono = Geist_Mono({
   variable: '--font-geist-mono',
+  subsets: ['latin'],
+})
+
+const outfit = Outfit({
+  variable: '--font-display-fallback',
   subsets: ['latin'],
 })
 
@@ -57,7 +66,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${geistSans.variable} ${geistMono.variable} ${outfit.variable} h-full antialiased`}
       suppressHydrationWarning
     >
       <head>
@@ -76,7 +85,9 @@ export default function RootLayout({
         />
       </head>
       <body className="flex min-h-full flex-col">
-        <LenisProvider>{children}</LenisProvider>
+        <LenisProvider>
+          {MAINTENANCE_MODE ? <MaintenanceScene /> : children}
+        </LenisProvider>
       </body>
     </html>
   )
