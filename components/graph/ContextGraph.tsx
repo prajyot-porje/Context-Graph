@@ -141,9 +141,13 @@ export default function ContextGraph({
   // Zoom-to-fit trigger
   useEffect(() => {
     if (graphRef.current && filteredData.nodes.length > 0) {
-      setTimeout(() => {
-        graphRef.current.zoomToFit(450, 55)
+      const fg = graphRef.current
+      const timer = setTimeout(() => {
+        if (fg && typeof fg.zoomToFit === 'function') {
+          fg.zoomToFit(450, 55)
+        }
       }, 80)
+      return () => clearTimeout(timer)
     }
   }, [data, zoomTrigger])
 

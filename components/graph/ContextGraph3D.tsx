@@ -196,14 +196,16 @@ export default function ContextGraph3D({
 
     // Delay so the Three.js controls are fully mounted
     const timer = setTimeout(() => {
-      const controls = fg.controls()
-      if (controls) {
-        // Disable rotation so right-dragging pans cleanly
-        controls.enableRotate = false
-        // Enable flat panning in screen coordinates
-        controls.enablePan = true
-        controls.screenSpacePanning = true
-        controls.panSpeed = 0.8
+      if (fg && typeof fg.controls === 'function') {
+        const controls = fg.controls()
+        if (controls) {
+          // Disable rotation so right-dragging pans cleanly
+          controls.enableRotate = false
+          // Enable flat panning in screen coordinates
+          controls.enablePan = true
+          controls.screenSpacePanning = true
+          controls.panSpeed = 0.8
+        }
       }
     }, 300)
 
@@ -213,9 +215,13 @@ export default function ContextGraph3D({
   // Zoom-to-fit trigger
   useEffect(() => {
     if (graphRef.current && graphData.nodes.length > 0) {
-      setTimeout(() => {
-        graphRef.current.zoomToFit(400, 60)
+      const fg = graphRef.current
+      const timer = setTimeout(() => {
+        if (fg && typeof fg.zoomToFit === 'function') {
+          fg.zoomToFit(400, 60)
+        }
       }, 80)
+      return () => clearTimeout(timer)
     }
   }, [zoomTrigger, graphData])
 

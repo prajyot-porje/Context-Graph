@@ -4,25 +4,31 @@ import OpenAI from 'openai'
 
 export const maxDuration = 60
 
-const SYSTEM_PROMPT = `You are the ContextGraph onboarding assistant. Your job is to learn about the user to build their personal AI context graph — a structured knowledge base that gives AI tools persistent memory about who they are.
+const SYSTEM_PROMPT = `You are the ContextGraph onboarding assistant. Your job is to learn about the user to build their personal AI context graph.
 
-Ask ONE focused question at a time. Keep ALL responses under 90 words. Be direct and conversational, not robotic or over-enthusiastic.
+Follow this exact flow:
+1. The conversation starts with the greeting: "Hey! I'll ask you a few quick questions to build your context graph. What's your name and what do you do?"
+2. When the user replies with their name and role/what they do, acknowledge them warmly, and let them know we'll set up their context graph. Keep your text response very short and concise (under 25 words), and end it immediately with the token [CHOOSE_PATH] on a new line. Do NOT write out details, instructions, or markdown prompts for Path A and Path B in your text response, since the UI renders visual cards instead.
+   Example: "Nice to meet you, [Name]! Let's get your context graph set up. Choose a path below to get started:\n[CHOOSE_PATH]"
+3. If the user pastes an AI memory profile (containing ChatGPT and/or Claude memory blocks), you MUST exhaustively parse and extract their details. 
+   - CRITICAL parsing rule: Do NOT ask for any details (such as tech stack, projects, name, role, or goals) that are already present in their pasted memory.
+   - Accept summaries, bullet points, and brief descriptions as valid information. Do not demand conversational enrichment if the data is there.
+   - If the pasted memory contains: (a) name and role, (b) skills or tech stack, (c) at least one active project, and (d) a primary goal — then you have ALL required information. In this case, you MUST immediately respond with ONLY the token [GRAPH_READY] on a new line. Do not ask any follow-up questions.
+   - If there are completely missing required fields (e.g. absolutely no projects or no goal listed), ask ONE focused question at a time to gather the missing details:
+     * Name and current role
+     * Primary tech stack / expertise
+     * Up to 3 active projects (name + one-sentence description)
+     * Primary goal right now (e.g. shipping a product, career placement, learning)
+     * Working style preferences (optional)
+     Only ask about what is missing or needs clarification to make the graph perfect.
+4. Keep all conversational questions/replies direct, concise (under 90 words), and friendly.
+5. Once you have all the information (name, role, skills, at least one project, and primary goal) — end your response with [GRAPH_READY] on a new line. Do not include [GRAPH_READY] in any intermediate message.`
 
-You need to learn across the conversation:
-1. Their name and current role (student / developer / founder / etc)
-2. Their primary tech stack or area of expertise
-3. Up to 3 active projects they are working on (name + one sentence description)
-4. Their primary goal right now (career placement, growing a business, shipping a product, learning, etc)
-5. Any working style preferences (brief is fine — optional)
-
-Start the very first message with: "Hey! I'll ask you a few quick questions to build your context graph. What's your name and what do you do?"
-
-After you have gathered name, role, at least one skill, and at least one project — end your response with [GRAPH_READY] on a new line. Do not include [GRAPH_READY] until you have all four of those. Do not include [GRAPH_READY] in any intermediate message.`
+import { logOpenRouterCall } from '@/lib/logging'
 
 const STREAM_MODELS = [
-  'meta-llama/llama-3.3-70b-instruct:free',
-  'google/gemma-4-31b-it:free',
-  'qwen/qwen3-235b-a22b:free',
+  'meta-llama/llama-3.3-70b-instruct',
+  'openrouter/free',
 ]
 
 export async function POST(req: NextRequest) {
@@ -53,22 +59,56 @@ export async function POST(req: NextRequest) {
           model,
           messages,
           stream: true,
-          max_tokens: 180,
+          max_tokens: 1000,
           temperature: 0.7,
+        }, {
+          timeout: 12000,
         })
+
+        let accumulatedContent = ''
+        let accumulatedReasoning = ''
+        let modelUsedActual = model
 
         const stream = new ReadableStream({
           async start(controller) {
             const encoder = new TextEncoder()
             try {
               for await (const chunk of completion) {
+                if (chunk.model) {
+                  modelUsedActual = chunk.model
+                }
                 const text = chunk.choices[0]?.delta?.content ?? ''
+                const reasoning = (chunk.choices[0]?.delta as any)?.reasoning ?? ''
+
                 if (text) {
+                  accumulatedContent += text
                   controller.enqueue(encoder.encode(text))
                 }
+                if (reasoning) {
+                  accumulatedReasoning += reasoning
+                }
               }
+
+              // Stream completed successfully, write to logs
+              logOpenRouterCall({
+                context: 'Onboarding Chat',
+                model,
+                status: 'SUCCESS',
+                modelUsed: modelUsedActual,
+              })
             } catch (err) {
+              const errMsg = err instanceof Error ? err.message : String(err)
               console.error(`Streaming error with model ${model}:`, err)
+
+              // Log streaming error
+              logOpenRouterCall({
+                context: 'Onboarding Chat',
+                model,
+                status: 'FAILED',
+                modelUsed: modelUsedActual,
+                error: errMsg
+              })
+
               controller.error(err)
             } finally {
               controller.close()
@@ -84,8 +124,17 @@ export async function POST(req: NextRequest) {
         })
       } catch (err: unknown) {
         const error = err as { status?: number; message?: string }
-        console.warn(`Model ${model} failed, trying next cascade model. Error:`, error.message || error)
-        if ([429, 404, 502, 503].includes(error.status ?? 0) || error.status === undefined) {
+        console.warn(`[${new Date().toISOString()}] [ONBOARDING CHAT] [FALLBACK] Model ${model} failed: ${error.message || error}. Trying next model...`)
+
+        // Log initial connection failure
+        logOpenRouterCall({
+          context: 'Onboarding Chat',
+          model,
+          status: 'FAILED',
+          error: `HTTP ${error.status ?? 'unknown'}: ${error.message || String(error)}`
+        })
+
+        if ([402, 429, 404, 502, 503].includes(error.status ?? 0) || error.status === undefined) {
           continue
         }
         throw err

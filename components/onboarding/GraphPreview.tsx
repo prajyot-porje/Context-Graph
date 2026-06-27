@@ -2,12 +2,10 @@
 
 import { useGSAP } from '@gsap/react'
 import { gsap } from '@/lib/gsap'
-import { Loader2 } from 'lucide-react'
 
 interface Props {
   messageCount: number    // number of user messages sent so far
   userText: string        // all user messages joined — for keyword extraction
-  isFinalizing: boolean
 }
 
 const PREVIEW_POSITIONS = [
@@ -55,7 +53,7 @@ function getLabels(text: string): string[] {
   return labels
 }
 
-export default function GraphPreview({ messageCount, userText, isFinalizing }: Props) {
+export default function GraphPreview({ messageCount, userText }: Props) {
   const visibleCount = Math.min(messageCount, PREVIEW_POSITIONS.length)
   const labels = getLabels(userText)
   const nodesToShow = PREVIEW_POSITIONS.slice(0, visibleCount)
@@ -145,30 +143,6 @@ export default function GraphPreview({ messageCount, userText, isFinalizing }: P
               </g>
             ))}
           </svg>
-          
-          {isFinalizing && (
-            <div style={{
-              position: 'absolute',
-              inset: 0,
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '12px',
-              background: 'rgba(8,8,8,0.75)',
-              borderRadius: '12px',
-            }}>
-              <Loader2 size={24} className="cg-spin text-[var(--accent)]" />
-              <p style={{
-                fontSize: '13px',
-                color: 'var(--accent, #b3ec13)',
-                fontFamily: 'var(--font-geist, sans-serif)',
-                fontWeight: 600,
-              }}>
-                Building your graph...
-              </p>
-            </div>
-          )}
         </div>
       )}
     </div>
