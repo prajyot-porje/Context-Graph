@@ -787,3 +787,229 @@
   animation: cg-bounce 1.4s infinite ease-in-out both;
 }
 
+/* ================================================================
+   Graph — Label overlay, Tooltip, Camera controls
+   Used by ContextGraph3D
+   ================================================================ */
+
+/* ---- Fade-in used by tooltip ---- */
+@keyframes cg-tooltip-in {
+  from {
+    opacity: 0;
+    transform: scale(0.96) translateY(3px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+/* ---- Graph node labels (CSS overlay, not SpriteText) ---- */
+.cg-graph-label {
+  position: absolute;
+  font-family: var(--font-geist, ui-sans-serif, sans-serif);
+  font-size: 11px;
+  line-height: 1;
+  white-space: nowrap;
+  pointer-events: none;
+  user-select: none;
+  transition: opacity 200ms ease, transform 200ms ease;
+}
+
+/* Root tier — accent, slightly larger, always visible */
+.cg-graph-label[data-tier="root"] {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--accent);
+  text-shadow:
+    0 0 12px rgba(179, 236, 19, 0.35),
+    0 1px 3px rgba(0, 0, 0, 0.8);
+  letter-spacing: 0.01em;
+}
+
+/* Agency tier — secondary text */
+.cg-graph-label[data-tier="agency"] {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.7);
+}
+
+/* Leaf tier — muted, small, appears only on hover proximity */
+.cg-graph-label[data-tier="leaf"] {
+  font-size: 10px;
+  font-weight: 400;
+  color: var(--text-muted);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
+}
+
+/* Selected node label gets accent regardless of tier */
+.cg-graph-label[data-selected] {
+  color: var(--accent);
+  text-shadow:
+    0 0 10px rgba(179, 236, 19, 0.4),
+    0 1px 3px rgba(0, 0, 0, 0.8);
+}
+
+/* Light mode overrides */
+[data-theme="light"] .cg-graph-label[data-tier="agency"] {
+  color: var(--text-secondary);
+  text-shadow: 0 1px 2px rgba(255, 255, 255, 0.7);
+}
+
+[data-theme="light"] .cg-graph-label[data-tier="leaf"] {
+  color: var(--text-muted);
+  text-shadow: none;
+}
+
+/* ---- Graph hover tooltip ---- */
+.cg-graph-tooltip {
+  background: var(--card);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-md);
+  padding: 10px 14px;
+  box-shadow: var(--shadow-md);
+  animation: cg-tooltip-in 100ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  min-width: 140px;
+  max-width: 220px;
+}
+
+.cg-graph-tooltip__title {
+  font-family: var(--font-geist, ui-sans-serif, sans-serif);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+  line-height: 1.3;
+  margin-bottom: 2px;
+}
+
+.cg-graph-tooltip__scope {
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: 10px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 6px;
+}
+
+.cg-graph-tooltip__row {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-bottom: 3px;
+}
+
+.cg-graph-tooltip__label {
+  font-size: 11px;
+  color: var(--text-secondary);
+}
+
+.cg-graph-tooltip__dot {
+  font-size: 8px;
+  line-height: 1;
+}
+
+.cg-graph-tooltip__value {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.cg-graph-tooltip__date {
+  font-size: 10px;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+.cg-graph-tooltip__divider {
+  height: 1px;
+  background: var(--border);
+  margin: 7px 0 5px;
+}
+
+.cg-graph-tooltip__hint {
+  font-size: 10px;
+  color: var(--text-muted);
+  letter-spacing: 0.02em;
+}
+
+/* ---- Range input (accent-colored track) ---- */
+.cg-range-input {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 4px;
+  width: 100%;
+  border-radius: var(--radius-full);
+  background: rgba(255, 255, 255, 0.08);
+  cursor: pointer;
+  outline: none;
+}
+
+[data-theme="light"] .cg-range-input {
+  background: rgba(0, 0, 0, 0.08);
+}
+
+.cg-range-input::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  border-radius: var(--radius-full);
+  background: var(--accent);
+  cursor: pointer;
+  box-shadow: 0 0 0 2px rgba(179, 236, 19, 0.2);
+  transition: box-shadow 150ms ease, transform 150ms ease;
+}
+
+.cg-range-input::-webkit-slider-thumb:hover {
+  box-shadow: 0 0 0 4px rgba(179, 236, 19, 0.25);
+  transform: scale(1.1);
+}
+
+.cg-range-input::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  border: none;
+  border-radius: var(--radius-full);
+  background: var(--accent);
+  cursor: pointer;
+}
+
+/* ---- Camera controls toolbar ---- */
+.cg-graph-controls {
+  /* Container: flex column, gap in component */
+}
+
+.cg-graph-controls__btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--card);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition:
+    background-color 150ms ease,
+    color 150ms ease,
+    border-color 150ms ease;
+  box-shadow: var(--shadow-xs);
+}
+
+.cg-graph-controls__btn:hover {
+  background: var(--card-raised);
+  color: var(--text-primary);
+  border-color: var(--border-strong);
+}
+
+.cg-graph-controls__btn:active {
+  transform: scale(0.95);
+}
+
+.cg-graph-controls__btn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
