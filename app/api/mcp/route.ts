@@ -110,6 +110,14 @@ export async function POST(req: NextRequest) {
               required: ['summary', 'scope', 'goal', 'achieved'],
             },
           },
+          {
+            name: 'list_nodes',
+            description: 'List all context nodes in the graph to see their scopes, titles, tags, and metadata (does not include full content to save tokens).',
+            inputSchema: {
+              type: 'object',
+              properties: {},
+            },
+          },
         ],
       },
     }, { headers: CORS })
@@ -148,6 +156,39 @@ export async function POST(req: NextRequest) {
           jsonrpc: '2.0',
           id,
           error: { code: -32000, message: 'Failed to fetch context' },
+        }, { headers: CORS })
+      }
+    }
+
+    if (name === 'list_nodes') {
+      try {
+        const nodes = await getUserNodes(userId)
+        
+        // Format nodes to omit long content to save tokens
+        const formattedNodes = nodes.map(node => ({
+          id: node.id,
+          scope: node.scope,
+          title: node.title,
+          relevance: node.relevance,
+          tags: node.tags,
+          parent_scope: node.parent_scope,
+          last_updated: node.last_updated,
+          created_at: node.created_at,
+        }))
+
+        return NextResponse.json({
+          jsonrpc: '2.0',
+          id,
+          result: {
+            content: [{ type: 'text', text: JSON.stringify(formattedNodes, null, 2) }],
+          },
+        }, { headers: CORS })
+      } catch (e) {
+        console.error('Failed to list nodes:', e)
+        return NextResponse.json({
+          jsonrpc: '2.0',
+          id,
+          error: { code: -32000, message: 'Failed to list nodes' },
         }, { headers: CORS })
       }
     }

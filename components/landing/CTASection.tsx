@@ -98,10 +98,10 @@ export function CTASection() {
         </div>
 
         {/* Headline */}
-        <h2 className="cta-heading cta-anim text-display-xl text-[var(--text-primary)]">
+        <h2 className="cta-heading cta-anim text-display-xl text-[var(--text-primary)] uppercase tracking-tight">
           Start building your
           <br />
-          <span className="text-[var(--accent)]">context graph</span>
+          <span className="text-[var(--text-secondary)]">context graph</span>
         </h2>
 
         {/* Sub text */}
@@ -111,21 +111,27 @@ export function CTASection() {
 
         <div className="cta-actions cta-anim mt-[var(--space-10)] flex flex-col items-center justify-center gap-[var(--space-4)] sm:flex-row">
           <Link href="/dashboard" passHref className="inline-block">
-            <Button variant="accent" size="lg" className="text-button-md min-h-[48px] px-8">
+            <button
+              className="min-h-11 px-6 rounded-[var(--radius-md)] bg-[var(--text-primary)] text-[var(--bg)] font-semibold text-[14px] transition-[opacity,transform] duration-150 ease-out hover:opacity-90 active:scale-[0.97] inline-flex items-center gap-3 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]"
+            >
               Start Building
-              <ArrowRight size={16} className="ml-1" />
-            </Button>
+              <span className="w-5 h-5 rounded-full bg-black/5 dark:bg-black/10 flex items-center justify-center text-[10px] font-bold shrink-0">
+                ↗
+              </span>
+            </button>
           </Link>
           <Link
-            href="https://github.com/prajyot-porje/Context-Graph"
+            href="https://github.com/context-graph/context-graph"
             target="_blank"
             rel="noopener noreferrer"
             passHref
             className="inline-block"
           >
-            <Button variant="secondary" size="lg" className="text-button-md min-h-[48px] px-8">
+            <button
+              className="min-h-11 px-6 rounded-[var(--radius-md)] border border-[var(--border-strong)] bg-transparent text-[var(--text-primary)] font-medium text-[14px] transition-[border-color,background-color,transform] duration-150 ease-out hover:border-[rgba(255,255,255,0.2)] hover:bg-[rgba(255,255,255,0.03)] active:scale-[0.97] cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]"
+            >
               View on GitHub
-            </Button>
+            </button>
           </Link>
         </div>
       </div>

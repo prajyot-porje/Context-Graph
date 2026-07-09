@@ -15,15 +15,24 @@ function Logo() {
   return (
     <Link
       href="/"
-      className={cn(
-        'inline-flex items-center gap-0',
-        'font-display text-[18px] font-bold tracking-tight',
-        'text-[var(--text-primary)]',
-        'transition-opacity duration-100 ease-out hover:opacity-80'
-      )}
+      className="inline-flex items-center gap-3 transition-opacity duration-100 ease-out hover:opacity-90"
     >
-      Context
-      <span className="text-[var(--accent)]">Graph</span>
+      <div className="relative h-10 w-10 flex items-center justify-center shrink-0 rounded-lg bg-[rgba(255,255,255,0.03)] dark:bg-[rgba(255,255,255,0.02)] border border-[var(--border-strong)] shadow-[var(--shadow-sm)] dark:shadow-[0_0_15px_rgba(179,236,19,0.12)] p-1.5 transition-all duration-200">
+        <div className="absolute inset-0 rounded-lg bg-[var(--accent)] opacity-[0.03] blur-sm pointer-events-none dark:block hidden" />
+        <img
+          src="/icons/logo-dark.png"
+          alt="ContextGraph Icon"
+          className="theme-logo-light h-full w-full object-contain"
+        />
+        <img
+          src="/icons/logo-light.png"
+          alt="ContextGraph Icon"
+          className="theme-logo-dark h-full w-full object-contain"
+        />
+      </div>
+      <span className="font-display text-[19px] font-bold tracking-tight text-[var(--text-primary)]">
+        Context<span className="text-[var(--accent)]">Graph</span>
+      </span>
     </Link>
   )
 }
@@ -79,12 +88,12 @@ function NavActions() {
           href="/dashboard"
           className={cn(
             'hidden sm:inline-flex items-center justify-center',
-            'h-[36px] px-[16px]',
+            'min-h-11 px-[18px]',
             'rounded-[var(--radius-md)]',
             'text-[14px] font-medium text-[var(--text-primary)]',
             'border border-[var(--border-strong)] bg-transparent',
-            'transition-[border-color,background-color] duration-150 ease-out',
-            'hover:border-[rgba(255,255,255,0.28)] hover:bg-[rgba(255,255,255,0.04)]',
+            'transition-[border-color,background-color,transform] duration-150 ease-out',
+            'hover:border-[rgba(255,255,255,0.22)] hover:bg-[rgba(255,255,255,0.03)] active:scale-[0.97]',
             'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bg)]'
           )}
         >
@@ -132,12 +141,12 @@ function NavActions() {
         href="/login"
         className={cn(
           'hidden sm:inline-flex items-center justify-center',
-          'h-[36px] px-[16px]',
+          'min-h-11 px-[18px]',
           'rounded-[var(--radius-md)]',
           'text-[14px] font-medium text-[var(--text-primary)]',
           'bg-transparent border border-[var(--border-strong)]',
-          'transition-[border-color,background-color] duration-150 ease-out',
-          'hover:border-[rgba(255,255,255,0.28)] hover:bg-[rgba(255,255,255,0.04)]',
+          'transition-[border-color,background-color,transform] duration-150 ease-out',
+          'hover:border-[rgba(255,255,255,0.22)] hover:bg-[rgba(255,255,255,0.03)] active:scale-[0.97]',
           'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bg)]'
         )}
       >
@@ -147,12 +156,12 @@ function NavActions() {
         href="/signup"
         className={cn(
           'inline-flex items-center justify-center',
-          'h-[36px] px-[20px]',
+          'min-h-11 px-[22px]',
           'rounded-[var(--radius-md)]',
           'text-[14px] font-semibold',
           'bg-[var(--text-primary)] text-[var(--bg)]',
-          'transition-opacity duration-150 ease-out',
-          'hover:opacity-90',
+          'transition-[opacity,transform] duration-150 ease-out',
+          'hover:opacity-90 active:scale-[0.97]',
           'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bg)]'
         )}
       >

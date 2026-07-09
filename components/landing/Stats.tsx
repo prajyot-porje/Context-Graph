@@ -55,7 +55,7 @@ export function Stats() {
           {STATS.map((stat, i) => (
             <React.Fragment key={i}>
               <div className="stat-item flex flex-1 flex-col items-center justify-center text-center px-[var(--space-4)]">
-                <div className="text-display-lg text-[var(--accent)] font-bold tracking-tight tabular-nums">
+                <div className="text-display-lg text-[var(--text-primary)] font-bold tracking-tight tabular-nums">
                   {stat.value}
                 </div>
                 <div className="mt-[var(--space-3)] text-label text-[10px] text-[var(--text-secondary)] font-semibold tracking-[0.1em] uppercase">

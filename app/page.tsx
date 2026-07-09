@@ -1,7 +1,6 @@
 import type { Metadata } from 'next'
 import { NavBar } from '@/components/landing/NavBar'
 import { Hero } from '@/components/landing/Hero'
-import { InteractiveVisualizer } from '@/components/landing/InteractiveVisualizer'
 import { Stats } from '@/components/landing/Stats'
 import { Features } from '@/components/landing/Features'
 import { HowItWorks } from '@/components/landing/HowItWorks'
@@ -21,7 +20,6 @@ export default function Home() {
       <NavBar />
       <main>
         <Hero />
-        <InteractiveVisualizer />
         <Stats />
         <Features />
         <HowItWorks />

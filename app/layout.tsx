@@ -27,8 +27,8 @@ export const metadata: Metadata = {
   },
   description: 'A cross-AI personal context engine. Build your context graph once. Claude, ChatGPT, Codex — every AI reads from the same source of truth.',
   keywords: ['AI context', 'MCP', 'Model Context Protocol', 'Claude', 'ChatGPT', 'Codex', 'persistent memory', 'developer tools', 'context graph'],
-  authors: [{ name: 'Prajyot Porje', url: 'https://github.com/prajyot-porje' }],
-  creator: 'Prajyot Porje',
+  authors: [{ name: 'ContextGraph Team', url: 'https://github.com/context-graph' }],
+  creator: 'ContextGraph Team',
   openGraph: {
     type: 'website',
     siteName: 'ContextGraph',
@@ -46,12 +46,21 @@ export const metadata: Metadata = {
     title: 'ContextGraph — Your context. Every AI.',
     description: 'Cross-AI persistent context engine with MCP support. Free to start.',
     images: ['/og-image.png'],
-    creator: '@prajyotporje',
+    creator: '@contextgraph',
   },
   robots: { index: true, follow: true },
   icons: {
-    icon: '/favicon.ico',
-    shortcut: '/favicon.ico',
+    icon: [
+      {
+        url: '/icons/logo-dark.png',
+        media: '(prefers-color-scheme: dark)',
+      },
+      {
+        url: '/icons/logo-light.png',
+        media: '(prefers-color-scheme: light)',
+      },
+    ],
+    shortcut: '/icons/logo-dark.png',
   },
 }
 
