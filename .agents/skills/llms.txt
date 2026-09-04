@@ -4,20 +4,21 @@ Canonical repo instructions:
 - /AGENTS.md
 
 Primary project docs:
-- /PRD.md
-- /DESIGN.md
+- /ARCHITECTURE.md (technical)
+- /PRODUCT.md (business/product)
+- /DESIGN.md (visual/UI)
 
 Supporting skills:
-- /.agent/skills/component-patterns.md
-- /.agent/skills/animations.md
-- /.agent/skills/api-patterns.md
-- /.agent/skills/database-patterns.md
+- /.agents/skills/component-patterns.md
+- /.agents/skills/animations.md
+- /.agents/skills/api-patterns.md
+- /.agents/skills/database-patterns.md
 
 GSAP reference skills:
-- /.agent/skills/gsap-core/SKILL.md
-- /.agent/skills/gsap-react/SKILL.md
-- /.agent/skills/gsap-scrolltrigger/SKILL.md
-- /.agent/skills/gsap-timeline/SKILL.md
+- /.agents/skills/gsap-core/SKILL.md
+- /.agents/skills/gsap-react/SKILL.md
+- /.agents/skills/gsap-scrolltrigger/SKILL.md
+- /.agents/skills/gsap-timeline/SKILL.md
 
 Project rules summary:
 - Better Auth is the auth source of truth.

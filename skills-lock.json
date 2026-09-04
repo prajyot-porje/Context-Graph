@@ -7,6 +7,12 @@
       "skillPath": "skills/animation-vocabulary/SKILL.md",
       "computedHash": "280c6688ef2568ad92f40c4dc638f0cc5cde0f49bdd6debd097410aa9945f44f"
     },
+    "hallmark": {
+      "source": "Nutlope/hallmark",
+      "sourceType": "github",
+      "skillPath": "skills/hallmark/SKILL.md",
+      "computedHash": "814fcf95a17ac8ce45b7d9c22584e1dcc592ce7a22c86d23bce20f297139366b"
+    },
     "brandkit": {
       "source": "Leonxlnx/taste-skill",
       "sourceType": "github",

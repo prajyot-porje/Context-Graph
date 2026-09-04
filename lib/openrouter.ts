@@ -1,5 +1,4 @@
 import OpenAI from 'openai'
-import { OnboardingAnswers } from '@/types'
 import { logOpenRouterCall } from './logging'
 
 const client = new OpenAI({
@@ -123,62 +122,4 @@ export async function judgeContext(prompt: string, isJson: boolean = false): Pro
   // All models exhausted
   console.error(`[${new Date().toISOString()}] [JUDGE CONTEXT] All models exhausted (total duration: ${Date.now() - startOverall}ms)`)
   throw lastError
-}
-
-export async function generateContextGraph(answers: OnboardingAnswers): Promise<string> {
-  const roles = answers.roles || answers.role || []
-  const prompt = `
-You are a context engine for a personal AI assistant.
-
-A user just completed onboarding. Generate their initial context graph 
-based on their answers. Return ONLY valid JSON — no markdown, no explanation.
-
-User answers:
-Name: ${answers.name}
-Location: ${answers.location}
-Roles: ${roles.join(', ')}
-Description: ${answers.description}
-Skills: ${answers.skills.join(', ')}
-Stack: ${answers.stack.join(', ')}
-Goals: ${answers.goals}
-Preferences: ${answers.constraints}
-Projects: ${JSON.stringify(answers.projects)}
-
-Return this exact JSON structure:
-{
-  "nodes": [
-    {
-      "scope": "me",
-      "title": "ME",
-      "content": "detailed markdown paragraph about who this person is, their skills, working style, and goals",
-      "tags": ["developer", "..."],
-      "parent_scope": null
-    },
-    // If they have agency/freelance work:
-    {
-      "scope": "agency",
-      "title": "agency or freelance name or their name + freelance",
-      "content": "what they do professionally, clients, services",
-      "tags": ["agency", "..."],
-      "parent_scope": "me"
-    },
-    // One node per project they listed:
-    {
-      "scope": "personal/project-slug or agency/project-slug",
-      "title": "Project Name",
-      "content": "what the project is, current status, tech stack, goals",
-      "tags": ["next.js", "..."],
-      "parent_scope": "me or agency"
-    }
-  ]
-}
-
-Rules:
-- me node is always first and always present
-- content should be dense and factual — written for an AI to understand
-- scope slugs use lowercase kebab-case
-- parent_scope must match another node's scope field exactly
-- maximum 6 nodes total
-`
-  return judgeContext(prompt, true)
 }

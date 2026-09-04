@@ -13,17 +13,19 @@ import { Toast } from '@/components/ui/Toast'
 type Tab = 'Claude' | 'Claude Code' | 'ChatGPT' | 'Codex'
 const TABS: Tab[] = ['Claude', 'Claude Code', 'ChatGPT', 'Codex']
 
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
+
 const getSnippets = (prefix: string) => ({
   Claude: {
     title: 'Remote MCP Server URL',
-    code: `https://your-app.vercel.app/api/mcp?key=${prefix}••••••••`
+    code: `${APP_URL}/api/mcp?key=${prefix}••••••••`
   },
   'Claude Code': {
     title: '~/.claude/claude_desktop_config.json',
     code: `{
   "mcpServers": {
     "context-engine": {
-      "url": "https://your-cf-worker.workers.dev/mcp",
+      "url": "${APP_URL}/api/mcp",
       "headers": {
         "x-api-key": "${prefix}••••••••"
       }
@@ -33,12 +35,12 @@ const getSnippets = (prefix: string) => ({
   },
   ChatGPT: {
     title: 'MCP Server URL',
-    code: `https://your-app.vercel.app/api/mcp?key=${prefix}••••••••`
+    code: `${APP_URL}/api/mcp?key=${prefix}••••••••`
   },
   Codex: {
     title: 'Codex Desktop — Streamable HTTP',
     code: `Name: context-engine
-URL: https://your-cf-worker.workers.dev/mcp
+URL: ${APP_URL}/api/mcp
 Header: x-api-key: ${prefix}••••••••`
   }
 })

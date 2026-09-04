@@ -1,32 +1,98 @@
-# Product
+# ContextGraph — Product
 
-## Register
+Version 2.0 | Consolidated 2026-09-05 (supersedes PRD.md, PRODUCT_DOCUMENT.md, technical_answers.md)
 
-product
+This is the business/product source of truth: who we build for, what problem we solve, what the product must do, and how it should feel. For how it's actually built, see [ARCHITECTURE.md](ARCHITECTURE.md). For exact visual tokens/rules, see [DESIGN.md](DESIGN.md).
+
+---
+
+## What It Is
+
+ContextGraph is a cross-AI personal context engine. It stores who you are, what you build, and how you work as a graph in a database. Any MCP-compatible AI (Claude, ChatGPT, Codex, Cursor) reads this graph at the start of a session and updates it when you type `/save`. The web dashboard lets you see and manage the graph visually.
+
+## Problem
+
+Every AI session starts from zero. Developers using multiple AI tools across multiple projects or clients repeatedly re-explain who they are, what stack a project uses, and what's already been decided. Existing memory features (ChatGPT memory, Claude memory) are siloed per-platform, non-portable, and flat — they can't represent a hierarchy (a global preference vs. an agency-level constraint vs. one repo's architecture). Without scope containment, instructions from one project bleed into another.
+
+## Solution
+
+A structured context graph, owned by the user, accessible to any AI via MCP protocol and a personal API key. Self-updating after sessions via an AI judgment layer that decides what's actually worth remembering. Visualized as an interactive 3D graph in a web dashboard.
 
 ## Users
-Developers and AI power users who use multiple AI tools (Claude, ChatGPT, Cursor, Codex) daily, manage multiple ongoing projects, and are familiar with MCP configuration. Secondary users include freelance developers and digital agencies managing context for multiple clients.
 
-## Product Purpose
-ContextGraph acts as a cross-AI personal context engine. By storing user identity, technical stacks, current projects, and goals in a structured graph database, it solves the "zero-context" problem of starting new AI sessions. Users build their context once and connect it to any AI via an MCP endpoint with a personal API key.
+Primary: developers and AI power users who use multiple AI tools daily, work across multiple ongoing projects, and already understand MCP configuration.
+
+Secondary: freelancers and agency owners managing context for multiple clients.
+
+## Phase History
+
+- **Phase 1 — Done.** Personal MCP server, TypeScript + Node.js, GitHub-markdown backed. Two tools (`get_context`, `save_context`). Connected to Claude.ai, Claude Desktop, Claude Code.
+- **Phase 2 — Skipped.** Moved directly to Phase 3.
+- **Phase 3 — This product.** Multi-user SaaS: Supabase-backed graph, Better Auth accounts, web dashboard, per-user API keys.
 
 ## Brand Personality
-- **Voice**: Direct, precise, technical, and understated.
-- **Personality**: Cinematic, dark-dominant, and expert.
-- **Emotional Goal**: Evoke a sense of structured clarity, security, and developer control.
+
+- **Voice**: Direct, precise, technical, understated.
+- **Personality**: Cinematic, dark-dominant, expert.
+- **Emotional goal**: Structured clarity, security, developer control.
 
 ## Anti-references
-- **Generic SaaS/AI Boilerplates**: Avoid warm sand/cream/beige backgrounds, gradient text, small tracked uppercase eyebrows on every section, and side-stripe card borders.
-- **Corporate/Enterprise Navy**: Avoid generic flat tables, deep navy administrative panel templates, and over-complex settings menus.
-- **Superficial Motion**: Avoid bounce/elastic eases, scroll-hijacking, and animations without a clear user trigger or structural purpose.
 
-## Design Principles
-1. **The Interface Retreats**: The context graph and user data are the heroes. UI layout and controls are minimal, precise, and retreat into the background.
-2. **Depth Through Shadow, Not Color**: Palette is near-monochrome. Visual hierarchy is established by layering card elevations using shadows and subtle surface gradients.
-3. **Motion Earns Its Place**: Every transition and transition speed is physical. Motion exists to communicate state changes or relationship connections in the graph, not for decoration.
+- **Generic SaaS/AI boilerplate**: warm sand/cream/beige backgrounds, gradient text, tracked-uppercase eyebrows on every section, side-stripe card borders.
+- **Corporate/enterprise navy**: generic flat tables, deep navy admin-panel templates, over-complex settings menus.
+- **Superficial motion**: bounce/elastic eases, scroll-hijacking, animation without a clear trigger or structural purpose.
 
-## Accessibility & Inclusion
-- Strict adherence to standard WCAG AA guidelines (minimum text contrast ratio of 4.5:1).
-- Clear, visible focus states on all interactive elements.
-- Minimum 44x44px interactive hit targets.
-- First-class support for `prefers-reduced-motion`, falling back to instant transitions or simple opacity fades.
+(Design principles, accessibility standards, and all visual tokens that implement this personality live in [DESIGN.md](DESIGN.md) — not duplicated here.)
+
+## Pages & Flows
+
+| Route | Auth | Purpose |
+|---|---|---|
+| `/` | Public | Landing page |
+| `/login`, `/signup` | Public | Email + password |
+| `/onboarding` | Protected | First-time context setup (conversational, not the original static form — see ARCHITECTURE.md log) |
+| `/dashboard` | Protected | Main graph view |
+| `/settings` | Protected | API key + account |
+| `/connect` | Protected | MCP connection setup guide per client |
+
+**Signup** → Better Auth creates user → API key auto-generated, shown once → onboarding.
+
+**Onboarding** → conversational chat gathers identity, stack, active projects, goals (with an optional "import my existing ChatGPT/Claude memory export" path) → AI generates initial graph nodes → dashboard.
+
+**Dashboard** → sidebar node tree + 3D graph canvas + detail panel on node click (content, decisions log, relevance bar, edit/delete). Add nodes from the sidebar.
+
+**Session update (`/save`)** → in any connected AI, user types `/save` → AI calls `save_context` → AI judgment decides if it's worth keeping → if yes, entry appears in the dashboard graph with an updated relevance score; if no, the AI explains why it skipped it.
+
+**Settings** → view API key prefix, copy connection snippets per client, regenerate key (with confirmation), manage account.
+
+## Features
+
+### Must Have (V1)
+- Email/password auth
+- Conversational onboarding generating an initial context graph
+- Dashboard with interactive graph visualization
+- Node detail panel (view, edit, delete), create nodes from dashboard
+- `/api/mcp` with `get_context`, `save_context`, `list_nodes`
+- API key generation, regeneration, and per-client connection snippets
+- Weekly relevance decay
+- Dark and light mode
+
+### Not yet real (tracked, not hidden)
+- Account tab in Settings (name/email edit, account deletion) — UI exists, nothing is wired up yet
+- Rate limiting on the MCP endpoint — table exists, nothing enforces it
+
+### Post V1 Roadmap
+- AI memory export parsing (ChatGPT/Claude memory → context graph) as a first-class import, not just the ad-hoc paste-in currently in onboarding
+- Multiple API keys with labels and scoped permissions (e.g. a read-only key for a docs bot)
+- Node version history
+- Public read-only graph sharing (e.g. share one project's context with a client)
+- Browser extension that auto-injects active context into web-based chat UIs
+
+## Success Criteria
+
+The project is complete when a user can:
+1. Sign up and complete onboarding
+2. See their context graph in the dashboard
+3. Connect any MCP-compatible AI using their API key
+4. Start a session where `get_context` loads their context automatically
+5. Type `/save` and see the new entry appear in the dashboard graph
