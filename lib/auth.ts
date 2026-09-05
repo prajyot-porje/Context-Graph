@@ -10,6 +10,12 @@ export const auth = betterAuth({
     enabled: true,
     requireEmailVerification: false,
   },
+  socialProviders: {
+    google: {
+      clientId: process.env.GOOGLE_CLIENT_ID as string,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET as string,
+    },
+  },
   session: {
     expiresIn: 60 * 60 * 24 * 7,       // 7 days
     updateAge: 60 * 60 * 24,            // refresh if >1 day old

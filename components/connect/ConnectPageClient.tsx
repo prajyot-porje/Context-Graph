@@ -1,7 +1,10 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
+import { driver, type Driver } from 'driver.js'
+import 'driver.js/dist/driver.css'
+import './driver-theme.css'
 import { Button } from '@/components/ui/Button'
 import { useToast } from '@/hooks/useToast'
 import { Toast } from '@/components/ui/Toast'
@@ -53,6 +56,15 @@ function IconSignal({ size = 14 }: { size?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
       <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
+    </svg>
+  )
+}
+
+function IconCompass({ size = 14 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="10" />
+      <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76" />
     </svg>
   )
 }
@@ -151,6 +163,9 @@ export function ConnectPageClient({ keyPrefix, appUrl }: ConnectPageClientProps)
   const [panelVisible, setPanelVisible] = useState(true)
   const panelRef = useRef<HTMLDivElement>(null)
 
+  const driverRef = useRef<Driver | null>(null)
+  const hasAutoRunTour = useRef(false)
+
   useEffect(() => {
     const stored = sessionStorage.getItem('cg-new-api-key')
     if (stored) {
@@ -161,7 +176,46 @@ export function ConnectPageClient({ keyPrefix, appUrl }: ConnectPageClientProps)
 
   useEffect(() => () => {
     if (copyKeyTimerRef.current) clearTimeout(copyKeyTimerRef.current)
+    driverRef.current?.destroy()
   }, [])
+
+  const runTour = useCallback(() => {
+    driverRef.current?.destroy()
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    driverRef.current = driver({
+      animate: !reducedMotion,
+      showProgress: true,
+      popoverClass: 'cg-tour-popover',
+      overlayOpacity: 0.7,
+      steps: [
+        {
+          element: '[data-tour="api-key"]',
+          popover: { title: 'Your personal API key', description: 'This is what lets any MCP-compatible AI read and update your context graph. Copy it now — it will not be shown again.' },
+        },
+        {
+          element: '[data-tour="client-tabs"]',
+          popover: { title: 'Pick your AI client', description: 'Claude, ChatGPT, and Codex/Cursor each need a slightly different setup — pick the one you actually use.' },
+        },
+        {
+          element: '[data-tour="code-snippet"]',
+          popover: { title: 'Copy this into your client', description: 'Paste this into the config location shown in the steps above.' },
+        },
+        {
+          element: '[data-tour="test-connection"]',
+          popover: { title: 'Test the connection', description: 'Once you’ve connected, run this to confirm your client can actually reach your graph.' },
+        },
+      ],
+    })
+    driverRef.current.drive()
+  }, [])
+
+  useEffect(() => {
+    if (freshKey && !hasAutoRunTour.current) {
+      hasAutoRunTour.current = true
+      const timer = setTimeout(runTour, 400)
+      return () => clearTimeout(timer)
+    }
+  }, [freshKey, runTour])
 
   const handleCopyKey = async () => {
     const textToCopy = freshKey || `${keyPrefix}••••••••`
@@ -337,7 +391,7 @@ export function ConnectPageClient({ keyPrefix, appUrl }: ConnectPageClientProps)
         <section className="connect-section connect-section--2 mb-8">
 
           {/* Double-bezel card */}
-          <div className="rounded-[var(--radius-xl)] border border-[var(--border)] bg-[rgba(255,255,255,0.02)] p-[5px] shadow-[var(--shadow-md)]">
+          <div data-tour="api-key" className="rounded-[var(--radius-xl)] border border-[var(--border)] bg-[rgba(255,255,255,0.02)] p-[5px] shadow-[var(--shadow-md)]">
             <div
               className="rounded-[calc(var(--radius-xl)-5px)] p-5 sm:p-6"
               style={{
@@ -429,6 +483,7 @@ export function ConnectPageClient({ keyPrefix, appUrl }: ConnectPageClientProps)
 
           {/* Tab row */}
           <div
+            data-tour="client-tabs"
             className="mb-6 flex gap-1 overflow-x-auto rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--surface)] p-1"
             role="tablist"
             aria-label="AI client connectors"
@@ -557,7 +612,7 @@ export function ConnectPageClient({ keyPrefix, appUrl }: ConnectPageClientProps)
               </div>
 
               {/* Code snippet */}
-              <div className="mb-6">
+              <div data-tour="code-snippet" className="mb-6">
                 <CodeSnippet
                   code={activeConnector.code}
                   label={activeConnector.codeLabel}
@@ -566,6 +621,7 @@ export function ConnectPageClient({ keyPrefix, appUrl }: ConnectPageClientProps)
 
               {/* Test Connection — secondary variant (neutral, no accent) */}
               <button
+                data-tour="test-connection"
                 disabled={activeStatus === 'testing'}
                 onClick={() => handleTestConnection(activeTab)}
                 className={[
@@ -615,6 +671,13 @@ export function ConnectPageClient({ keyPrefix, appUrl }: ConnectPageClientProps)
           </p>
 
           <div className="flex items-center gap-2.5">
+            <Button
+              variant="ghost"
+              onClick={runTour}
+              className="h-10 px-4 text-[13px] text-[var(--text-muted)] hover:text-[var(--text-secondary)] active:scale-[0.97] flex items-center gap-1.5"
+            >
+              <IconCompass size={13} /> Take a tour
+            </Button>
             <Button
               variant="ghost"
               onClick={() => router.push('/dashboard')}

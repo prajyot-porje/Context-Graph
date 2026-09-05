@@ -50,14 +50,14 @@ Secondary: freelancers and agency owners managing context for multiple clients.
 |---|---|---|
 | `/` | Public | Landing page |
 | `/login`, `/signup` | Public | Email + password |
-| `/onboarding` | Protected | First-time context setup (conversational, not the original static form — see ARCHITECTURE.md log) |
+| `/onboarding` | Protected | First-time context setup — a 5-step wizard, not a chat (see ARCHITECTURE.md log) |
 | `/dashboard` | Protected | Main graph view |
 | `/settings` | Protected | API key + account |
 | `/connect` | Protected | MCP connection setup guide per client |
 
 **Signup** → Better Auth creates user → API key auto-generated, shown once → onboarding.
 
-**Onboarding** → conversational chat gathers identity, stack, active projects, goals (with an optional "import my existing ChatGPT/Claude memory export" path) → AI generates initial graph nodes → dashboard.
+**Onboarding** → a short wizard collects identity, stack, active projects, and goals as real form fields (with an optional first step to import an existing ChatGPT/Claude memory export, which prefills the rest) → AI writes the graph node content from those answers → API key issued → a guided tour on `/connect` walks through connecting an AI client → dashboard.
 
 **Dashboard** → sidebar node tree + 3D graph canvas + detail panel on node click (content, decisions log, relevance bar, edit/delete). Add nodes from the sidebar.
 

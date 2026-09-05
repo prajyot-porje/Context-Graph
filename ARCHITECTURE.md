@@ -59,7 +59,7 @@ Next.js App Router monolith. One deployment (Vercel) serves the marketing site, 
   /graph        → ContextGraph3D.tsx (live)
   /landing      → marketing sections
   /dashboard    → shell, sidebar, node panels, settings client
-  /onboarding   → conversational onboarding flow
+  /onboarding   → step-wizard onboarding flow (StepIdentity/Stack/Projects/Goals/Review, MemoryImportStep, GraphPreview)
   /auth         → login/signup client components
   /connect      → MCP connection setup UI
   /providers    → GraphProvider (realtime), LenisProvider
@@ -76,7 +76,10 @@ Next.js App Router monolith. One deployment (Vercel) serves the marketing site, 
   /logging.ts                                     → OpenRouter call logging
 
 /types        → hand-maintained interfaces + Supabase Database type (see §8 debt)
-middleware.ts → route protection (was proxy.ts — fixed 2026-09-05, see log)
+proxy.ts      → route protection. Next.js 16 renamed the `middleware.ts`/`middleware()`
+                convention to `proxy.ts`/`proxy()` — the old name still "works" but only
+                runs in the (here, incompatible) edge runtime. Do NOT rename this to
+                middleware.ts. See log, 2026-09-05, for a correction of an earlier mistake.
 ```
 
 ## 4. Data Model
@@ -106,7 +109,7 @@ Two independent schemes, deliberately not bridged:
 
 Both paths converge on the same rule: every `lib/db.ts` function takes a `userId` and filters by it explicitly. This is programmatic tenant isolation, not database-level RLS — deliberate, see log 2026-05-08.
 
-Route protection: `middleware.ts` (see log, 2026-09-05 — previously a dead file named `proxy.ts`) redirects unauthenticated visitors away from `/dashboard`, `/settings`, `/onboarding`, `/connect`, and redirects based on `onboarding_done`. This is the only route-level guard for `/dashboard` and `/settings`; those two pages have no additional per-page `requireSessionUser()` check, so if middleware config or matcher ever breaks, those pages currently have no fallback guard. Worth adding one if this becomes a repeated failure mode.
+Route protection: `proxy.ts` (Next.js 16's route-protection convention — see log, 2026-09-05, for a correction: this was briefly and incorrectly renamed to `middleware.ts` during an earlier audit) redirects unauthenticated visitors away from `/dashboard`, `/settings`, `/onboarding`, `/connect`, and redirects based on `onboarding_done`. This is the only route-level guard for `/dashboard` and `/settings`; those two pages have no additional per-page `requireSessionUser()` check, so if the proxy's matcher config ever breaks, those pages currently have no fallback guard. Worth adding one if this becomes a repeated failure mode.
 
 ## 6. MCP Endpoint
 
@@ -118,7 +121,7 @@ Route protection: `middleware.ts` (see log, 2026-09-05 — previously a dead fil
 
 `lib/openrouter.ts` implements a fallback cascade for `save_context` judgment calls: a direct Gemini call first, then OpenRouter models in order, retrying on transient errors (`402/404/429/502/503`) and aborting immediately on non-transient ones (auth, bad request). The judgment prompt evaluates whether a session summary is worth permanently saving (goal achieved, factual/architectural significance, filters out trivial progress), returns `{ should_save, reason, entry, score, target_scope }`. If accepted: writes `context_entries`, bumps the node's `relevance` (clamped to 1.0).
 
-`generateContextGraph()` in the same file builds the *old* form-based onboarding prompt — superseded by the conversational onboarding flow (`/api/onboarding/chat` + `/api/onboarding/finalize`), see log 2026-07. Not currently called by the frontend.
+`judgeContext()` is also reused by `/api/onboarding/finalize` (see log, 2026-09-06) to turn structured onboarding-wizard answers into rich node `content` prose — a much smaller, more reliable prompt than the earlier chat-transcript-parsing approach it replaced.
 
 ## 8. Known Architecture Debt
 
@@ -129,7 +132,8 @@ Track items here; when one is fixed, add a dated log entry below and remove it f
 - `rate_limits` table exists, nothing uses it. No rate limiting is enforced on `/api/mcp` today.
 - No RLS policies found in-repo; realtime subscriptions run over the anon key. Needs verification against the live Supabase project.
 - Settings → Account tab: hardcoded placeholder values, "Save" is a no-op toast with no API call. Danger Zone delete button has no handler and no backing route — account deletion isn't implemented. *(Not yet fixed — needs a real `PATCH`/`DELETE` account route plus wiring.)*
-- `/dashboard` and `/settings` still have no per-page `requireSessionUser()` guard as a fallback behind `middleware.ts` — acceptable now that middleware actually runs (see log), but worth adding if middleware config ever silently breaks again.
+- `/dashboard` and `/settings` still have no per-page `requireSessionUser()` guard as a fallback behind `proxy.ts` — acceptable given `proxy.ts` runs correctly (see log, 2026-09-05 correction), but worth adding if its matcher config ever silently breaks.
+- The dev-only `Agentation` overlay (`components/providers/LenisProvider.tsx`, gated to `NODE_ENV === 'development'`) installs a global keydown listener that can swallow Enter/comma keystrokes app-wide while `npm run dev` is running (observed while testing the onboarding wizard's tag input — the `onBlur` commit path is unaffected). Harmless in production since it's dev-gated, but worth knowing if a keyboard shortcut mysteriously doesn't fire during local development.
 
 ---
 
@@ -159,14 +163,30 @@ Static 4-step form (`app/api/onboarding/route.ts` + `generateContextGraph()`) re
 ### 2026-09-05 — Documentation consolidation
 Replaced three overlapping product/architecture documents (`PRD.md`, `PRODUCT_DOCUMENT.md`, `technical_answers.md`) with two: this file (technical architecture + this log) and `PRODUCT.md` (business/product scope only). Rationale: the three old docs restated the same facts with drifting detail and no changelog, making it unclear which was current. Going forward, architectural changes are logged here instead of accumulating in a new standalone doc.
 
-### 2026-09-05 — `proxy.ts` → `middleware.ts`
-Route-protection logic existed but Next.js only auto-loads middleware from a file literally named `middleware.ts` (or `src/middleware.ts`), exporting a function named `middleware` (or default export). The file was named `proxy.ts` and exported a function named `proxy` — silently never executed. Renamed the file and the exported function. This was the single highest-impact bug found in the initial project audit: `/dashboard` and `/settings` were reachable without a session and without an onboarding-completion check.
+### 2026-09-05 — Corrected: `proxy.ts` was never dead code
+The initial project audit concluded `proxy.ts` was silently dead — reasoning that Next.js only auto-loads middleware from a file named `middleware.ts`. That reasoning was stale: **Next.js 16 renamed the convention from `middleware.ts`/`middleware()` to `proxy.ts`/`proxy()`**, and this app is on Next 16.2.6. `proxy.ts` was almost certainly working correctly the whole time. Acting on the wrong diagnosis, it was renamed to `middleware.ts` earlier in this same session — which, in Next 16, only runs in the edge runtime (not configurable), and immediately crashed every route with "The edge runtime does not support Node.js 'crypto' module" (this file imports `lib/auth.ts`, which uses `pg.Pool`). Caught by actually booting the dev server and hitting the crash in a browser, rather than trusting static analysis alone. Reverted: renamed back to `proxy.ts`, function back to `proxy`. Lesson logged here so it isn't repeated: **do not rename `proxy.ts` to `middleware.ts` in this codebase.** If Next.js docs are consulted for this again, use version-matched docs (Next 16, not general/pre-16 knowledge) — see `node_modules/next/dist/docs/` per Next's own AGENTS.md guidance for this version.
 
 ### 2026-09-05 — MCP deployment documentation corrected
 Confirmed with the project owner: there is no separate Railway or Cloudflare Worker MCP deployment. This Next.js app, deployed on Vercel, is the only real MCP server (`/api/mcp`). Removed the stale "deployed separately on Railway" claim from AGENTS.md and fixed `SettingsClient.tsx`, which hardcoded a placeholder Cloudflare Worker URL (and a placeholder Vercel domain) in its connection snippets — both now derive from `NEXT_PUBLIC_APP_URL`.
+
+### 2026-09-06 — Google OAuth added as a Better Auth social provider
+Evaluated removing Better Auth for a Google-only auth model; decided against it — Better Auth already supports Google as a `socialProviders` entry, so the session model, `requireSessionUser()`, and the `onboarding_done` field all stay unchanged. Added `GOOGLE_CLIENT_ID`/`GOOGLE_CLIENT_SECRET` and a "Continue with Google" option on both `/login` and `/signup`, routed through the same `proxy.ts` onboarding gate as email/password accounts — no separate signup-vs-login branching needed for the social path.
 
 ### 2026-09-05 — Dead code removed
 Deleted `lib/mock-data.ts`, `lib/mock-entries.ts`, `components/graph/ContextGraph.tsx` (2D, superseded), `components/dashboard/CreateNodeDialog.tsx` (duplicate of `AddNodeModal.tsx`), `app/api/onboarding/route.ts` and `generateContextGraph()` in `lib/openrouter.ts` (superseded by the chat+finalize flow), `lib/supabase.ts`'s unused `createSupabaseBrowser`, and the now-unused `OnboardingAnswers` type. Also removed `test.css` (stray Tailwind build output, not imported anywhere) and stopped tracking `.impeccable/live/config.json` (local dev-tool session state — kept on disk, added to `.gitignore`).
 
 ### 2026-09-05 — Checked-in schema snapshot added
 Added `supabase/schema.sql` reflecting the actual live schema (reverse-engineered from `types/index.ts`'s `Database` type plus `scripts/migrate.ts` and `scripts/migrate-edges.ts`), so the schema has one readable source instead of three scattered ones. This is a snapshot, not a migration framework — future schema changes should still add a new dated SQL file (or adopt a real migration tool) and get logged here, not just edit the snapshot silently.
+
+### 2026-09-06 — Onboarding rebuilt as a structured wizard, chat flow removed
+Replaced the chatbot-style onboarding (`ConversationalOnboarding.tsx`, `/api/onboarding/chat`) with a 5-step form wizard (`components/onboarding/OnboardingWizard.tsx` + `StepIdentity`/`StepStack`/`StepProjects`/`StepGoals`/`StepReview`), plus an explicit "import AI memory" first step (`MemoryImportStep.tsx`) instead of a mid-chat interruption. Rationale: the chat UI made the user re-explain themselves through an LLM roleplaying a form — slower, less predictable, and harder to correct than typed fields; the product owner (building this for their own portfolio) considered it unfinished-looking.
+
+`app/api/onboarding/finalize/route.ts` now takes a structured JSON payload instead of a chat transcript. Node structure (`me`, optional `agency`, `personal/skills`, up to 3 project nodes, `personal/goals`) is built **deterministically in code** — no AI needed to infer shape from free text anymore, since the wizard already collected it as structured fields. AI (`judgeContext`, Gemini-first/OpenRouter-fallback) is called once per finalize, only to write rich prose `content` per node; if that call fails, deterministic fallback content is generated from the same facts so onboarding never hard-fails on an AI outage. `app/api/onboarding/chat/route.ts` deleted; new `app/api/onboarding/parse-memory/route.ts` handles the one-shot AI parse for the memory-import step (also degrades gracefully to blank fields on failure, never a dead end).
+
+`GraphPreview.tsx` (the live mini-graph shown beside the wizard) now renders from real wizard state instead of regex-guessing labels out of chat text — a node only appears once the user has actually entered the data it represents.
+
+The old `FINALIZE_STEPS` overlay (a hardcoded `setTimeout` checklist faking granular progress around what's actually one request/response) is replaced with a single honest "Building your graph — about 10 seconds" state.
+
+Added `driver.js` (Nutlope-independent, kamranahmedse/driver.js, MIT) as a dependency for a one-time guided tour on `/connect` right after finalize: spotlights the API key, the client-tab strip, the code snippet, and Test Connection, in sequence. Reuses the existing `sessionStorage['cg-new-api-key']` flag (already set by finalize) to detect "just onboarded" rather than adding a new flag. Popover re-themed via `components/connect/driver-theme.css` against DESIGN.md tokens instead of the library's default look. A persistent "Take a tour" button lets returning users replay it.
+
+Verified end-to-end against a live dev server: full wizard flow (fresh path), live graph preview updating per field, finalize producing real AI-authored node content and a working API key, and the driver.js tour auto-firing on `/connect` with correct popover content. One environment-only finding: the dev-only `Agentation` overlay (see §8) intercepts Enter/comma keydowns during `npm run dev`, which looked like a tag-input bug until isolated — the `onBlur` commit path (and real end users without this dev tool) are unaffected.

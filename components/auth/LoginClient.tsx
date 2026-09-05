@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { signIn } from '@/lib/auth-client'
 import { AuthLayout } from '@/components/auth/AuthLayout'
+import { GoogleIcon } from '@/components/auth/GoogleIcon'
 import { Input } from '@/components/ui/Input'
 import { PasswordInput } from '@/components/auth/PasswordInput'
 import { Button } from '@/components/ui/Button'
@@ -17,6 +18,12 @@ export default function LoginClient() {
   const [errors, setErrors] = useState<{ email?: string; password?: string }>({})
   const [error, setError] = useState('')
   const [isLoading, setIsLoading] = useState(false)
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false)
+
+  const handleGoogle = async () => {
+    setIsGoogleLoading(true)
+    await signIn.social({ provider: 'google', callbackURL: '/dashboard' })
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -64,6 +71,23 @@ export default function LoginClient() {
         <p className="cg-subtext mb-8 text-[15px] text-[var(--text-secondary)]">
           Sign in to your context graph
         </p>
+
+        <Button
+          type="button"
+          variant="secondary"
+          className="w-full"
+          onClick={handleGoogle}
+          disabled={isLoading || isGoogleLoading}
+        >
+          {isGoogleLoading ? <Loader2 className="animate-spin" size={16} /> : <GoogleIcon size={16} />}
+          Continue with Google
+        </Button>
+
+        <div className="my-6 flex items-center gap-3">
+          <span className="h-px flex-1 bg-[var(--border)]" />
+          <span className="text-[12px] text-[var(--text-muted)]">or</span>
+          <span className="h-px flex-1 bg-[var(--border)]" />
+        </div>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <div className="cg-field">

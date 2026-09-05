@@ -1,92 +1,84 @@
-﻿'use client'
+'use client'
 
+import { useMemo } from 'react'
 import { useGSAP } from '@gsap/react'
 import { gsap } from '@/lib/gsap'
+import type { WizardData } from './wizard-types'
 
 interface Props {
-  messageCount: number
-  userText: string
+  data: WizardData
 }
 
-const NODES = [
-  { x: 200, y: 160, r: 34, tier: 'root',   defaultLabel: 'ME'        },
-  { x:  88, y:  82, r: 21, tier: 'branch',  defaultLabel: 'Skills'    },
-  { x: 312, y:  82, r: 21, tier: 'branch',  defaultLabel: 'Projects'  },
-  { x:  72, y: 258, r: 16, tier: 'leaf',    defaultLabel: 'Goals'     },
-  { x: 328, y: 258, r: 16, tier: 'leaf',    defaultLabel: 'Agency'    },
-  { x: 200, y: 290, r: 14, tier: 'leaf',    defaultLabel: 'More'      },
-]
+type Tier = 'root' | 'branch' | 'leaf'
+interface PreviewNode { id: string; label: string; tier: Tier; x: number; y: number; r: number }
 
-const NODE_COLORS: Record<string, { fill: string; text: string }> = {
-  root:   { fill: 'var(--accent)',      text: 'var(--on-accent)'      },
-  branch: { fill: 'var(--card-raised)', text: 'var(--text-primary)'   },
-  leaf:   { fill: 'var(--card)',        text: 'var(--text-secondary)'  },
+const CENTER = { x: 200, y: 160 }
+const RADIUS: Record<Exclude<Tier, 'root'>, number> = { branch: 92, leaf: 130 }
+const NODE_RADIUS: Record<Tier, number> = { root: 34, branch: 21, leaf: 15 }
+
+const NODE_COLORS: Record<Tier, { fill: string; text: string }> = {
+  root: { fill: 'var(--accent)', text: 'var(--on-accent)' },
+  branch: { fill: 'var(--card-raised)', text: 'var(--text-primary)' },
+  leaf: { fill: 'var(--card)', text: 'var(--text-secondary)' },
 }
 
-function getLabels(text: string): string[] {
-  const labels: string[] = []
-  const nameMatch = text.match(/(?:I'm|I am|my name is|name's|call me)\s+([A-Z][a-z]+)/i)
-  labels.push(nameMatch?.[1] ?? 'ME')
+// Real facts only — no guessing from free text. A node only appears once the
+// user has actually entered the data it represents.
+function buildNodes(data: WizardData): PreviewNode[] {
+  const satellites: { id: string; label: string; tier: Tier }[] = []
 
-  const techWords = ['React', 'Next.js', 'TypeScript', 'Python', 'Node.js', 'Flutter', 'Vue', 'Angular', 'Swift', 'Kotlin', 'Go', 'Rust', 'Java', 'PHP', 'Django', 'Rails']
-  const foundTech = techWords.find(t => new RegExp('\\b' + t + '\\b', 'i').test(text))
-  labels.push(foundTech ?? 'Skills')
+  if (data.agencyName.trim()) satellites.push({ id: 'agency', label: data.agencyName.trim(), tier: 'branch' })
+  if (data.skills.length || data.stack.length) satellites.push({ id: 'skills', label: 'Skills & Stack', tier: 'branch' })
+  data.projects.slice(0, 3).forEach((p, i) => {
+    if (p.name.trim()) satellites.push({ id: `project-${i}`, label: p.name.trim(), tier: 'leaf' })
+  })
+  if (data.goals.trim()) satellites.push({ id: 'goals', label: 'Goals', tier: 'leaf' })
 
-  const projMatch = text.match(/(?:working on|building|created|shipped)\s+(?:a\s+)?([A-Z][a-zA-Z0-9_-]+)/i)
-  labels.push(projMatch?.[1] ?? 'Projects')
+  const count = satellites.length
+  const placed: PreviewNode[] = satellites.map((n, i) => {
+    const angle = (i / Math.max(count, 1)) * Math.PI * 2 - Math.PI / 2
+    const radius = RADIUS[n.tier as Exclude<Tier, 'root'>]
+    return {
+      ...n,
+      x: CENTER.x + Math.cos(angle) * radius,
+      y: CENTER.y + Math.sin(angle) * radius,
+      r: NODE_RADIUS[n.tier],
+    }
+  })
 
-  labels.push('Goals')
-
-  if (/agency|freelan|studio|client|business/i.test(text)) labels.push('Agency')
-  else { const pm2 = text.match(/(?:also|another|second|other)\s+(?:called|named|is)\s+([A-Z][a-zA-Z0-9_-]+)/i); labels.push(pm2?.[1] ?? 'Work') }
-
-  labels.push('More')
-
-  return labels
+  return [
+    { id: 'me', label: data.name.trim() || 'You', tier: 'root', x: CENTER.x, y: CENTER.y, r: NODE_RADIUS.root },
+    ...placed,
+  ]
 }
 
-export default function GraphPreview({ messageCount, userText }: Props) {
-  const visibleCount = Math.min(messageCount, NODES.length)
-  const labels = getLabels(userText)
-  const nodesToShow = NODES.slice(0, visibleCount)
-  const edges = nodesToShow.slice(1).map(n => ({ x1: 200, y1: 160, x2: n.x, y2: n.y }))
+export default function GraphPreview({ data }: Props) {
+  const nodes = useMemo(() => buildNodes(data), [data])
+  const hasSatellites = nodes.length > 1
 
   useGSAP(() => {
-    if (visibleCount === 0) return
-    const idx = visibleCount - 1
-    const node = NODES[idx]
-    if (!node) return
     const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
     if (prefersReduced) return
+    const last = nodes[nodes.length - 1]
+    if (!last) return
     gsap.fromTo(
-      `.pg-node-${idx}`,
-      { opacity: 0, scale: 0.3, transformOrigin: `${node.x}px ${node.y}px` },
-      { opacity: 1, scale: 1, duration: 0.55, ease: 'back.out(1.8)' },
+      `.pg-node-${last.id}`,
+      { opacity: 0, scale: 0.3, transformOrigin: `${last.x}px ${last.y}px` },
+      { opacity: 1, scale: 1, duration: 0.5, ease: 'back.out(1.8)' },
     )
-  }, [visibleCount])
-
-  const emptyState = visibleCount === 0
+  }, [nodes.length])
 
   return (
     <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', flex: 1, padding: '32px 24px 24px' }}>
-      {/* Panel label */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
-        <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: emptyState ? 'var(--text-muted)' : 'var(--accent)', display: 'inline-block', transition: 'background-color 500ms ease' }} />
+        <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: hasSatellites ? 'var(--accent)' : 'var(--text-muted)', display: 'inline-block', transition: 'background-color 500ms ease' }} />
         <p style={{ fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--text-muted)', fontFamily: 'var(--font-geist-sans), sans-serif', margin: 0 }}>
-          {emptyState ? 'Graph preview' : `Graph preview — ${visibleCount} node${visibleCount !== 1 ? 's' : ''}`}
+          {hasSatellites ? `Graph preview — ${nodes.length} node${nodes.length !== 1 ? 's' : ''}` : 'Graph preview'}
         </p>
       </div>
 
-      {/* SVG */}
       <div style={{ flex: 1, position: 'relative', minHeight: 0 }}>
-        <svg
-          viewBox="0 0 400 340"
-          width="100%"
-          height="100%"
-          style={{ display: 'block', overflow: 'visible' }}
-          aria-label="Context graph preview"
-          role="img"
-        >
+        <svg viewBox="0 0 400 340" width="100%" height="100%" style={{ display: 'block', overflow: 'visible' }} aria-label="Context graph preview" role="img">
           <defs>
             <radialGradient id="pg-node-glow" cx="50%" cy="50%" r="50%">
               <stop offset="0%" stopColor="var(--accent)" stopOpacity="0.15" />
@@ -98,89 +90,69 @@ export default function GraphPreview({ messageCount, userText }: Props) {
             </filter>
           </defs>
 
-          {/* Empty state ambient ring */}
-          {emptyState && (
+          {!hasSatellites && (
             <g opacity="0.4">
-              <circle cx="200" cy="160" r="60" fill="none" stroke="var(--border)" strokeWidth="1" strokeDasharray="4 6" />
-              <circle cx="200" cy="160" r="100" fill="none" stroke="var(--border)" strokeWidth="0.5" strokeDasharray="2 8" />
-              <circle cx="200" cy="160" r="34" fill="var(--card)" stroke="var(--border-strong)" strokeWidth="1" />
-              <text x="200" y="165" textAnchor="middle" fontSize="11" fontWeight="600" fill="var(--text-muted)" fontFamily="var(--font-geist-sans), sans-serif">You</text>
+              <circle cx={CENTER.x} cy={CENTER.y} r="60" fill="none" stroke="var(--border)" strokeWidth="1" strokeDasharray="4 6" />
+              <circle cx={CENTER.x} cy={CENTER.y} r="100" fill="none" stroke="var(--border)" strokeWidth="0.5" strokeDasharray="2 8" />
             </g>
           )}
 
-          {/* Edges */}
-          {edges.map((e, i) => (
-            <line
-              key={i}
-              x1={e.x1} y1={e.y1} x2={e.x2} y2={e.y2}
-              stroke="var(--border-strong)"
-              strokeWidth="1"
-              strokeDasharray="4 5"
-              className="cg-dash-flow"
-              opacity="0.7"
-            />
+          {nodes.slice(1).map(n => (
+            <line key={`edge-${n.id}`} x1={CENTER.x} y1={CENTER.y} x2={n.x} y2={n.y} stroke="var(--border-strong)" strokeWidth="1" strokeDasharray="4 5" opacity="0.7" />
           ))}
 
-          {/* Root node glow */}
-          {visibleCount > 0 && (
-            <circle cx="200" cy="160" r="60" fill="url(#pg-node-glow)" />
-          )}
+          <circle cx={CENTER.x} cy={CENTER.y} r="60" fill="url(#pg-node-glow)" />
 
-          {/* Nodes */}
-          {nodesToShow.map((node, i) => {
+          {nodes.map(node => {
             const colors = NODE_COLORS[node.tier]
-            const label = labels[i] ?? node.defaultLabel
+            const caption = node.label.length > 16 ? node.label.slice(0, 15) + '…' : node.label
             return (
-              <g key={i} className={`pg-node-${i}`} style={{ opacity: 1 }}>
-                {/* Subtle node shadow */}
+              <g key={node.id} className={`pg-node-${node.id}`}>
                 <circle cx={node.x} cy={node.y + 1.5} r={node.r} fill="rgba(0,0,0,0.35)" opacity="0.6" />
-                {/* Node fill */}
                 <circle
-                  cx={node.x}
-                  cy={node.y}
-                  r={node.r}
+                  cx={node.x} cy={node.y} r={node.r}
                   fill={colors.fill}
                   stroke={node.tier === 'root' ? 'rgba(179,236,19,0.3)' : 'var(--border-strong)'}
                   strokeWidth={node.tier === 'root' ? 2 : 1}
                   filter={node.tier === 'root' ? 'url(#pg-glow)' : undefined}
                 />
-                {/* Node label */}
+                {/* Initial inside the node — always fits regardless of label length */}
                 <text
-                  x={node.x}
-                  y={node.y + (node.tier === 'root' ? 5 : 4)}
+                  x={node.x} y={node.y + (node.tier === 'root' ? 6 : 5)}
                   textAnchor="middle"
-                  fontSize={node.tier === 'root' ? 13 : node.tier === 'branch' ? 10 : 9}
-                  fontWeight={node.tier === 'root' ? 700 : 600}
+                  fontSize={node.tier === 'root' ? 20 : node.tier === 'branch' ? 14 : 12}
+                  fontWeight={700}
                   fill={colors.text}
                   fontFamily="var(--font-geist-sans), sans-serif"
                   style={{ userSelect: 'none', pointerEvents: 'none' }}
                 >
-                  {label}
+                  {(node.label.trim()[0] ?? '?').toUpperCase()}
+                </text>
+                {/* Full label as a caption below the node */}
+                <text
+                  x={node.x} y={node.y + node.r + 14}
+                  textAnchor="middle"
+                  fontSize={node.tier === 'root' ? 11 : 9}
+                  fontWeight={node.tier === 'root' ? 600 : 500}
+                  fill={node.tier === 'root' ? 'var(--text-primary)' : 'var(--text-secondary)'}
+                  fontFamily="var(--font-geist-sans), sans-serif"
+                  style={{ userSelect: 'none', pointerEvents: 'none' }}
+                >
+                  {caption}
                 </text>
               </g>
             )
           })}
         </svg>
 
-        {/* Empty state caption */}
-        {emptyState && (
-          <div style={{
-            position: 'absolute', bottom: '20px', left: 0, right: 0,
-            textAlign: 'center',
-          }}>
+        {!hasSatellites && (
+          <div style={{ position: 'absolute', bottom: '20px', left: 0, right: 0, textAlign: 'center' }}>
             <p style={{ fontSize: '13px', color: 'var(--text-muted)', lineHeight: '1.6', fontFamily: 'var(--font-geist-sans), sans-serif' }}>
-              Your graph builds here as we talk
+              Your graph builds here as you fill in each step
             </p>
           </div>
         )}
       </div>
-
-      {/* Footer note when nodes exist */}
-      {visibleCount > 0 && visibleCount < NODES.length && (
-        <p style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '12px', fontFamily: 'var(--font-geist-sans), sans-serif', lineHeight: '1.5' }}>
-          {NODES.length - visibleCount} more node{NODES.length - visibleCount !== 1 ? 's' : ''} will appear as the conversation continues.
-        </p>
-      )}
     </div>
   )
 }
