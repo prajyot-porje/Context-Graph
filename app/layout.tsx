@@ -1,10 +1,10 @@
 import type { Metadata } from 'next'
 import { Geist, Geist_Mono, Outfit } from 'next/font/google'
 import { LenisProvider } from '@/components/providers/LenisProvider'
-import { MaintenanceScene } from '@/components/landing/MaintenanceScene'
+import { MaintenanceScene } from '@/components/maintenance/MaintenanceScene'
 import './globals.css'
 
-const MAINTENANCE_MODE = process.env.NEXT_PUBLIC_MAINTENANCE_MODE !== 'false'
+const MAINTENANCE_MODE = process.env.NEXT_PUBLIC_MAINTENANCE_MODE === 'true'
 
 
 const geistSans = Geist({
@@ -30,8 +30,8 @@ export const metadata: Metadata = {
   },
   description: 'A cross-AI personal context engine. Build your context graph once. Claude, ChatGPT, Codex — every AI reads from the same source of truth.',
   keywords: ['AI context', 'MCP', 'Model Context Protocol', 'Claude', 'ChatGPT', 'Codex', 'persistent memory', 'developer tools', 'context graph'],
-  authors: [{ name: 'Prajyot Porje', url: 'https://github.com/prajyot-porje' }],
-  creator: 'Prajyot Porje',
+  authors: [{ name: 'ContextGraph Team', url: 'https://github.com/context-graph' }],
+  creator: 'ContextGraph Team',
   openGraph: {
     type: 'website',
     siteName: 'ContextGraph',
@@ -49,12 +49,21 @@ export const metadata: Metadata = {
     title: 'ContextGraph — Your context. Every AI.',
     description: 'Cross-AI persistent context engine with MCP support. Free to start.',
     images: ['/og-image.png'],
-    creator: '@prajyotporje',
+    creator: '@contextgraph',
   },
   robots: { index: true, follow: true },
   icons: {
-    icon: '/favicon.ico',
-    shortcut: '/favicon.ico',
+    icon: [
+      {
+        url: '/icons/logo-dark.png',
+        media: '(prefers-color-scheme: dark)',
+      },
+      {
+        url: '/icons/logo-light.png',
+        media: '(prefers-color-scheme: light)',
+      },
+    ],
+    shortcut: '/icons/logo-dark.png',
   },
 }
 
@@ -74,11 +83,11 @@ export default function RootLayout({
           dangerouslySetInnerHTML={{
             __html: `
               try {
-                if (localStorage.theme === 'light') {
-                  document.documentElement.setAttribute('data-theme', 'light');
-                } else {
-                  document.documentElement.removeAttribute('data-theme');
+                var t = localStorage.getItem('cg-theme');
+                if (!t) {
+                  t = window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
                 }
+                document.documentElement.setAttribute('data-theme', t);
               } catch (_) {}
             `,
           }}

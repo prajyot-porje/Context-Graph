@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createHash } from 'crypto'
 import { createSupabaseServer } from '@/lib/supabase'
+import { validateApiKey } from '@/lib/db'
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Methods': 'GET, OPTIONS',
-  'Access-Control-Allow-Headers': 'Content-Type, x-api-key',
+  'Access-Control-Allow-Headers': 'Content-Type, x-api-key, Authorization',
 }
 
 export async function OPTIONS() {
@@ -15,40 +15,39 @@ export async function OPTIONS() {
 export async function GET(request: NextRequest) {
   try {
     // 1. Extract API key from header or query param
-    let apiKey = request.headers.get('x-api-key')
-    if (!apiKey) {
-      const { searchParams } = new URL(request.url)
-      apiKey = searchParams.get('key')
+    let rawApiKey: string | null = null
+
+    const authHeader = request.headers.get('authorization')
+    if (authHeader) {
+      rawApiKey = authHeader
+    } else {
+      const headerKey = request.headers.get('x-api-key')
+      if (headerKey) {
+        rawApiKey = headerKey
+      } else {
+        const { searchParams } = new URL(request.url)
+        rawApiKey = searchParams.get('key') || searchParams.get('apiKey') || searchParams.get('api_key')
+      }
     }
 
-    if (!apiKey) {
+    if (!rawApiKey) {
       return NextResponse.json(
         { error: 'Missing API key' },
         { status: 401, headers: CORS }
       )
     }
 
-    // 2. Hash key with SHA-256
-    const hash = createHash('sha256').update(apiKey).digest('hex')
-
-    // 3. Supabase lookup
-    const supabase = createSupabaseServer()
-    
-    // Look up in api_keys
-    const { data: keyData, error: keyError } = await supabase
-      .from('api_keys')
-      .select('user_id')
-      .eq('key_hash', hash)
-      .maybeSingle()
-
-    if (keyError || !keyData) {
+    // 2. Validate API key via centralized helper (strips Bearer, quotes, verifies SHA-256)
+    const userId = await validateApiKey(rawApiKey)
+    if (!userId) {
       return NextResponse.json(
         { error: 'Invalid API key' },
         { status: 401, headers: CORS }
       )
     }
 
-    const userId = keyData.user_id
+    // 3. Supabase lookup
+    const supabase = createSupabaseServer()
 
     // Fetch user name from 'user' table
     const { data: userData, error: userError } = await supabase
@@ -76,12 +75,6 @@ export async function GET(request: NextRequest) {
         { status: 500, headers: CORS }
       )
     }
-
-    // Update last_used
-    await supabase
-      .from('api_keys')
-      .update({ last_used: new Date().toISOString() })
-      .eq('key_hash', hash)
 
     return NextResponse.json(
       {

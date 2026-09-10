@@ -3,148 +3,305 @@
 import { useRef, useState } from 'react'
 import { useGSAP } from '@gsap/react'
 import { gsap, prefersReducedMotion } from '@/lib/gsap'
-import { ArrowRight, Terminal, Shield, Sparkles, Network } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import {
+  Layers,
+  Sparkles,
+  CheckCircle2,
+  RefreshCw,
+  Zap,
+} from 'lucide-react'
 
-const STEPS = [
+interface Step {
+  number: string
+  title: string
+  subtitle: string
+  description: string
+  badge: string
+}
+
+const STEPS: Step[] = [
   {
     number: '01',
-    title: 'Complete 3-minute onboarding',
+    title: 'Structure your foundation',
+    subtitle: 'Define role, stack, and conventions',
     description:
-      'Answer questions about your identity, stack, active projects, and primary goals. We analyze and structure your initial context graph automatically.',
+      'Answer a few quick questions or paste your existing guidelines. ContextGraph structures your identity, tech stack, and architectural rules into an organized semantic graph.',
+    badge: 'Step 1: Setup',
   },
   {
     number: '02',
-    title: 'Connect your AI clients',
+    title: 'Plug into any AI tool',
+    subtitle: 'Universal Model Context Protocol',
     description:
-      'Copy your generated secure API key. Add one line to your Claude, ChatGPT, or Cursor system prompts. Your AI now has access to the Graph.',
+      'Connect Claude, Cursor, Windsurf, or Codex CLI in seconds. One unified API key connects all your assistants to your single source of truth.',
+    badge: 'Step 2: Connect',
   },
   {
     number: '03',
-    title: 'Sync memory automatically',
+    title: 'Code without repeating yourself',
+    subtitle: 'Zero-prompt context injection & evolution',
     description:
-      'Type /save at the end of any coding session. The protocol processes the conversation transcripts and appends relevant updates to the graph.',
+      'Assistants automatically query relevant nodes on prompt 1. When you make architecture decisions, type /save to persist updates to your graph in real time.',
+    badge: 'Step 3: Build',
   },
 ]
 
 export function HowItWorks() {
-  const container = useRef<HTMLElement>(null)
+  const containerRef = useRef<HTMLElement>(null)
   const [activeStep, setActiveStep] = useState(0)
+  const [testingPing, setTestingPing] = useState(false)
+  const [pingVerified, setPingVerified] = useState(false)
+
+  const handleTestPing = () => {
+    setTestingPing(true)
+    setTimeout(() => {
+      setTestingPing(false)
+      setPingVerified(true)
+      setTimeout(() => setPingVerified(false), 3000)
+    }, 600)
+  }
 
   useGSAP(
     () => {
       if (prefersReducedMotion()) {
-        gsap.set('.hiw-header, .hiw-grid', { opacity: 1, y: 0 })
+        gsap.set('.hiw-header, .hiw-card', { opacity: 1, y: 0 })
         return
-      }
-
-      const trigger = {
-        trigger: container.current,
-        start: 'top 85%',
-        once: true,
       }
 
       gsap.from('.hiw-header', {
         opacity: 0,
         y: 20,
-        duration: 0.4,
+        duration: 0.5,
         ease: 'cg-out',
-        scrollTrigger: trigger,
+        scrollTrigger: {
+          trigger: containerRef.current,
+          start: 'top 85%',
+          once: true,
+        },
       })
 
-      gsap.from('.hiw-grid', {
+      gsap.from('.hiw-card', {
         opacity: 0,
-        y: 32,
-        duration: 0.55,
+        y: 24,
+        duration: 0.6,
         ease: 'cg-out',
-        scrollTrigger: trigger,
+        scrollTrigger: {
+          trigger: containerRef.current,
+          start: 'top 80%',
+          once: true,
+        },
       })
     },
-    { scope: container }
+    { scope: containerRef }
   )
 
-  const renderVisualCompanion = (stepIdx: number) => {
-    switch (stepIdx) {
+  const renderVisualCompanion = () => {
+    switch (activeStep) {
       case 0:
         return (
-          <div className="flex flex-col gap-3 w-full max-w-[320px] font-mono text-[11px] bg-[#0c0c0c] border border-[var(--border)] rounded-[var(--radius-md)] p-4 shadow-[var(--shadow-sm)]">
-            <div className="flex items-center gap-1.5 text-[var(--text-muted)] border-b border-[var(--border)] pb-2 mb-1">
-              <Sparkles size={12} className="text-[var(--accent)]" />
-              <span>onboarding_payload.json</span>
+          <div className="flex flex-col w-full text-left gap-4">
+            <div className="flex items-center justify-between pb-3 border-b border-[var(--border)]">
+              <div className="flex items-center gap-2">
+                <div className="h-7 w-7 rounded-md bg-[var(--surface)] border border-[var(--border)] flex items-center justify-center text-[var(--accent)]">
+                  <Layers className="w-4 h-4" />
+                </div>
+                <div>
+                  <div className="text-[12px] font-semibold text-[var(--text-primary)]">User Context Blueprint</div>
+                  <div className="text-[10px] text-[var(--text-secondary)]">Scope: @identity/root</div>
+                </div>
+              </div>
+              <span className="px-2 py-0.5 rounded-full bg-[var(--accent-muted)] text-[var(--accent)] border border-[rgba(179,236,19,0.2)] text-[9px] font-mono font-bold uppercase">
+                Graph Ready
+              </span>
             </div>
-            <div><span className="text-[var(--text-muted)]">"identity":</span> "Senior Full-Stack Engineer"</div>
-            <div><span className="text-[var(--text-muted)]">"skills":</span> ["TypeScript", "Next.js", "Supabase"]</div>
-            <div><span className="text-[var(--text-muted)]">"projects":</span> ["TaskFlow SaaS", "ContextGraph"]</div>
-            <div><span className="text-[var(--text-muted)]">"goals":</span> "Deploy multi-user API endpoint"</div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div className="p-3 rounded-xl bg-[var(--surface)] border border-[var(--border)] text-left">
+                <div className="text-[10px] font-mono text-[var(--text-muted)] uppercase tracking-wider font-semibold">Primary Role</div>
+                <div className="text-[13px] font-semibold text-[var(--text-primary)] mt-1">Lead Architect</div>
+                <div className="text-[11px] text-[var(--text-secondary)] mt-0.5">Full-Stack Web &amp; AI</div>
+              </div>
+
+              <div className="p-3 rounded-xl bg-[var(--surface)] border border-[var(--border)] text-left">
+                <div className="text-[10px] font-mono text-[var(--text-muted)] uppercase tracking-wider font-semibold">Active Repository</div>
+                <div className="text-[13px] font-semibold text-[var(--text-primary)] mt-1">TaskFlow SaaS</div>
+                <div className="text-[11px] text-[var(--text-secondary)] mt-0.5">Production Branch</div>
+              </div>
+            </div>
+
+            <div className="p-3.5 rounded-xl bg-[var(--surface)] border border-[var(--border)] flex flex-col gap-2 text-left font-mono text-[11px]">
+              <div className="text-[10px] text-[var(--text-muted)] font-semibold uppercase tracking-wider">Engineered Rules Injected:</div>
+              <div className="flex items-center gap-2 text-[var(--text-primary)]">
+                <span className="text-[var(--accent)] font-bold">✓</span>
+                <span>Next.js 15 App Router · TypeScript Strict</span>
+              </div>
+              <div className="flex items-center gap-2 text-[var(--text-primary)]">
+                <span className="text-[var(--accent)] font-bold">✓</span>
+                <span>Programmatic tenant auth via Better Auth</span>
+              </div>
+              <div className="flex items-center gap-2 text-[var(--text-primary)]">
+                <span className="text-[var(--accent)] font-bold">✓</span>
+                <span>Tailwind v4 tokens only (no hardcoded hex)</span>
+              </div>
+            </div>
           </div>
         )
+
       case 1:
         return (
-          <div className="flex flex-col gap-3 w-full max-w-[340px] font-mono text-[11px] bg-[#0c0c0c] border border-[var(--border)] rounded-[var(--radius-md)] p-4 shadow-[var(--shadow-sm)]">
-            <div className="flex items-center gap-1.5 text-[var(--text-muted)] border-b border-[var(--border)] pb-2 mb-1">
-              <Terminal size={12} className="text-[var(--accent)]" />
-              <span>mcp_config.json</span>
+          <div className="flex flex-col w-full text-left gap-4">
+            <div className="flex items-center justify-between pb-3 border-b border-[var(--border)]">
+              <div className="flex items-center gap-2">
+                <div className="h-7 w-7 rounded-md bg-[var(--surface)] border border-[var(--border)] flex items-center justify-center text-[var(--accent)]">
+                  <Zap className="w-4 h-4" />
+                </div>
+                <div>
+                  <div className="text-[12px] font-semibold text-[var(--text-primary)]">Cross-AI Connection Hub</div>
+                  <div className="text-[10px] text-[var(--text-secondary)]">Universal Model Context Protocol (MCP v1.0)</div>
+                </div>
+              </div>
+
+              {/* Interactive Test Ping Button */}
+              <button
+                onClick={handleTestPing}
+                disabled={testingPing}
+                className="inline-flex items-center gap-1.5 px-3 py-1 rounded-[var(--radius-sm)] border border-[var(--border-strong)] bg-[var(--surface)] text-[11px] font-medium text-[var(--text-primary)] hover:border-[var(--accent)] transition-[border-color,background-color,color] duration-150 active:scale-95 cursor-pointer disabled:opacity-50"
+              >
+                <RefreshCw className={cn('w-3 h-3 text-[var(--accent)]', testingPing && 'animate-spin')} />
+                <span>{pingVerified ? 'Verified (4ms)' : testingPing ? 'Pinging...' : 'Verify Link'}</span>
+              </button>
             </div>
-            <div className="text-[var(--text-secondary)] whitespace-pre overflow-x-auto">
-{`{
-  "mcpServers": {
-    "context-graph": {
-      "command": "npx",
-      "args": ["-y", "@context-graph/mcp"],
-      "env": {
-        "CONTEXT_GRAPH_API_KEY": "cg_live_9f27...41d"
-      }
-    }
-  }
-}`}
+
+            {/* Connected Clients Matrix */}
+            <div className="grid grid-cols-2 gap-2.5">
+              <div className="p-3 rounded-xl bg-[var(--surface)] border border-[var(--border)] flex flex-col justify-between">
+                <div className="flex items-center justify-between">
+                  <span className="text-[12px] font-semibold text-[var(--text-primary)] flex items-center gap-1.5">
+                    <span>⚡</span> Cursor IDE
+                  </span>
+                  <CheckCircle2 className="w-3.5 h-3.5 text-[var(--accent)]" />
+                </div>
+                <span className="text-[10px] font-mono text-[var(--text-secondary)] mt-2">@stack/nextjs · @rules/tokens</span>
+              </div>
+
+              <div className="p-3 rounded-xl bg-[var(--surface)] border border-[var(--border)] flex flex-col justify-between">
+                <div className="flex items-center justify-between">
+                  <span className="text-[12px] font-semibold text-[var(--text-primary)] flex items-center gap-1.5">
+                    <span>🔮</span> Claude Code
+                  </span>
+                  <CheckCircle2 className="w-3.5 h-3.5 text-[var(--accent)]" />
+                </div>
+                <span className="text-[10px] font-mono text-[var(--text-secondary)] mt-2">@identity/architect · @rules/auth</span>
+              </div>
+
+              <div className="p-3 rounded-xl bg-[var(--surface)] border border-[var(--border)] flex flex-col justify-between">
+                <div className="flex items-center justify-between">
+                  <span className="text-[12px] font-semibold text-[var(--text-primary)] flex items-center gap-1.5">
+                    <span>⚙️</span> Codex CLI
+                  </span>
+                  <CheckCircle2 className="w-3.5 h-3.5 text-[var(--accent)]" />
+                </div>
+                <span className="text-[10px] font-mono text-[var(--text-secondary)] mt-2">@stack/supabase · @db/schema</span>
+              </div>
+
+              <div className="p-3 rounded-xl bg-[var(--surface)] border border-[var(--border)] flex flex-col justify-between">
+                <div className="flex items-center justify-between">
+                  <span className="text-[12px] font-semibold text-[var(--text-primary)] flex items-center gap-1.5">
+                    <span>💬</span> ChatGPT Web
+                  </span>
+                  <CheckCircle2 className="w-3.5 h-3.5 text-[var(--accent)]" />
+                </div>
+                <span className="text-[10px] font-mono text-[var(--text-secondary)] mt-2">@identity/lead · @projects/active</span>
+              </div>
+            </div>
+
+            {/* Explanatory summary */}
+            <div className="p-3 rounded-xl bg-[var(--surface)] border border-[var(--border)] text-left flex items-start gap-2.5">
+              <span className="text-[var(--accent)] font-bold text-[13px] mt-0.5">●</span>
+              <p className="text-[11px] text-[var(--text-secondary)] leading-relaxed">
+                One personal API key securely connects every tool. Context updates propagate across all clients in real time without manual copy-pasting.
+              </p>
             </div>
           </div>
         )
+
       case 2:
         return (
-          <div className="flex flex-col items-center justify-center gap-4 w-full max-w-[300px] border border-[var(--border)] rounded-[var(--radius-md)] p-6 bg-gradient-to-b from-[var(--card-raised)] to-[var(--card)] shadow-[var(--shadow-sm)] min-h-[180px]">
-            <div className="flex items-center gap-6">
-              {/* Parent node */}
-              <div className="p-2.5 rounded-[var(--radius-md)] bg-[var(--surface)] border border-[var(--border-strong)] text-[var(--text-secondary)]">
-                <Shield size={16} />
+          <div className="flex flex-col w-full text-left gap-4">
+            <div className="flex items-center justify-between pb-3 border-b border-[var(--border)]">
+              <div className="flex items-center gap-2">
+                <div className="h-7 w-7 rounded-md bg-[var(--surface)] border border-[var(--border)] flex items-center justify-center text-[var(--accent)]">
+                  <Sparkles className="w-4 h-4" />
+                </div>
+                <div>
+                  <div className="text-[12px] font-semibold text-[var(--text-primary)]">Live Context Injection</div>
+                  <div className="text-[10px] text-[var(--text-secondary)]">Prompt augmentation at runtime</div>
+                </div>
               </div>
-              <div className="h-[2px] w-8 bg-[var(--accent)] relative">
-                <div className="absolute top-1/2 -translate-y-1/2 left-0 w-2 h-2 rounded-full bg-[var(--accent)] animate-[ping_1.5s_infinite]" />
-              </div>
-              {/* Newly appended node */}
-              <div className="p-2.5 rounded-[var(--radius-md)] bg-[var(--surface)] border border-[var(--accent)] text-[var(--accent)] shadow-[var(--shadow-accent)] animate-pulse">
-                <Network size={16} />
+              <span className="px-2 py-0.5 rounded-full bg-[var(--accent-muted)] text-[var(--accent)] border border-[rgba(179,236,19,0.2)] text-[9px] font-mono font-bold uppercase">
+                1 Turn Answer
+              </span>
+            </div>
+
+            <div className="p-3.5 rounded-xl bg-[var(--surface)] border border-[var(--border)] text-left">
+              <div className="text-[10px] font-mono text-[var(--text-muted)] uppercase tracking-wider font-semibold mb-1">Incoming User Prompt:</div>
+              <div className="text-[13px] text-[var(--text-primary)] font-medium">
+                &ldquo;Write the server action to update user billing plan.&rdquo;
               </div>
             </div>
-            <div className="text-[10px] font-mono text-[var(--accent)] font-semibold mt-2">
-              New node appended: /projects/taskflow
+
+            <div className="p-3.5 rounded-xl bg-[var(--surface)] border border-[var(--border)] flex flex-col gap-2 text-left">
+              <div className="text-[10px] font-mono text-[var(--accent)] uppercase tracking-wider font-bold flex items-center gap-1.5">
+                <span className="h-1.5 w-1.5 rounded-full bg-[var(--accent)] animate-ping" />
+                Context Injected Instantly:
+              </div>
+              <div className="text-[12px] text-[var(--text-secondary)] leading-relaxed">
+                → Scoped to <span className="text-[var(--text-primary)] font-semibold">@rules/session-auth</span> (uses requireSessionUser)
+                <br />
+                → Linked with <span className="text-[var(--text-primary)] font-semibold">@stack/supabase</span> (filters by user_id, no raw SQL)
+                <br />
+                → Returns typed action state without 3 turns of back-and-forth questioning.
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between pt-1 text-[11px] font-mono text-[var(--text-secondary)]">
+              <span>Saved conversation turns: <strong className="text-[var(--accent)] font-semibold">3-4 turns</strong></span>
+              <span>Latency added: <strong className="text-[var(--text-primary)] font-semibold">0ms</strong></span>
             </div>
           </div>
         )
+
       default:
         return null
     }
   }
 
   return (
-    <section ref={container} className="relative py-[var(--space-24)]">
-      <div className="section-divider absolute left-0 right-0 top-0" />
-
-      <div className="mx-auto max-w-[1200px] px-[var(--space-6)]">
+    <section id="how-it-works" ref={containerRef} className="relative py-28 bg-[var(--bg)] border-t border-[var(--border)]">
+      <div className="mx-auto max-w-[1200px] px-[var(--space-6)] relative z-10">
         {/* Section Header */}
-        <div className="hiw-header mb-[var(--space-16)]">
-          <h2 className="text-display-lg text-[var(--text-primary)] font-bold">
-            Three steps to connected context
+        <div className="hiw-header mb-16 text-left">
+          <div className="mb-4 flex items-center gap-2 rounded-full border border-[var(--border)] bg-[var(--surface)] w-max px-3.5 py-1 shadow-[var(--shadow-xs)]">
+            <span className="h-1.5 w-1.5 rounded-full bg-[var(--accent)] shrink-0" />
+            <span className="text-label text-[10px] text-[var(--text-secondary)] font-semibold tracking-[0.12em] uppercase">
+              Workflow Protocol
+            </span>
+          </div>
+
+          <h2 className="text-display-lg text-[var(--text-primary)] font-bold uppercase tracking-tight">
+            Connected context in three steps.
           </h2>
+
+          <p className="mt-[var(--space-4)] max-w-[56ch] text-body-md text-[var(--text-secondary)] leading-relaxed">
+            From zero to cross-AI memory in under two minutes. Designed to get out of your way and let you build.
+          </p>
         </div>
 
         {/* 2-Column Grid */}
-        <div className="hiw-grid grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
-          {/* Left Column: Vertical timeline steppers */}
-          <div className="lg:col-span-5 flex flex-col gap-3 relative">
-            {/* Vertical connecting timeline line */}
-            <div className="absolute left-[36px] top-6 bottom-6 w-[1px] bg-gradient-to-b from-[var(--border)] via-[var(--border-strong)] to-[var(--border)] z-0 hidden sm:block pointer-events-none" />
-
+        <div className="hiw-card grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
+          {/* Left Column: Interactive Steppers */}
+          <div className="lg:col-span-5 flex flex-col gap-3.5 relative">
             {STEPS.map((step, i) => {
               const isActive = activeStep === i
               return (
@@ -153,33 +310,51 @@ export function HowItWorks() {
                   onMouseEnter={() => setActiveStep(i)}
                   onClick={() => setActiveStep(i)}
                   className={cn(
-                    "group relative z-10 flex flex-row items-start p-[var(--space-5)] rounded-[var(--radius-lg)] border transition-[background-color,border-color,box-shadow] duration-200 ease-out cursor-pointer text-left",
+                    'group relative z-10 flex flex-row items-start p-5 sm:p-6 rounded-[20px] border transition-[background-color,border-color,box-shadow] duration-200 ease-out cursor-pointer text-left',
                     isActive
-                      ? "bg-[rgba(255,255,255,0.02)] border-[var(--border-strong)] shadow-[var(--shadow-sm)]"
-                      : "bg-transparent border-transparent hover:bg-[rgba(255,255,255,0.01)]"
+                      ? 'bg-[var(--card)] border-[var(--border-strong)] shadow-[var(--shadow-sm)]'
+                      : 'bg-transparent border-transparent hover:bg-[var(--surface)]/50 hover:border-[var(--border)]'
                   )}
                 >
                   {/* Step Number Badge */}
-                  <div className={cn(
-                    "mr-[var(--space-4)] flex h-8 w-8 shrink-0 items-center justify-center rounded-[var(--radius-md)] border text-[12px] font-bold transition-[color,background-color,border-color] duration-200 ease-out",
-                    isActive
-                      ? "border-[var(--accent)] bg-[var(--accent-muted)] text-[var(--accent)]"
-                      : "border-[var(--border-strong)] bg-[var(--card)] text-[var(--text-secondary)] group-hover:border-[var(--text-primary)] group-hover:text-[var(--text-primary)]"
-                  )}>
+                  <div
+                    className={cn(
+                      'mr-4 flex h-9 w-9 shrink-0 items-center justify-center rounded-[var(--radius-sm)] border text-[12px] font-bold transition-[border-color,background-color,color,box-shadow] duration-200 ease-out',
+                      isActive
+                        ? 'border-[var(--accent)] bg-[var(--accent)] text-[var(--on-accent)] shadow-[0_0_12px_rgba(179,236,19,0.3)]'
+                        : 'border-[var(--border)] bg-[var(--surface)] text-[var(--text-secondary)] group-hover:border-[var(--border-strong)] group-hover:text-[var(--text-primary)]'
+                    )}
+                  >
                     {step.number}
                   </div>
 
                   <div className="flex-1 pt-0.5">
-                    <h3 className={cn(
-                      "text-heading-sm font-bold transition-colors duration-200",
-                      isActive ? "text-[var(--text-primary)]" : "text-[var(--text-secondary)] group-hover:text-[var(--text-primary)]"
-                    )}>
-                      {step.title}
-                    </h3>
-                    <p className={cn(
-                      "mt-1 text-body-sm transition-colors duration-200",
-                      isActive ? "text-[var(--text-secondary)]" : "text-[var(--text-muted)]"
-                    )}>
+                    <div className="flex items-center justify-between mb-1">
+                      <h3
+                        className={cn(
+                          'text-heading-sm font-bold transition-colors duration-200 uppercase tracking-tight',
+                          isActive
+                            ? 'text-[var(--text-primary)]'
+                            : 'text-[var(--text-secondary)] group-hover:text-[var(--text-primary)]'
+                        )}
+                      >
+                        {step.title}
+                      </h3>
+                      <span className="text-[9px] font-mono font-semibold text-[var(--text-muted)] uppercase tracking-wider">
+                        {step.badge}
+                      </span>
+                    </div>
+
+                    <div className="text-[12px] font-medium text-[var(--text-secondary)] mb-2">
+                      {step.subtitle}
+                    </div>
+
+                    <p
+                      className={cn(
+                        'text-body-sm leading-relaxed transition-colors duration-200',
+                        isActive ? 'text-[var(--text-secondary)]' : 'text-[var(--text-muted)]'
+                      )}
+                    >
                       {step.description}
                     </p>
                   </div>
@@ -188,15 +363,16 @@ export function HowItWorks() {
             })}
           </div>
 
-          {/* Right Column: Visual companion card */}
-          <div className="lg:col-span-7 flex items-center justify-center p-[var(--space-8)] bg-gradient-to-br from-[var(--card)] to-[rgba(8,8,8,0.7)] border border-[var(--border)] rounded-[var(--radius-xl)] [box-shadow:var(--shadow-inset)] min-h-[290px] relative overflow-hidden">
-            <div className="absolute inset-0 opacity-[0.015] pointer-events-none" style={{
-              backgroundImage: 'radial-gradient(var(--text-primary) 1px, transparent 1px)',
-              backgroundSize: '20px 20px'
-            }} />
-            
-            <div className="transition-[opacity,transform] duration-300 ease-out w-full flex items-center justify-center relative z-10">
-              {renderVisualCompanion(activeStep)}
+          {/* Right Column: Live Context Interface Companion */}
+          <div className="lg:col-span-7 rounded-[2rem] p-1.5 bg-gradient-to-b from-[var(--card-raised)] to-[var(--card)] border border-[var(--border)] shadow-[var(--shadow-sm)]">
+            <div
+              className="rounded-[calc(2rem-6px)] p-6 sm:p-8 flex flex-col min-h-[400px] justify-center overflow-hidden"
+              style={{
+                background: 'linear-gradient(to bottom, var(--card-raised), var(--card))',
+                boxShadow: 'var(--shadow-inset)',
+              }}
+            >
+              {renderVisualCompanion()}
             </div>
           </div>
         </div>

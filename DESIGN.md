@@ -11,6 +11,8 @@ description: >
 
 # ContextGraph Design System
 
+This is the visual/UI source of truth — exact tokens, type scale, spacing, motion rules. For business/brand scope (users, positioning, voice) see [PRODUCT.md](PRODUCT.md). For how the app is built see [ARCHITECTURE.md](ARCHITECTURE.md).
+
 ## Philosophy
 
 Three principles govern every decision:
@@ -371,6 +373,12 @@ Accent badge:
 
 ---
 
+## Accessibility & Inclusion
+
+- Minimum text contrast ratio 4.5:1 (WCAG AA) everywhere — check this against the actual token pairing in use, not just in isolation.
+- Every interactive element has a visible focus state (see Components below) and a minimum 44×44px hit target, even for visually compact variants.
+- `prefers-reduced-motion` is checked before every GSAP animation; when set, use `gsap.set()` directly instead of tweening (falls back to instant/opacity-only transitions).
+
 ## Dark / Light Mode
 
 Implementation: `data-theme` attribute on `<html>`. All values via CSS custom properties. No JS required for the visual switch itself.
@@ -424,7 +432,7 @@ Mobile: bottom nav | main full screen | detail full-screen drawer
 - GSAP ScrollTrigger start point: `"top 88%"` for most elements. `"top 75%"` for hero-level sections.
 - Always add `once: true` to ScrollTrigger for entrance animations.
 - Always implement `prefers-reduced-motion` check before GSAP animations. If reduced motion is preferred, set elements directly with `gsap.set()` instead.
-- Load the relevant GSAP skill file from `.agent/skills/` before writing any animation.
+- Load the relevant GSAP skill file from `.agents/skills/` before writing any animation.
 
 ### Colors & Tokens
 - Never hardcode hex values in component files. Always use CSS custom properties.

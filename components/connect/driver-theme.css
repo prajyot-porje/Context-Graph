@@ -1,0 +1,69 @@
+/* Re-skin driver.js's default popover to match DESIGN.md tokens instead of
+   its own default look — same rule already applied to react-force-graph-3d
+   elsewhere in this codebase: never ship a library's default styling. */
+
+.cg-tour-popover.driver-popover {
+  all: unset;
+  box-sizing: border-box;
+  background: linear-gradient(to bottom, var(--card-raised), var(--card));
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg), var(--shadow-inset);
+  padding: 18px 20px;
+  min-width: 260px;
+  max-width: 320px;
+  font-family: var(--font-geist-sans), system-ui, sans-serif;
+}
+
+.cg-tour-popover .driver-popover-title {
+  color: var(--text-primary);
+  font-size: 14.5px;
+  font-weight: 600;
+  letter-spacing: -0.2px;
+}
+
+.cg-tour-popover .driver-popover-description {
+  color: var(--text-secondary);
+  font-size: 13px;
+  line-height: 1.55;
+  margin-top: 6px;
+}
+
+.cg-tour-popover .driver-popover-footer {
+  margin-top: 14px;
+}
+
+.cg-tour-popover .driver-popover-progress-text {
+  color: var(--text-muted);
+  font-size: 11px;
+}
+
+.cg-tour-popover .driver-popover-footer-btn {
+  all: unset;
+  box-sizing: border-box;
+  background: transparent;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  cursor: pointer;
+  font-size: 12.5px;
+  font-weight: 500;
+  padding: 6px 12px;
+  transition: background-color 150ms ease, border-color 150ms ease;
+}
+
+.cg-tour-popover .driver-popover-footer-btn:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.cg-tour-popover .driver-popover-close-btn {
+  color: var(--text-muted);
+}
+.cg-tour-popover .driver-popover-close-btn:hover {
+  color: var(--text-primary);
+}
+
+.cg-tour-popover .driver-popover-arrow-side-top { border-top-color: var(--card); }
+.cg-tour-popover .driver-popover-arrow-side-bottom { border-bottom-color: var(--card); }
+.cg-tour-popover .driver-popover-arrow-side-left { border-left-color: var(--card); }
+.cg-tour-popover .driver-popover-arrow-side-right { border-right-color: var(--card); }

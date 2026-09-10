@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import { requireSessionUser } from '@/lib/auth/server'
 import { redirect } from 'next/navigation'
-import ConversationalOnboarding from '@/components/onboarding/ConversationalOnboarding'
+import OnboardingWizard from '@/components/onboarding/OnboardingWizard'
 import { ErrorBoundary } from '@/components/ui/ErrorBoundary'
 
 export const metadata: Metadata = { title: 'Build your graph' }
@@ -16,7 +16,7 @@ export default async function OnboardingPage() {
   return (
     <main style={{ minHeight: '100vh', background: 'var(--bg-dark)' }}>
       <ErrorBoundary>
-        <ConversationalOnboarding />
+        <OnboardingWizard />
       </ErrorBoundary>
     </main>
   )

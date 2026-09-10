@@ -2,136 +2,146 @@ import { NextRequest, NextResponse } from 'next/server'
 import { requireSessionUser } from '@/lib/auth/server'
 import { createSupabaseServer } from '@/lib/supabase'
 import { createEdge } from '@/lib/db'
-import OpenAI from 'openai'
+import { judgeContext } from '@/lib/openrouter'
 import { randomBytes, createHash } from 'crypto'
 import type { ContextNode } from '@/types'
 
-interface GeneratedNode {
-  scope: string
-  title: string
-  content: string
-  tags?: string[]
-  parent_scope: string | null
-  relevance?: number
-}
-
 export const maxDuration = 60
 
-const STREAM_MODELS = [
-  'meta-llama/llama-3.3-70b-instruct:free',
-  'google/gemma-4-31b-it:free',
-  'qwen/qwen3-235b-a22b:free',
-]
-
-interface ConversationMessage {
-  role: 'user' | 'assistant'
-  content: string
+interface Project {
+  name: string
+  description: string
+  status: string
 }
+
+interface FinalizePayload {
+  name: string
+  role: string
+  location?: string
+  skills: string[]
+  stack: string[]
+  projects: Project[]
+  goals: string
+  workingStyle?: string
+  agencyName?: string
+}
+
+interface PlannedNode {
+  scope: string
+  title: string
+  parent_scope: string | null
+  tags: string[]
+  relevance: number
+}
+
+const slugify = (text: string) =>
+  text.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') || 'untitled'
+
+// Always available, even if the AI content call fails entirely.
+function deterministicContent(node: PlannedNode, payload: FinalizePayload): string {
+  const { name, role, location, skills, stack, goals, workingStyle, agencyName } = payload
+  if (node.scope === 'me') {
+    return `${name} is a ${role}${location ? ` based in ${location}` : ''}. Primary stack: ${stack.join(', ') || 'not specified'}. Additional skills: ${skills.join(', ') || 'not specified'}.`
+  }
+  if (node.scope === 'agency') {
+    return `${agencyName} — a professional/freelance practice run by ${name}.`
+  }
+  if (node.scope === 'personal/skills') {
+    return `Technical skills and stack: ${[...stack, ...skills].join(', ') || 'not specified'}.`
+  }
+  if (node.scope === 'personal/goals') {
+    return `Current goals: ${goals || 'not specified'}.${workingStyle ? ` Preferred working style: ${workingStyle}.` : ''}`
+  }
+  const project = payload.projects.find(p => node.scope.endsWith('/' + slugify(p.name)))
+  if (project) return `${project.name} (${project.status}): ${project.description}`
+  return node.title
+}
+
+function planNodes(payload: FinalizePayload): PlannedNode[] {
+  const nodes: PlannedNode[] = [
+    { scope: 'me', title: 'ME', parent_scope: null, tags: [...payload.stack, ...payload.skills].slice(0, 12), relevance: 0.95 },
+  ]
+
+  const projectParentScope = payload.agencyName ? 'agency' : 'me'
+  if (payload.agencyName) {
+    nodes.push({ scope: 'agency', title: payload.agencyName, parent_scope: 'me', tags: ['agency'], relevance: 0.9 })
+  }
+
+  if (payload.skills.length || payload.stack.length) {
+    nodes.push({ scope: 'personal/skills', title: 'Skills & Stack', parent_scope: 'me', tags: [...payload.stack, ...payload.skills].slice(0, 12), relevance: 0.9 })
+  }
+
+  for (const project of payload.projects.slice(0, 3)) {
+    const scope = `${projectParentScope === 'agency' ? 'agency' : 'personal'}/${slugify(project.name)}`
+    nodes.push({ scope, title: project.name, parent_scope: projectParentScope, tags: [project.status], relevance: 0.9 })
+  }
+
+  if (payload.goals) {
+    nodes.push({ scope: 'personal/goals', title: 'Goals', parent_scope: 'me', tags: [], relevance: 0.9 })
+  }
+
+  return nodes
+}
+
+const CONTENT_PROMPT = (payload: FinalizePayload, scopes: string[]) => `Write content fields for a personal AI context graph. Given these facts about a developer, return ONLY a valid JSON object mapping each of the listed scopes to a dense, factual markdown paragraph (3-5 sentences, third person) meant to be read by an AI assistant before a coding session. No markdown fences, no explanation.
+
+Facts: ${JSON.stringify(payload)}
+
+Scopes to fill (use exactly these keys): ${JSON.stringify(scopes)}`
 
 export async function POST(req: NextRequest) {
+  const startOverall = Date.now()
+  let userId = 'unknown'
   try {
     const user = await requireSessionUser()
-    const userId = user.id
+    userId = user.id
 
-    const { history } = (await req.json()) as { history: ConversationMessage[] }
+    const payload = (await req.json()) as FinalizePayload
+    const plannedNodes = planNodes(payload)
+    const scopes = plannedNodes.map(n => n.scope)
 
-    const conversationText = history
-      .map(m => `${m.role.toUpperCase()}: ${m.content.replace('[GRAPH_READY]', '').trim()}`)
-      .join('\n')
-
-    const GRAPH_PROMPT = `Based on this conversation, generate a context graph for the user.
-Return ONLY a valid JSON array. No markdown fences, no explanation, no preamble.
-
-Schema for each object in the array:
-{
-  "scope": string,          // unique slug. Use: "me", "agency", "personal/project-name", "personal/skills", "personal/goals", "agency/project-name"
-  "title": string,          // short display name (e.g. "ME", "ContextGraph", "Dev Studio")
-  "content": string,        // 3-5 rich sentences an AI reads to understand this context before a session. Write in third person about the user.
-  "tags": string[],         // lowercase strings (e.g. ["developer", "nextjs", "saas"])
-  "parent_scope": string | null,  // null for "me" node, "me" for most others, "agency" for agency projects
-  "relevance": number       // 0.88 to 0.95 for fresh onboarding data
-}
-
-Rules:
-- ALWAYS include a "me" node (parent_scope: null, relevance: 0.95)
-- Include "agency" node ONLY if they mentioned running an agency, studio, or freelance business
-- Include up to 3 project nodes using scope "personal/project-slug" or "agency/project-slug"
-- Include "personal/skills" node if they mentioned 2+ technologies (parent_scope: "me")
-- Always include "personal/goals" node (parent_scope: "me")
-- Maximum 8 nodes total
-- Scope slugs: lowercase, hyphens only, no spaces, no special characters
-- Content must be rich enough that an AI reading it could immediately understand context without asking follow-up questions
-
-Conversation:
-${conversationText}`
-
-    const openrouterClient = new OpenAI({
-      baseURL: 'https://openrouter.ai/api/v1',
-      apiKey: process.env.OPENROUTER_API_KEY || process.env.OPEN_ROUTER_API_KEY || '',
-      defaultHeaders: {
-        'HTTP-Referer': 'https://contextgraph.vercel.app',
-        'X-Title': 'ContextGraph Onboarding Finalize',
-      }
-    })
-
-    let generatedNodes: GeneratedNode[] = []
-
-    for (const model of STREAM_MODELS) {
-      try {
-        const completion = await openrouterClient.chat.completions.create({
-          model,
-          messages: [{ role: 'user', content: GRAPH_PROMPT }],
-          max_tokens: 2000,
-          temperature: 0.3,
-        })
-
-        let rawText = completion.choices[0]?.message?.content ?? ''
-        // Strip markdown fences if present
-        rawText = rawText.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim()
-        generatedNodes = JSON.parse(rawText)
-        break
-      } catch (err: unknown) {
-        const error = err as { status?: number; message?: string }
-        console.warn(`Model ${model} failed to generate JSON, trying next cascade model. Error:`, error.message || error)
-        if ([429, 404, 502, 503].includes(error.status ?? 0) || error.status === undefined) {
-          continue
-        }
-        throw err
-      }
-    }
-
-    if (!generatedNodes || generatedNodes.length === 0) {
-      return NextResponse.json({ error: 'AI generation failed to produce nodes.' }, { status: 500 })
+    let contentMap: Record<string, string> = {}
+    try {
+      const raw = await judgeContext(CONTENT_PROMPT(payload, scopes), true)
+      let cleaned = raw.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim()
+      const start = cleaned.indexOf('{')
+      const end = cleaned.lastIndexOf('}')
+      if (start !== -1 && end !== -1 && end > start) cleaned = cleaned.substring(start, end + 1)
+      contentMap = JSON.parse(cleaned) as Record<string, string>
+    } catch (aiError) {
+      console.warn(`[${new Date().toISOString()}] [ONBOARDING FINALIZE] AI content generation failed, using deterministic fallback:`, aiError)
     }
 
     const supabase = createSupabaseServer()
 
-    // Write all nodes to Supabase
+    await supabase.from('context_edges').delete().eq('user_id', userId)
+    await supabase.from('context_nodes').delete().eq('user_id', userId)
+
     const allInsertedNodes: ContextNode[] = []
-    for (const node of generatedNodes) {
+    for (const node of plannedNodes) {
+      const content = contentMap[node.scope]?.trim() || deterministicContent(node, payload)
       const { data: inserted, error: insertError } = await supabase
         .from('context_nodes')
         .insert({
           user_id: userId,
           scope: node.scope,
           title: node.title,
-          content: node.content,
-          tags: node.tags || [],
+          content,
+          tags: node.tags,
           parent_scope: node.parent_scope,
-          relevance: node.relevance || 0.9,
+          relevance: node.relevance,
           last_updated: new Date().toISOString(),
         })
         .select()
         .single()
 
       if (insertError) {
-        console.error(`Failed to insert node ${node.scope}:`, insertError.message)
+        console.error(`[ONBOARDING FINALIZE] Failed to insert node ${node.scope}:`, insertError.message)
         continue
       }
       allInsertedNodes.push(inserted)
     }
 
-    // Connect edges
     for (const insertedNode of allInsertedNodes) {
       if (insertedNode.parent_scope) {
         const parentNode = allInsertedNodes.find(n => n.scope === insertedNode.parent_scope)
@@ -141,26 +151,26 @@ ${conversationText}`
       }
     }
 
-    // Generate API key for this user
     const rawKey = 'ctx_' + randomBytes(32).toString('base64url')
     const keyHash = createHash('sha256').update(rawKey).digest('hex')
     const keyPrefix = rawKey.slice(0, 12)
 
-    await supabase.from('api_keys').upsert(
-      { user_id: userId, key_hash: keyHash, key_prefix: keyPrefix },
-      { onConflict: 'user_id' }
-    )
+    await supabase.from('api_keys').delete().eq('user_id', userId)
+    const { error: insertKeyError } = await supabase.from('api_keys').insert({
+      user_id: userId,
+      key_hash: keyHash,
+      key_prefix: keyPrefix,
+    })
+    if (insertKeyError) throw new Error(`Failed to store API key: ${insertKeyError.message}`)
 
-    // Mark onboarding complete
-    await supabase.from('user')
-      .update({ onboarding_done: true })
-      .eq('id', userId)
+    await supabase.from('user').update({ onboarding_done: true }).eq('id', userId)
+
+    console.log(`[${new Date().toISOString()}] [ONBOARDING FINALIZE] Success for user ${userId} (${Date.now() - startOverall}ms, ${allInsertedNodes.length} nodes)`)
 
     return NextResponse.json({ nodes: allInsertedNodes, apiKey: rawKey })
-
   } catch (error: unknown) {
     const err = error as Error
-    console.error('Finalize route error:', err)
+    console.error(`[${new Date().toISOString()}] [ONBOARDING FINALIZE] Error for user ${userId} (${Date.now() - startOverall}ms):`, err)
     return NextResponse.json({ error: err.message || 'Server error' }, { status: 500 })
   }
 }

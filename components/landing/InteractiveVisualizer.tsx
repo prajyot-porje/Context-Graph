@@ -159,19 +159,19 @@ export function InteractiveVisualizer() {
         return (
           <div className="space-y-1 font-mono text-[11px] md:text-[12px] text-[var(--text-secondary)]">
             <div><span className="text-[#88c6ff]">{`{`}</span></div>
-            <div className="pl-4"><span className="text-[#ff7b72]">"client"</span>: <span className="text-[#a5d6ff]">"Claude 3.7 Sonnet"</span>,</div>
-            <div className="pl-4"><span className="text-[#ff7b72]">"mcp_version"</span>: <span className="text-[#a5d6ff]">"2024-11-05"</span>,</div>
+            <div className="pl-4"><span className="text-[#ff7b72]">&quot;client&quot;</span>: <span className="text-[#a5d6ff]">&quot;Claude 3.7 Sonnet&quot;</span>,</div>
+            <div className="pl-4"><span className="text-[#ff7b72]">&quot;mcp_version&quot;</span>: <span className="text-[#a5d6ff]">&quot;2024-11-05&quot;</span>,</div>
             <div className="pl-4">
-              <span className="text-[#ff7b72]">"identity"</span>: <span className="text-[#88c6ff]">{`{`}</span>
+              <span className="text-[#ff7b72]">&quot;identity&quot;</span>: <span className="text-[#88c6ff]">{`{`}</span>
             </div>
-            <div className="pl-8"><span className="text-[#ff7b72]">"role"</span>: <span className="text-[#a5d6ff]">"Lead Architect"</span>,</div>
+            <div className="pl-8"><span className="text-[#ff7b72]">&quot;role&quot;</span>: <span className="text-[#a5d6ff]">&quot;Lead Architect&quot;</span>,</div>
             <div className="pl-8">
-              <span className="text-[#ff7b72]">"stack"</span>: <span className="text-[#88c6ff]">[</span>
-              <span className="text-[#a5d6ff]">"Next.js"</span>, <span className="text-[#a5d6ff]">"TS"</span>, <span className="text-[#a5d6ff]">"Supabase"</span>
+              <span className="text-[#ff7b72]">&quot;stack&quot;</span>: <span className="text-[#88c6ff]">[</span>
+              <span className="text-[#a5d6ff]">&quot;Next.js&quot;</span>, <span className="text-[#a5d6ff]">&quot;TS&quot;</span>, <span className="text-[#a5d6ff]">&quot;Supabase&quot;</span>
               <span className="text-[#88c6ff]">]</span>
             </div>
             <div className="pl-4"><span className="text-[#88c6ff]">{`}`}</span>,</div>
-            <div className="pl-4"><span className="text-[#ff7b72]">"active_task"</span>: <span className="text-[#a5d6ff]">"Refactoring hero section"</span></div>
+            <div className="pl-4"><span className="text-[#ff7b72]">&quot;active_task&quot;</span>: <span className="text-[#a5d6ff]">&quot;Refactoring hero section&quot;</span></div>
             <div><span className="text-[#88c6ff]">{`}`}</span></div>
           </div>
         )
@@ -179,19 +179,19 @@ export function InteractiveVisualizer() {
         return (
           <div className="space-y-1 font-mono text-[11px] md:text-[12px] text-[var(--text-secondary)]">
             <div><span className="text-[#88c6ff]">{`{`}</span></div>
-            <div className="pl-4"><span className="text-[#ff7b72]">"client"</span>: <span className="text-[#a5d6ff]">"ChatGPT 4o"</span>,</div>
-            <div className="pl-4"><span className="text-[#ff7b72]">"scope"</span>: <span className="text-[#a5d6ff]">"global"</span>,</div>
+            <div className="pl-4"><span className="text-[#ff7b72]">&quot;client&quot;</span>: <span className="text-[#a5d6ff]">&quot;ChatGPT 4o&quot;</span>,</div>
+            <div className="pl-4"><span className="text-[#ff7b72]">&quot;scope&quot;</span>: <span className="text-[#a5d6ff]">&quot;global&quot;</span>,</div>
             <div className="pl-4">
-              <span className="text-[#ff7b72]">"profile"</span>: <span className="text-[#88c6ff]">{`{`}</span>
+              <span className="text-[#ff7b72]">&quot;profile&quot;</span>: <span className="text-[#88c6ff]">{`{`}</span>
             </div>
-            <div className="pl-8"><span className="text-[#ff7b72]">"user"</span>: <span className="text-[#a5d6ff]">"Alex Rivera"</span>,</div>
-            <div className="pl-8"><span className="text-[#ff7b72]">"company"</span>: <span className="text-[#a5d6ff]">"ContextGraph Inc."</span></div>
+            <div className="pl-8"><span className="text-[#ff7b72]">&quot;user&quot;</span>: <span className="text-[#a5d6ff]">&quot;Alex Rivera&quot;</span>,</div>
+            <div className="pl-8"><span className="text-[#ff7b72]">&quot;company&quot;</span>: <span className="text-[#a5d6ff]">&quot;ContextGraph Inc.&quot;</span></div>
             <div className="pl-4"><span className="text-[#88c6ff]">{`}`}</span>,</div>
             <div className="pl-4">
-              <span className="text-[#ff7b72]">"preferences"</span>: <span className="text-[#88c6ff]">{`{`}</span>
+              <span className="text-[#ff7b72]">&quot;preferences&quot;</span>: <span className="text-[#88c6ff]">{`{`}</span>
             </div>
-            <div className="pl-8"><span className="text-[#ff7b72]">"editor"</span>: <span className="text-[#a5d6ff]">"VSCode"</span>,</div>
-            <div className="pl-8"><span className="text-[#ff7b72]">"ui_theme"</span>: <span className="text-[#a5d6ff]">"Sleek Minimalist"</span></div>
+            <div className="pl-8"><span className="text-[#ff7b72]">&quot;editor&quot;</span>: <span className="text-[#a5d6ff]">&quot;VSCode&quot;</span>,</div>
+            <div className="pl-8"><span className="text-[#ff7b72]">&quot;ui_theme&quot;</span>: <span className="text-[#a5d6ff]">&quot;Sleek Minimalist&quot;</span></div>
             <div className="pl-4"><span className="text-[#88c6ff]">{`}`}</span></div>
             <div><span className="text-[#88c6ff]">{`}`}</span></div>
           </div>
@@ -200,14 +200,14 @@ export function InteractiveVisualizer() {
         return (
           <div className="space-y-1 font-mono text-[11px] md:text-[12px] text-[var(--text-secondary)]">
             <div><span className="text-[#88c6ff]">{`{`}</span></div>
-            <div className="pl-4"><span className="text-[#ff7b72]">"client"</span>: <span className="text-[#a5d6ff]">"Gemini 1.5 Pro"</span>,</div>
+            <div className="pl-4"><span className="text-[#ff7b72]">&quot;client&quot;</span>: <span className="text-[#a5d6ff]">&quot;Gemini 1.5 Pro&quot;</span>,</div>
             <div className="pl-4">
-              <span className="text-[#ff7b72]">"agent"</span>: <span className="text-[#88c6ff]">{`{`}</span>
+              <span className="text-[#ff7b72]">&quot;agent&quot;</span>: <span className="text-[#88c6ff]">{`{`}</span>
             </div>
-            <div className="pl-8"><span className="text-[#ff7b72]">"role"</span>: <span className="text-[#a5d6ff]">"Fullstack Engineer"</span>,</div>
+            <div className="pl-8"><span className="text-[#ff7b72]">&quot;role&quot;</span>: <span className="text-[#a5d6ff]">&quot;Fullstack Engineer&quot;</span>,</div>
             <div className="pl-8">
-              <span className="text-[#ff7b72]">"tools"</span>: <span className="text-[#88c6ff]">[</span>
-              <span className="text-[#a5d6ff]">"Supabase PG"</span>, <span className="text-[#a5d6ff]">"React Flow"</span>
+              <span className="text-[#ff7b72]">&quot;tools&quot;</span>: <span className="text-[#88c6ff]">[</span>
+              <span className="text-[#a5d6ff]">&quot;Supabase PG&quot;</span>, <span className="text-[#a5d6ff]">&quot;React Flow&quot;</span>
               <span className="text-[#88c6ff]">]</span>
             </div>
             <div className="pl-4"><span className="text-[#88c6ff]">{`}`}</span></div>
@@ -218,17 +218,17 @@ export function InteractiveVisualizer() {
         return (
           <div className="space-y-1 font-mono text-[11px] md:text-[12px] text-[var(--text-secondary)]">
             <div><span className="text-[#88c6ff]">{`{`}</span></div>
-            <div className="pl-4"><span className="text-[#ff7b72]">"client"</span>: <span className="text-[#a5d6ff]">"Cursor Editor"</span>,</div>
-            <div className="pl-4"><span className="text-[#ff7b72]">"project"</span>: <span className="text-[#a5d6ff]">"context-graph-app"</span>,</div>
-            <div className="pl-4"><span className="text-[#ff7b72]">"active_file"</span>: <span className="text-[#a5d6ff]">"/app/page.tsx"</span>,</div>
+            <div className="pl-4"><span className="text-[#ff7b72]">&quot;client&quot;</span>: <span className="text-[#a5d6ff]">&quot;Cursor Editor&quot;</span>,</div>
+            <div className="pl-4"><span className="text-[#ff7b72]">&quot;project&quot;</span>: <span className="text-[#a5d6ff]">&quot;context-graph-app&quot;</span>,</div>
+            <div className="pl-4"><span className="text-[#ff7b72]">&quot;active_file&quot;</span>: <span className="text-[#a5d6ff]">&quot;/app/page.tsx&quot;</span>,</div>
             <div className="pl-4">
-              <span className="text-[#ff7b72]">"context_nodes"</span>: <span className="text-[#88c6ff]">[</span>
+              <span className="text-[#ff7b72]">&quot;context_nodes&quot;</span>: <span className="text-[#88c6ff]">[</span>
             </div>
             <div className="pl-8">
-              <span className="text-[#88c6ff]">{`{`}</span> <span className="text-[#ff7b72]">"id"</span>: <span className="text-[#a5d6ff]">"design-tokens"</span>, <span className="text-[#ff7b72]">"rel"</span>: <span className="text-[#79c0ff]">0.95</span> <span className="text-[#88c6ff]">{`}`}</span>,
+              <span className="text-[#88c6ff]">{`{`}</span> <span className="text-[#ff7b72]">&quot;id&quot;</span>: <span className="text-[#a5d6ff]">&quot;design-tokens&quot;</span>, <span className="text-[#ff7b72]">&quot;rel&quot;</span>: <span className="text-[#79c0ff]">0.95</span> <span className="text-[#88c6ff]">{`}`}</span>,
             </div>
             <div className="pl-8">
-              <span className="text-[#88c6ff]">{`{`}</span> <span className="text-[#ff7b72]">"id"</span>: <span className="text-[#a5d6ff]">"auth-patterns"</span>, <span className="text-[#ff7b72]">"rel"</span>: <span className="text-[#79c0ff]">0.88</span> <span className="text-[#88c6ff]">{`}`}</span>
+              <span className="text-[#88c6ff]">{`{`}</span> <span className="text-[#ff7b72]">&quot;id&quot;</span>: <span className="text-[#a5d6ff]">&quot;auth-patterns&quot;</span>, <span className="text-[#ff7b72]">&quot;rel&quot;</span>: <span className="text-[#79c0ff]">0.88</span> <span className="text-[#88c6ff]">{`}`}</span>
             </div>
             <div className="pl-4"><span className="text-[#88c6ff]">]</span></div>
             <div><span className="text-[#88c6ff]">{`}`}</span></div>
@@ -238,11 +238,11 @@ export function InteractiveVisualizer() {
         return (
           <div className="space-y-1 font-mono text-[11px] md:text-[12px] text-[var(--text-secondary)]">
             <div><span className="text-[#88c6ff]">{`{`}</span></div>
-            <div className="pl-4"><span className="text-[#ff7b72]">"client"</span>: <span className="text-[#a5d6ff]">"Claude Code CLI"</span>,</div>
-            <div className="pl-4"><span className="text-[#ff7b72]">"terminal"</span>: <span className="text-[#a5d6ff]">"zsh"</span>,</div>
-            <div className="pl-4"><span className="text-[#ff7b72]">"working_dir"</span>: <span className="text-[#a5d6ff]">"/alex/projects/cg"</span>,</div>
-            <div className="pl-4"><span className="text-[#ff7b72]">"last_cmd"</span>: <span className="text-[#a5d6ff]">"git commit -m 'new hero'"</span>,</div>
-            <div className="pl-4"><span className="text-[#ff7b72]">"mcp_server"</span>: <span className="text-[#a5d6ff]">"active"</span></div>
+            <div className="pl-4"><span className="text-[#ff7b72]">&quot;client&quot;</span>: <span className="text-[#a5d6ff]">&quot;Claude Code CLI&quot;</span>,</div>
+            <div className="pl-4"><span className="text-[#ff7b72]">&quot;terminal&quot;</span>: <span className="text-[#a5d6ff]">&quot;zsh&quot;</span>,</div>
+            <div className="pl-4"><span className="text-[#ff7b72]">&quot;working_dir&quot;</span>: <span className="text-[#a5d6ff]">&quot;/alex/projects/cg&quot;</span>,</div>
+            <div className="pl-4"><span className="text-[#ff7b72]">&quot;last_cmd&quot;</span>: <span className="text-[#a5d6ff]">&quot;git commit -m &apos;new hero&apos;&quot;</span>,</div>
+            <div className="pl-4"><span className="text-[#ff7b72]">&quot;mcp_server&quot;</span>: <span className="text-[#a5d6ff]">&quot;active&quot;</span></div>
             <div><span className="text-[#88c6ff]">{`}`}</span></div>
           </div>
         )

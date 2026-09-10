@@ -1,6 +1,6 @@
 import { createHash } from 'crypto'
 import { createSupabaseServer } from '@/lib/supabase'
-import type { ContextNode, ContextEntry, ApiKey, ContextEdge } from '@/types'
+import type { ContextNode, ContextEdge } from '@/types'
 import type { SupabaseClient } from '@supabase/supabase-js'
 
 export async function getUserNodes(userId: string): Promise<ContextNode[]> {
@@ -143,20 +143,54 @@ export async function appendEntry(
   }
 }
 
+export function sanitizeApiKey(rawKey: string): string {
+  if (!rawKey || typeof rawKey !== 'string') {
+    return ''
+  }
+
+  let clean = rawKey.trim()
+  try {
+    clean = decodeURIComponent(clean)
+  } catch {
+    // ignore decode error
+  }
+
+  // Strip wrapping quotes ("..." or '...')
+  clean = clean.replace(/^["']+|["']+$/g, '').trim()
+  // Strip Bearer prefix
+  clean = clean.replace(/^Bearer\s+/i, '').trim()
+  // Strip wrapping quotes again in case of Bearer "..."
+  clean = clean.replace(/^["']+|["']+$/g, '').trim()
+
+  return clean
+}
+
 export async function validateApiKey(rawKey: string): Promise<string | null> {
+  const cleanKey = sanitizeApiKey(rawKey)
+  if (!cleanKey) {
+    return null
+  }
+
+  // If the key contains masked bullet characters or asterisks, it's a copied UI placeholder
+  if (cleanKey.includes('•') || cleanKey.includes('*')) {
+    console.warn('[validateApiKey] Rejected API key containing masked placeholder characters')
+    return null
+  }
+
   const supabase = createSupabaseServer()
-  const hash = createHash('sha256').update(rawKey).digest('hex')
+  const hash = createHash('sha256').update(cleanKey).digest('hex')
 
   const { data, error } = await supabase
     .from('api_keys')
     .select('user_id')
     .eq('key_hash', hash)
-    .single()
+    .maybeSingle()
 
   if (error || !data) {
     return null
   }
 
+  // Fire-and-forget timestamp update
   await supabase
     .from('api_keys')
     .update({ last_used: new Date().toISOString() })
@@ -249,6 +283,61 @@ export async function getApiKeyInfo(userId: string): Promise<{ prefix: string, l
   return {
     prefix: data.key_prefix,
     last_used: data.last_used,
+  }
+}
+
+export interface AccountStatus {
+  exists: boolean
+  emailVerified: boolean
+  hasPassword: boolean
+  hasGoogle: boolean
+}
+
+export async function getAccountStatus(rawEmail: string): Promise<AccountStatus> {
+  const cleanEmail = rawEmail.trim().toLowerCase()
+  if (!cleanEmail) {
+    return { exists: false, emailVerified: false, hasPassword: false, hasGoogle: false }
+  }
+
+  const supabase = createSupabaseServer()
+  // Query user table by email (managed by Better Auth)
+  const untypedSupabase = supabase as unknown as SupabaseClient
+  const { data: userData, error: userError } = await untypedSupabase
+    .from('user')
+    .select('id, emailVerified')
+    .eq('email', cleanEmail)
+    .maybeSingle<{ id: string; emailVerified: boolean | null }>()
+
+  if (userError || !userData) {
+    return { exists: false, emailVerified: false, hasPassword: false, hasGoogle: false }
+  }
+
+  // Query account table for linked providers and password presence
+  const { data: accountsData, error: accountError } = await untypedSupabase
+    .from('account')
+    .select('providerId, password')
+    .eq('userId', userData.id)
+    .returns<Array<{ providerId: string; password?: string | null }>>()
+
+  if (accountError || !accountsData) {
+    return {
+      exists: true,
+      emailVerified: !!userData.emailVerified,
+      hasPassword: false,
+      hasGoogle: false,
+    }
+  }
+
+  const hasPassword = accountsData.some(
+    (a) => a.providerId === 'credential' && a.password !== null && a.password !== undefined
+  )
+  const hasGoogle = accountsData.some((a) => a.providerId === 'google')
+
+  return {
+    exists: true,
+    emailVerified: !!userData.emailVerified,
+    hasPassword,
+    hasGoogle,
   }
 }
 

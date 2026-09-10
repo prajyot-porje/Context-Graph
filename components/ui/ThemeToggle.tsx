@@ -25,11 +25,16 @@ export function ThemeToggle() {
   const toggleTheme = () => {
     const newTheme = theme === 'dark' ? 'light' : 'dark'
     setTheme(newTheme)
+    document.documentElement.classList.add('theme-transitioning')
     localStorage.setItem('cg-theme', newTheme)
     document.documentElement.setAttribute('data-theme', newTheme)
     
-    // Dispatch custom event to notify other components (e.g. if multiple theme toggles are visible)
+    // Dispatch custom event to notify other components
     window.dispatchEvent(new Event('cg-theme-change'))
+
+    setTimeout(() => {
+      document.documentElement.classList.remove('theme-transitioning')
+    }, 300)
   }
 
   // Handle theme changes from other components
@@ -44,7 +49,7 @@ export function ThemeToggle() {
 
   if (!mounted) {
     return (
-      <div className="h-[36px] w-[36px] rounded-[var(--radius-md)] bg-transparent" />
+      <div className="h-11 w-11 rounded-[var(--radius-md)] bg-transparent" />
     )
   }
 
@@ -52,12 +57,13 @@ export function ThemeToggle() {
     <button
       onClick={toggleTheme}
       className={cn(
-        'inline-flex h-[36px] w-[36px] items-center justify-center',
+        'inline-flex h-11 w-11 items-center justify-center',
         'rounded-[var(--radius-md)]',
         'text-[var(--text-secondary)]',
-        'bg-transparent',
-        'transition-[color,background-color] duration-150 ease-out',
-        'hover:text-[var(--text-primary)] hover:bg-[rgba(255,255,255,0.05)]',
+        'bg-transparent border border-transparent',
+        'transition-[color,background-color,border-color,transform] duration-150 ease-out',
+        'hover:text-[var(--text-primary)] hover:bg-[var(--surface)] hover:border-[var(--border)]',
+        'active:scale-[0.96]',
         'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bg)]'
       )}
       aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}

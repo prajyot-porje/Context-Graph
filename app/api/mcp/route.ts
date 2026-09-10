@@ -8,7 +8,7 @@ import type { ContextNode } from '@/types'
 const CORS = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Methods': 'GET, POST, DELETE, OPTIONS',
-  'Access-Control-Allow-Headers': 'Content-Type, mcp-session-id, x-api-key',
+  'Access-Control-Allow-Headers': 'Content-Type, mcp-session-id, x-api-key, Authorization',
 }
 
 export async function OPTIONS() {
@@ -21,14 +21,21 @@ export async function GET() {
 }
 
 function extractApiKey(request: Request): string | null {
-  // Claude Code, Codex, Antigravity — pass key as header
-  const headerKey = request.headers.get("x-api-key");
-  if (headerKey) return headerKey;
+  // 1. Authorization header: "Bearer ctx_..." or raw key
+  const authHeader = request.headers.get("authorization");
+  if (authHeader) {
+    const cleanAuth = authHeader.replace(/^Bearer\s+/i, '').trim();
+    if (cleanAuth) return cleanAuth;
+  }
 
-  // Claude.ai web, ChatGPT web — pass key as ?key= query param
+  // 2. Claude Code, Codex, Antigravity — pass key as x-api-key header
+  const headerKey = request.headers.get("x-api-key");
+  if (headerKey) return headerKey.trim();
+
+  // 3. Claude.ai web, ChatGPT web — pass key as query param (?key=, ?apiKey=, ?api_key=)
   const url = new URL(request.url);
-  const paramKey = url.searchParams.get("key");
-  if (paramKey) return paramKey;
+  const paramKey = url.searchParams.get("key") || url.searchParams.get("apiKey") || url.searchParams.get("api_key");
+  if (paramKey) return paramKey.trim();
 
   return null;
 }
@@ -51,7 +58,7 @@ export async function POST(req: NextRequest) {
   let body
   try {
     body = await req.json()
-  } catch (e) {
+  } catch {
     return NextResponse.json(
       { jsonrpc: '2.0', error: { code: -32700, message: 'Parse error' }, id: null },
       { status: 400, headers: CORS }
@@ -110,6 +117,14 @@ export async function POST(req: NextRequest) {
               required: ['summary', 'scope', 'goal', 'achieved'],
             },
           },
+          {
+            name: 'list_nodes',
+            description: 'List all context nodes in the graph to see their scopes, titles, tags, and metadata (does not include full content to save tokens).',
+            inputSchema: {
+              type: 'object',
+              properties: {},
+            },
+          },
         ],
       },
     }, { headers: CORS })
@@ -148,6 +163,39 @@ export async function POST(req: NextRequest) {
           jsonrpc: '2.0',
           id,
           error: { code: -32000, message: 'Failed to fetch context' },
+        }, { headers: CORS })
+      }
+    }
+
+    if (name === 'list_nodes') {
+      try {
+        const nodes = await getUserNodes(userId)
+        
+        // Format nodes to omit long content to save tokens
+        const formattedNodes = nodes.map(node => ({
+          id: node.id,
+          scope: node.scope,
+          title: node.title,
+          relevance: node.relevance,
+          tags: node.tags,
+          parent_scope: node.parent_scope,
+          last_updated: node.last_updated,
+          created_at: node.created_at,
+        }))
+
+        return NextResponse.json({
+          jsonrpc: '2.0',
+          id,
+          result: {
+            content: [{ type: 'text', text: JSON.stringify(formattedNodes, null, 2) }],
+          },
+        }, { headers: CORS })
+      } catch (e) {
+        console.error('Failed to list nodes:', e)
+        return NextResponse.json({
+          jsonrpc: '2.0',
+          id,
+          error: { code: -32000, message: 'Failed to list nodes' },
         }, { headers: CORS })
       }
     }
