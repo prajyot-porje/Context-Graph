@@ -1,7 +1,10 @@
 import type { Metadata } from 'next'
 import { Geist, Geist_Mono, Outfit } from 'next/font/google'
 import { LenisProvider } from '@/components/providers/LenisProvider'
+import { MaintenanceScene } from '@/components/maintenance/MaintenanceScene'
 import './globals.css'
+
+const MAINTENANCE_MODE = process.env.NEXT_PUBLIC_MAINTENANCE_MODE === 'true'
 
 
 const geistSans = Geist({
@@ -91,7 +94,9 @@ export default function RootLayout({
         />
       </head>
       <body className="flex min-h-full flex-col">
-        <LenisProvider>{children}</LenisProvider>
+        <LenisProvider>
+          {MAINTENANCE_MODE ? <MaintenanceScene /> : children}
+        </LenisProvider>
       </body>
     </html>
   )
