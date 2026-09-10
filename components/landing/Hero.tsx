@@ -5,6 +5,7 @@ import { useGSAP } from '@gsap/react'
 import { gsap, DUR, prefersReducedMotion } from '@/lib/gsap'
 import Link from 'next/link'
 import dynamic from 'next/dynamic'
+import { ArrowUpRight } from 'lucide-react'
 
 // Dynamically import the WebGL 3D Graph component to ensure SSR compatibility
 const HeroGraph3D = dynamic(
@@ -99,7 +100,7 @@ export function Hero() {
   return (
     <section
       ref={containerRef}
-      className="relative flex min-h-[calc(100dvh-60px)] lg:h-[calc(100dvh-60px)] w-full flex-col items-center justify-center overflow-hidden bg-[var(--bg)] px-[var(--space-6)] pt-24 pb-12 lg:py-0"
+      className="relative flex min-h-[calc(100dvh-60px)] lg:h-[calc(100dvh-60px)] w-full flex-col items-center justify-center overflow-hidden bg-[var(--bg)] pt-24 pb-12 lg:py-0"
     >
       {/* Subtle top-center atmospheric radial highlight */}
       <div
@@ -128,7 +129,7 @@ export function Hero() {
       </svg>
 
       {/* Grid container separating visualizer and content */}
-      <div className="relative z-10 mx-auto grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-8 items-center w-full max-w-[1200px]">
+      <div className="relative z-10 mx-auto grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-8 items-center w-full max-w-[1200px] px-[var(--space-6)]">
         
         {/* Left Column: Premium Editorial Copy */}
         <div className="lg:col-span-6 flex flex-col text-left items-start">
@@ -159,18 +160,17 @@ export function Hero() {
           <div className="hero-cta flex flex-wrap items-center gap-4">
             <Link href="/dashboard" className="inline-block">
               <button
-                className="min-h-11 px-5 rounded-[var(--radius-md)] bg-[var(--text-primary)] text-[var(--bg)] font-semibold text-[13px] transition-[opacity,transform] duration-150 ease-out hover:opacity-90 active:scale-[0.97] inline-flex items-center gap-3.5 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]"
+                className="group min-h-11 px-6 rounded-[var(--radius-md)] bg-[var(--text-primary)] text-[var(--bg)] font-semibold text-[15px] tracking-[-0.01em] transition-[opacity,transform] duration-150 ease-out hover:opacity-90 active:scale-[0.97] inline-flex items-center gap-2.5 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]"
               >
-                Start Building
-                {/* Button-in-button circle icon */}
-                <span className="w-5 h-5 rounded-full bg-black/5 dark:bg-black/10 flex items-center justify-center text-[10px] font-bold shrink-0">
-                  ↗
+                <span>Start Building</span>
+                <span className="w-5 h-5 rounded-full bg-current/10 flex items-center justify-center shrink-0 transition-transform duration-150 ease-out group-hover:translate-x-0.5 group-hover:-translate-y-0.5">
+                  <ArrowUpRight className="w-3.5 h-3.5 text-inherit" />
                 </span>
               </button>
             </Link>
             <Link href="/docs" className="inline-block">
               <button
-                className="min-h-11 px-6 rounded-[var(--radius-md)] border border-[var(--border-strong)] bg-transparent text-[var(--text-primary)] font-medium text-[13px] transition-[border-color,background-color,transform] duration-150 ease-out hover:border-[rgba(255,255,255,0.18)] hover:bg-[rgba(255,255,255,0.02)] active:scale-[0.97] cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]"
+                className="min-h-11 px-6 rounded-[var(--radius-md)] border border-[var(--border-strong)] bg-transparent text-[var(--text-primary)] font-medium text-[15px] tracking-[-0.01em] transition-[border-color,background-color,transform] duration-150 ease-out hover:border-[var(--accent)] hover:bg-[var(--surface)] active:scale-[0.97] cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]"
               >
                 Explore Protocol
               </button>
@@ -181,10 +181,10 @@ export function Hero() {
         {/* Right Column: Interactive 3D Graph (Wow Factor) */}
         <div className="hero-visual-wrapper lg:col-span-6 w-full flex items-center justify-center">
           {/* Double-Bezel Outer Shell */}
-          <div className="w-full max-w-[520px] rounded-[2.5rem] p-2 bg-gradient-to-b from-white/[0.04] to-white/[0.01] border border-white/5 shadow-2xl relative">
+          <div className="w-full max-w-[520px] rounded-[2.5rem] p-2 bg-gradient-to-b from-[var(--border-strong)] to-[var(--border)] border border-[var(--border)] shadow-2xl relative">
             {/* Double-Bezel Inner Core */}
             <div
-              className="relative w-full h-[350px] lg:h-[450px] rounded-[calc(2.5rem-8px)] bg-gradient-to-b from-[var(--card-raised)] to-[var(--card)] border border-white/[0.02] flex items-center justify-center overflow-hidden"
+              className="relative w-full h-[350px] lg:h-[450px] rounded-[calc(2.5rem-8px)] bg-gradient-to-b from-[var(--card-raised)] to-[var(--card)] border border-[var(--border)] flex items-center justify-center overflow-hidden"
               style={{ boxShadow: 'var(--shadow-inset)' }}
             >
               {/* Background grid dot overlay */}
@@ -201,17 +201,12 @@ export function Hero() {
                 <HeroGraph3D />
               </div>
 
-              {/* Float tag indicators */}
-              <div className="absolute top-6 left-6 z-20 pointer-events-none flex flex-col gap-1.5">
-                <div className="px-2 py-0.5 rounded bg-[#080808]/80 border border-white/5 text-[9px] font-mono text-[var(--accent)] tracking-wider">
-                  ACTIVE_SYNC
-                </div>
-              </div>
-
-              <div className="absolute bottom-6 right-6 z-20 pointer-events-none flex flex-col gap-1.5 text-right">
-                <div className="px-2 py-0.5 rounded bg-[#080808]/80 border border-white/5 text-[9px] font-mono text-[var(--text-secondary)] tracking-wider">
-                  LATENCY &lt; 8ms
-                </div>
+              {/* Meaningful Interactive Badge */}
+              <div className="absolute top-4 left-4 z-20 pointer-events-none flex items-center gap-2 rounded-full border border-[var(--border)] bg-[var(--card)]/90 backdrop-blur-md px-3 py-1 shadow-[var(--shadow-xs)]">
+                <span className="h-1.5 w-1.5 rounded-full bg-[var(--accent)] animate-pulse" />
+                <span className="text-[10px] font-mono text-[var(--text-secondary)] font-medium tracking-wide">
+                  3D Force Graph • Drag to stretch
+                </span>
               </div>
             </div>
           </div>

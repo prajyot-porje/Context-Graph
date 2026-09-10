@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
 @source "../components";
 @source "../lib";
 
@@ -11,12 +12,17 @@
 /* ----------------------------------------------------------------
    1. DARK MODE (default)
    ---------------------------------------------------------------- */
-:root {
+:root,
+[data-theme="dark"] {
+  color-scheme: dark;
   /* ---- Accent ---- */
   --accent: #b3ec13;
   --accent-soft: #9fd411;
   --accent-muted: rgba(179, 236, 19, 0.12);
   --on-accent: #0a0a0a;
+  --footer-brand-text: #ffffff;
+  --footer-watermark-gradient: linear-gradient(to right bottom, #ffffff 15%, #def79c 50%, #b3ec13 90%);
+  --logo-glow-opacity: 0.04;
 
   /* ---- Surfaces ---- */
   --bg: #080808;
@@ -133,6 +139,10 @@
    2. LIGHT MODE
    ---------------------------------------------------------------- */
 [data-theme="light"] {
+  color-scheme: light;
+  --footer-brand-text: #000000;
+  --footer-watermark-gradient: linear-gradient(to right bottom, #a3e607 0%, #689904 35%, #1c2605 70%, #000000 95%);
+  --logo-glow-opacity: 0;
   --bg: #f8f8f8;
   --surface: #f0f0f0;
   --card: #ffffff;
@@ -222,6 +232,7 @@
   --color-warning: var(--warning);
   --color-error: var(--error);
   --color-on-semantic: var(--on-semantic);
+  --color-footer-brand: var(--footer-brand-text);
 
   --font-sans: var(--font-geist-sans), system-ui, sans-serif;
   --font-mono: var(--font-geist-mono), "Fira Code", monospace;
@@ -264,15 +275,12 @@
   }
 
   /* ---- Theme transition (specific properties, never "all") ---- */
-  body,
-  body * {
-    transition-property: background-color, color, border-color;
-    transition-duration: 0ms;
-  }
-
-  [data-theme="light"],
-  [data-theme="light"] * {
-    transition-duration: 200ms;
+  html.theme-transitioning,
+  html.theme-transitioning body,
+  html.theme-transitioning body * {
+    transition-property: background-color, color, border-color, fill, stroke;
+    transition-duration: 250ms;
+    transition-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
   }
 
   /* ---- Focus visible ---- */

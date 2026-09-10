@@ -80,11 +80,11 @@ export default function RootLayout({
           dangerouslySetInnerHTML={{
             __html: `
               try {
-                if (localStorage.theme === 'light') {
-                  document.documentElement.setAttribute('data-theme', 'light');
-                } else {
-                  document.documentElement.removeAttribute('data-theme');
+                var t = localStorage.getItem('cg-theme');
+                if (!t) {
+                  t = window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
                 }
+                document.documentElement.setAttribute('data-theme', t);
               } catch (_) {}
             `,
           }}

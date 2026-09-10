@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { Copy, Check, RotateCcw, Trash2, ArrowLeft, Loader2 } from 'lucide-react'
 import Link from 'next/link'
 import { cn } from '@/lib/utils'
+import { useSession } from '@/lib/auth-client'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { CodeBlock } from '@/components/ui/CodeBlock'
@@ -15,40 +16,44 @@ const TABS: Tab[] = ['Claude', 'Claude Code', 'ChatGPT', 'Codex']
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
 
-const getSnippets = (prefix: string) => ({
-  Claude: {
-    title: 'Remote MCP Server URL',
-    code: `${APP_URL}/api/mcp?key=${prefix}••••••••`
-  },
-  'Claude Code': {
-    title: '~/.claude/claude_desktop_config.json',
-    code: `{
+const getSnippets = (prefix: string, rawKey?: string | null) => {
+  const displayKey = rawKey || `${prefix}••••••••`
+  return {
+    Claude: {
+      title: 'Remote MCP Server URL',
+      code: `${APP_URL}/api/mcp?key=${displayKey}`,
+    },
+    'Claude Code': {
+      title: '~/.claude/claude_desktop_config.json',
+      code: `{
   "mcpServers": {
-    "context-engine": {
+    "context-graph": {
       "url": "${APP_URL}/api/mcp",
       "headers": {
-        "x-api-key": "${prefix}••••••••"
+        "x-api-key": "${displayKey}"
       }
     }
   }
-}`
-  },
-  ChatGPT: {
-    title: 'MCP Server URL',
-    code: `${APP_URL}/api/mcp?key=${prefix}••••••••`
-  },
-  Codex: {
-    title: 'Codex Desktop — Streamable HTTP',
-    code: `Name: context-engine
+}`,
+    },
+    ChatGPT: {
+      title: 'MCP Server URL',
+      code: `${APP_URL}/api/mcp?key=${displayKey}`,
+    },
+    Codex: {
+      title: 'Codex Desktop — Streamable HTTP',
+      code: `Name: context-graph
 URL: ${APP_URL}/api/mcp
-Header: x-api-key: ${prefix}••••••••`
+Header: x-api-key: ${displayKey}`,
+    },
   }
-})
+}
 
 type SettingsTab = 'API Key' | 'Account' | 'Danger Zone'
 const SETTINGS_TABS: SettingsTab[] = ['API Key', 'Account', 'Danger Zone']
 
 export default function SettingsClient() {
+  const { data: session } = useSession()
   const { toast, showToast, hideToast } = useToast()
 
   const [settingsTab, setSettingsTab] = useState<SettingsTab>('API Key')
@@ -149,7 +154,7 @@ export default function SettingsClient() {
   }
 
   const activePrefix = apiKeyInfo?.prefix || 'ctx_a3f2'
-  const snippets = getSnippets(activePrefix)
+  const snippets = getSnippets(activePrefix, newRawKey)
 
   return (
     <div className="w-full h-full overflow-y-auto" data-lenis-prevent="true">
@@ -302,9 +307,9 @@ export default function SettingsClient() {
           </p>
 
           <div className="flex flex-col gap-4">
-            <Input label="Full name" defaultValue="Prajyot Porje" />
-            <Input label="Email" defaultValue="porjeprajyot@gmail.com" type="email" />
-            <Input label="Location" defaultValue="Pune, India" />
+            <Input label="Full name" defaultValue={session?.user?.name || ''} placeholder="John Doe" key={`name-${session?.user?.name}`} />
+            <Input label="Email" defaultValue={session?.user?.email || ''} placeholder="you@example.com" type="email" key={`email-${session?.user?.email}`} />
+            <Input label="Location" defaultValue="San Francisco, CA" placeholder="Your location" />
           </div>
 
           <div className="mt-6">

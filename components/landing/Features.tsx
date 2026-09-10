@@ -1,40 +1,79 @@
 'use client'
 
-import { useRef, useState, useEffect } from 'react'
+import { useRef, useState } from 'react'
 import { useGSAP } from '@gsap/react'
 import { gsap, prefersReducedMotion } from '@/lib/gsap'
 import { cn } from '@/lib/utils'
+import {
+  Cpu,
+  Layers,
+  Sparkles,
+  Database,
+  CheckCircle2,
+  ShieldCheck,
+} from 'lucide-react'
+
+interface ClientTarget {
+  id: string
+  name: string
+  icon: string
+  type: string
+  scope: string[]
+  sampleOutput: string
+}
+
+const CLIENT_TARGETS: ClientTarget[] = [
+  {
+    id: 'cursor',
+    name: 'Cursor IDE',
+    icon: '⚡',
+    type: 'Editor Extension',
+    scope: ['@stack/nextjs15', '@rules/tailwind-v4', '@rules/programmatic-auth'],
+    sampleOutput: 'Inline completions adhere strictly to Next.js 15 App Router & zero-inline-SQL rules without repeating guidelines.',
+  },
+  {
+    id: 'claude',
+    name: 'Claude Code',
+    icon: '🔮',
+    type: 'CLI / Terminal',
+    scope: ['@identity/lead-architect', '@projects/taskflow', '@rules/strict-ts'],
+    sampleOutput: 'Terminal CLI immediately understands repository architecture, dependency tiers, and active migration status.',
+  },
+  {
+    id: 'codex',
+    name: 'Codex CLI',
+    icon: '⚙️',
+    type: 'Agentic Worker',
+    scope: ['@stack/supabase-postgres', '@rules/session-auth', '@projects/contextgraph'],
+    sampleOutput: 'Autonomous task execution loads typed db helpers from lib/db.ts without querying Supabase directly from client.',
+  },
+  {
+    id: 'chatgpt',
+    name: 'ChatGPT / Web',
+    icon: '💬',
+    type: 'Chat Assistant',
+    scope: ['@rules/design-tokens', '@identity/developer-profile'],
+    sampleOutput: 'Generates UI designs using exact CSS custom properties and 4px spacing grid from DESIGN.md on prompt 1.',
+  },
+]
 
 export function Features() {
   const containerRef = useRef<HTMLElement>(null)
-  const [decayScore, setDecayScore] = useState(95)
-
-  // Simulation of relevance decay score animation
-  useEffect(() => {
-    if (prefersReducedMotion()) return
-    const interval = setInterval(() => {
-      setDecayScore(prev => {
-        if (prev <= 40) return 95
-        return prev - 5
-      })
-    }, 2000)
-    return () => clearInterval(interval)
-  }, [])
+  const [selectedClient, setSelectedClient] = useState<ClientTarget>(CLIENT_TARGETS[0])
 
   useGSAP(
     () => {
       if (prefersReducedMotion()) {
-        gsap.set('.feature-header, .bento-tile', { opacity: 1, y: 0 })
+        gsap.set('.feature-header, .feature-card', { opacity: 1, y: 0 })
         return
       }
 
-      // Single timeline triggered by the section container to ensure everything reveals together
       const tl = gsap.timeline({
         scrollTrigger: {
           trigger: containerRef.current,
           start: 'top 80%',
           once: true,
-        }
+        },
       })
 
       tl.from('.feature-header', {
@@ -42,306 +81,327 @@ export function Features() {
         y: 20,
         duration: 0.5,
         ease: 'cg-out',
-      })
-
-      tl.from('.bento-tile', {
-        opacity: 0,
-        y: 24,
-        duration: 0.6,
-        ease: 'cg-out',
-        stagger: 0.08,
-      }, '-=0.3')
+      }).from(
+        '.feature-card',
+        {
+          opacity: 0,
+          y: 24,
+          duration: 0.6,
+          ease: 'cg-out',
+          stagger: 0.08,
+        },
+        '-=0.3'
+      )
     },
     { scope: containerRef }
   )
 
   return (
-    <section 
-      ref={containerRef} 
-      className="relative py-24 bg-[var(--bg)] border-t border-[var(--border)] overflow-hidden"
+    <section
+      id="features"
+      ref={containerRef}
+      className="relative py-28 bg-[var(--bg)] border-t border-[var(--border)] overflow-hidden"
     >
-      {/* Subtle atmospheric ambient glow */}
-      <div 
-        className="pointer-events-none absolute top-[10%] left-[-10%] w-[450px] h-[450px] rounded-full bg-white/[0.01] blur-[120px]" 
-        aria-hidden="true" 
+      {/* Ambient background glow */}
+      <div
+        className="pointer-events-none absolute top-[5%] left-[20%] w-[500px] h-[350px] rounded-full bg-[var(--accent)] opacity-[0.015] blur-[140px]"
+        aria-hidden="true"
       />
-      <div 
-        className="pointer-events-none absolute bottom-[10%] right-[-10%] w-[450px] h-[450px] rounded-full bg-white/[0.01] blur-[120px]" 
-        aria-hidden="true" 
+      <div
+        className="pointer-events-none absolute bottom-[10%] right-[10%] w-[500px] h-[350px] rounded-full bg-[var(--accent)] opacity-[0.015] blur-[140px]"
+        aria-hidden="true"
       />
 
-      <div className="mx-auto max-w-[1200px] px-[var(--space-6)]">
-        
+      <div className="mx-auto max-w-[1200px] px-[var(--space-6)] relative z-10">
         {/* Section Header */}
         <div className="feature-header mb-16 text-left">
-          {/* Eyebrow badge */}
-          <div className="mb-4 flex items-center gap-2 rounded-full border border-[var(--border)] bg-white/[0.01] w-max px-3.5 py-1 shadow-[var(--shadow-xs)]">
-            <span className="h-1.5 w-1.5 rounded-full bg-[var(--accent)] shrink-0" />
-            <span className="text-label text-[9px] text-[var(--text-secondary)] font-semibold tracking-[0.12em] uppercase">
-              Aesthetic Intelligence
+          <div className="mb-4 flex items-center gap-2 rounded-full border border-[var(--border)] bg-[var(--surface)] w-max px-3.5 py-1 shadow-[var(--shadow-xs)]">
+            <span className="h-1.5 w-1.5 rounded-full bg-[var(--accent)] shrink-0 animate-pulse" />
+            <span className="text-label text-[10px] text-[var(--text-secondary)] font-semibold tracking-[0.12em] uppercase">
+              Cross-Platform Protocol
             </span>
           </div>
-          <h2 className="text-display-lg max-w-[620px] text-[var(--text-primary)] font-bold uppercase tracking-tight">
+
+          <h2 className="text-display-lg max-w-[700px] text-[var(--text-primary)] font-bold uppercase tracking-tight">
             Context that travels with you.
           </h2>
-          <p className="mt-[var(--space-4)] max-w-[50ch] text-body-md text-[var(--text-secondary)] leading-relaxed">
-            A self-updating, persistent graph built for developers. One integration feeds all coding assistants and clients.
+
+          <p className="mt-[var(--space-4)] max-w-[56ch] text-body-md text-[var(--text-secondary)] leading-relaxed">
+            Stop copy-pasting system instructions and tech stack rules into every new prompt.
+            ContextGraph unifies your identities, projects, and architecture patterns into a single living graph queryable by every AI.
           </p>
         </div>
 
-        {/* Bento Grid Layout - Asymmetric masonry */}
-        <div className="bento-grid grid grid-cols-1 md:grid-cols-3 gap-6">
-          
-          {/* Card 1: Build once, use everywhere (col-span-2) */}
-          <div className="bento-tile col-span-1 md:col-span-2 group relative rounded-[2rem] p-1.5 bg-gradient-to-b from-white/[0.04] to-white/[0.01] border border-white/5 shadow-[var(--shadow-sm)] hover:border-white/10 transition-all duration-300">
+        {/* Bento Grid Layout */}
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
+          {/* Card 1 (col-span-12 lg:col-span-7): Universal Protocol Handshake */}
+          <div className="feature-card md:col-span-12 lg:col-span-7 group rounded-[2rem] p-1.5 bg-gradient-to-b from-[var(--card-raised)] to-[var(--card)] border border-[var(--border)] shadow-[var(--shadow-sm)] hover:border-[var(--border-strong)] transition-[border-color,box-shadow] duration-300">
             <div
-              className="rounded-[calc(2rem-6px)] p-8 flex flex-col md:flex-row h-full gap-8 justify-between"
-              style={{
-                background: 'linear-gradient(to bottom, var(--card-raised), var(--card))',
-                boxShadow: 'var(--shadow-inset)',
-              }}
-            >
-              {/* Text side */}
-              <div className="flex flex-col justify-between flex-1 text-left">
-                <div>
-                  <div className="flex h-10 w-10 items-center justify-center rounded-[var(--radius-md)] border border-white/5 bg-white/[0.02] text-[var(--text-primary)] transition-transform duration-300 group-hover:scale-105 shadow-[var(--shadow-inset)]">
-                    <svg className="w-5 h-5 opacity-70" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.25">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 21a9.004 9.004 0 0 0 8.716-6.747M12 21a9.004 9.004 0 0 1-8.716-6.747M12 21c2.485 0 4.5-4.03 4.5-9S14.485 3 12 3m0 18c-2.485 0-4.5-4.03-4.5-9S9.515 3 12 3m0 0a8.997 8.997 0 0 1 7.843 4.582M12 3a8.997 8.997 0 0 0-7.843 4.582m15.686 0A11.953 11.953 0 0 1 12 10.5c-2.905 0-5.64-.5-8.157-1.418m16.314 0C19.645 11.724 16.002 12.5 12 12.5c-4.002 0-7.644-.776-9.843-1.918" />
-                    </svg>
-                  </div>
-                  <h3 className="mt-6 text-heading-lg text-[var(--text-primary)] font-bold tracking-tight uppercase">
-                    Build once, use everywhere
-                  </h3>
-                  <p className="mt-3 text-body-md text-[var(--text-secondary)] leading-relaxed">
-                    Create your profile and project rules once. Every MCP-compatible assistant queries the same structured Graph in your private database, eliminating duplicate instructions and context fragmentation.
-                  </p>
-                </div>
-                <div className="mt-8 text-[9px] font-mono text-[var(--text-muted)] uppercase tracking-wider">
-                  Protocol Specification: MCP v1.0
-                </div>
-              </div>
-
-              {/* Graphic side: Premium client network node visual */}
-              <div className="flex-1 flex items-center justify-center bg-[#080808]/40 rounded-2xl border border-white/5 p-6 min-h-[220px] relative overflow-hidden">
-                <div 
-                  className="absolute inset-0 opacity-[0.015] pointer-events-none" 
-                  style={{
-                    backgroundImage: 'radial-gradient(var(--text-primary) 1px, transparent 1px)',
-                    backgroundSize: '12px 12px'
-                  }} 
-                />
-                
-                <div className="flex flex-col items-center gap-4 relative z-10 w-full">
-                  <div className="flex items-center justify-between w-full max-w-[240px] border border-white/5 bg-white/[0.01] p-3 rounded-xl shadow-sm">
-                    <span className="text-[10px] font-mono text-white/50">sync_status</span>
-                    <span className="text-[9px] font-mono text-[var(--accent)] bg-[var(--accent-muted)] border border-[rgba(179,236,19,0.1)] px-2 py-0.5 rounded font-semibold uppercase tracking-wider">connected</span>
-                  </div>
-
-                  <div className="flex items-center justify-center gap-5 w-full">
-                    {/* Source node */}
-                    <div className="flex flex-col items-center p-3.5 rounded-2xl bg-[#0a0a0a] border border-[var(--accent)] shadow-[0_0_15px_rgba(179,236,19,0.15)] z-10">
-                      <div className="h-6 w-6 flex items-center justify-center rounded-lg bg-[var(--accent-muted)] text-[var(--accent)]">
-                        <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M12 21a9.004 9.004 0 0 0 8.716-6.747M12 21a9.004 9.004 0 0 1-8.716-6.747M12 21c2.485 0 4.5-4.03 4.5-9S14.485 3 12 3m0 18c-2.485 0-4.5-4.03-4.5-9S9.515 3 12 3m0 0a8.997 8.997 0 0 1 7.843 4.582M12 3a8.997 8.997 0 0 0-7.843 4.582" />
-                        </svg>
-                      </div>
-                      <span className="text-[8px] font-mono mt-1 text-[var(--accent)] tracking-wider font-bold">CORE</span>
-                    </div>
-
-                    {/* Glowing connect lines */}
-                    <div className="flex-1 flex flex-col gap-2.5 max-w-[50px] relative">
-                      <div className="h-[1px] bg-gradient-to-r from-[var(--accent)] to-white/10 relative w-full">
-                        <div className="absolute top-1/2 -translate-y-1/2 left-0 w-1 h-1 rounded-full bg-[var(--accent)] animate-ping" />
-                      </div>
-                    </div>
-
-                    {/* AI client destinations */}
-                    <div className="flex flex-col gap-2">
-                      <div className="text-[9px] font-mono px-3.5 py-1.5 rounded-lg bg-[#0a0a0a] border border-white/5 text-white/80 shadow-sm flex items-center gap-2 hover:border-white/10 transition-colors">
-                        <span className="h-1.5 w-1.5 rounded-full bg-[var(--accent)]" />
-                        Claude
-                      </div>
-                      <div className="text-[9px] font-mono px-3.5 py-1.5 rounded-lg bg-[#0a0a0a] border border-white/5 text-white/80 shadow-sm flex items-center gap-2 hover:border-white/10 transition-colors">
-                        <span className="h-1.5 w-1.5 rounded-full bg-[var(--accent)]" />
-                        Cursor
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Card 2: Auto-updates (col-span-1) */}
-          <div className="bento-tile col-span-1 group relative rounded-[2rem] p-1.5 bg-gradient-to-b from-white/[0.04] to-white/[0.01] border border-white/5 shadow-[var(--shadow-sm)] hover:border-white/10 transition-all duration-300">
-            <div
-              className="rounded-[calc(2rem-6px)] p-8 flex flex-col h-full justify-between text-left"
+              className="rounded-[calc(2rem-6px)] p-6 sm:p-8 flex flex-col justify-between h-full text-left"
               style={{
                 background: 'linear-gradient(to bottom, var(--card-raised), var(--card))',
                 boxShadow: 'var(--shadow-inset)',
               }}
             >
               <div>
-                <div className="flex h-10 w-10 items-center justify-center rounded-[var(--radius-md)] border border-white/5 bg-white/[0.02] text-[var(--text-primary)] transition-transform duration-300 group-hover:scale-105 shadow-[var(--shadow-inset)]">
-                  <svg className="w-5 h-5 opacity-70" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.25">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M17.25 6.75 22.5 12l-5.25 5.25m-10.5 0L1.5 12l5.25-5.25m7.5-3-4.5 16.5" />
-                  </svg>
+                <div className="flex items-center justify-between">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-[var(--radius-md)] border border-[var(--border-strong)] bg-[var(--surface)] text-[var(--accent)] shadow-[var(--shadow-xs)]">
+                    <Cpu className="w-5 h-5" />
+                  </div>
+                  <div className="flex items-center gap-2 rounded-full border border-[var(--border)] bg-[var(--surface)] px-3 py-1 text-[10px] font-mono text-[var(--text-secondary)]">
+                    <span className="h-1.5 w-1.5 rounded-full bg-[var(--accent)] animate-ping" />
+                    MCP Protocol v1.0
+                  </div>
                 </div>
+
                 <h3 className="mt-6 text-heading-lg text-[var(--text-primary)] font-bold tracking-tight uppercase">
-                  Auto-updates
+                  Universal Model Handshake
                 </h3>
-                <p className="mt-3 text-body-md text-[var(--text-secondary)] leading-relaxed">
-                  Type <code className="text-[12px] font-mono text-[var(--text-primary)] bg-white/[0.03] px-1.5 py-0.5 rounded border border-white/5 font-semibold">/save</code> at the end of any session. The model processes the transcripts and appends changes dynamically.
+                <p className="mt-2 text-body-md text-[var(--text-secondary)] leading-relaxed">
+                  Click any connected client below to inspect how ContextGraph dynamically injects relevant context scopes on demand.
                 </p>
+
+                {/* Client Target Switcher Pills */}
+                <div className="mt-6 flex flex-wrap gap-2">
+                  {CLIENT_TARGETS.map((target) => {
+                    const isSelected = selectedClient.id === target.id
+                    return (
+                      <button
+                        key={target.id}
+                        onClick={() => setSelectedClient(target)}
+                        className={cn(
+                          'inline-flex items-center gap-2 px-3.5 py-1.5 rounded-[var(--radius-sm)] text-[12px] font-medium border transition-[color,background-color,border-color,box-shadow,transform] duration-150 active:scale-95 cursor-pointer',
+                          isSelected
+                            ? 'bg-[var(--accent-muted)] border-[var(--accent)] text-[var(--text-primary)] font-semibold shadow-[0_0_12px_rgba(179,236,19,0.15)]'
+                            : 'bg-[var(--surface)] border-[var(--border)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:border-[var(--border-strong)]'
+                        )}
+                      >
+                        <span>{target.icon}</span>
+                        <span>{target.name}</span>
+                      </button>
+                    )
+                  })}
+                </div>
               </div>
 
-              {/* Console Mockup - macOS Style Terminal */}
-              <div className="mt-8 rounded-xl bg-[#080808]/80 border border-white/5 overflow-hidden shadow-inner font-mono text-[10px] text-[var(--text-secondary)]">
-                <div className="h-6 bg-black/40 border-b border-white/5 flex items-center px-3 gap-1">
-                  <span className="w-1.5 h-1.5 rounded-full bg-white/20" />
-                  <span className="w-1.5 h-1.5 rounded-full bg-white/20" />
-                  <span className="w-1.5 h-1.5 rounded-full bg-white/20" />
-                </div>
-                <div className="p-4 text-left">
-                  <div className="text-white/40">&gt; /save</div>
-                  <div className="text-[var(--accent)] mt-1.5 flex items-center gap-1.5">
-                    <span className="h-1 w-1 rounded-full bg-[var(--accent)] animate-ping" />
-                    syncing memory graph...
+              {/* Handshake Display Box */}
+              <div className="mt-8 rounded-xl border border-[var(--border)] bg-[var(--surface)] p-5 shadow-inner font-mono">
+                <div className="flex items-center justify-between pb-3 mb-3 border-b border-[var(--border)] text-[11px]">
+                  <div className="flex items-center gap-2 text-[var(--text-primary)] font-semibold">
+                    <span>{selectedClient.icon}</span>
+                    <span>{selectedClient.name}</span>
+                    <span className="text-[10px] text-[var(--text-muted)] font-normal">({selectedClient.type})</span>
                   </div>
-                  <div className="text-white/80 mt-1 opacity-70">✓ appended projects/taskflow</div>
+                  <div className="flex items-center gap-1.5 text-[var(--accent)] text-[10px] font-semibold">
+                    <CheckCircle2 className="w-3.5 h-3.5" />
+                    Synchronized (4ms)
+                  </div>
+                </div>
+
+                <div className="text-[11px] text-[var(--text-secondary)] mb-2 font-medium">
+                  Active Context Scopes Injected:
+                </div>
+                <div className="flex flex-wrap gap-1.5 mb-3">
+                  {selectedClient.scope.map((s, idx) => (
+                    <span
+                      key={idx}
+                      className="px-2 py-0.5 rounded bg-[var(--card)] border border-[var(--border)] text-[10px] text-[var(--text-primary)] font-semibold"
+                    >
+                      {s}
+                    </span>
+                  ))}
+                </div>
+
+                <div className="p-3 rounded-lg bg-[var(--card)] border border-[var(--border)] text-[12px] text-[var(--text-primary)] leading-relaxed font-sans">
+                  &ldquo;{selectedClient.sampleOutput}&rdquo;
                 </div>
               </div>
             </div>
           </div>
 
-          {/* Card 3: Relevance Decay (col-span-1) */}
-          <div className="bento-tile col-span-1 group relative rounded-[2rem] p-1.5 bg-gradient-to-b from-white/[0.04] to-white/[0.01] border border-white/5 shadow-[var(--shadow-sm)] hover:border-white/10 transition-all duration-300">
+          {/* Card 2 (col-span-12 lg:col-span-5): Auto-Evolving Memory */}
+          <div className="feature-card md:col-span-12 lg:col-span-5 group rounded-[2rem] p-1.5 bg-gradient-to-b from-[var(--card-raised)] to-[var(--card)] border border-[var(--border)] shadow-[var(--shadow-sm)] hover:border-[var(--border-strong)] transition-[border-color,box-shadow] duration-300">
             <div
-              className="rounded-[calc(2rem-6px)] p-8 flex flex-col h-full justify-between text-left"
+              className="rounded-[calc(2rem-6px)] p-6 sm:p-8 flex flex-col justify-between h-full text-left"
               style={{
                 background: 'linear-gradient(to bottom, var(--card-raised), var(--card))',
                 boxShadow: 'var(--shadow-inset)',
               }}
             >
               <div>
-                <div className="flex h-10 w-10 items-center justify-center rounded-[var(--radius-md)] border border-white/5 bg-white/[0.02] text-[var(--text-primary)] transition-transform duration-300 group-hover:scale-105 shadow-[var(--shadow-inset)]">
-                  <svg className="w-5 h-5 opacity-70" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.25">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99" />
-                  </svg>
+                <div className="flex h-10 w-10 items-center justify-center rounded-[var(--radius-md)] border border-[var(--border-strong)] bg-[var(--surface)] text-[var(--accent)] shadow-[var(--shadow-xs)]">
+                  <Sparkles className="w-5 h-5" />
                 </div>
+
                 <h3 className="mt-6 text-heading-lg text-[var(--text-primary)] font-bold tracking-tight uppercase">
-                  Relevance decay
+                  Automatic Memory Evolution
                 </h3>
-                <p className="mt-3 text-body-md text-[var(--text-secondary)] leading-relaxed">
-                  Stale context nodes age and decay over time. Inactive data sinks to lower priority, while active nodes stay queryable. Keeps your context clean.
+                <p className="mt-2 text-body-md text-[var(--text-secondary)] leading-relaxed">
+                  Type <code className="px-1.5 py-0.5 rounded bg-[var(--surface)] border border-[var(--border)] font-mono text-[12px] font-semibold text-[var(--text-primary)]">/save</code> at the end of any coding session. The engine parses the conversation and updates nodes automatically.
                 </p>
               </div>
 
-              {/* Node Decay Simulation Visual */}
-              <div className="mt-8 flex flex-col gap-2 p-4 rounded-xl bg-[#080808]/40 border border-white/5 shadow-inner">
-                {/* Node 1 */}
-                <div className="flex items-center justify-between text-[9px] font-mono">
-                  <span className="text-white/95 font-semibold">AGENTS.md</span>
-                  <div className="flex items-center gap-2">
-                    <span className="text-[var(--accent)] font-semibold">98%</span>
-                    <span className="h-1.5 w-1.5 rounded-full bg-[var(--accent)]" />
+              {/* Memory Capture Simulation Card */}
+              <div className="mt-8 flex flex-col gap-2.5 p-4 rounded-xl border border-[var(--border)] bg-[var(--surface)] font-mono text-[11px]">
+                <div className="flex items-center justify-between pb-2 border-b border-[var(--border)] text-[var(--text-muted)] text-[10px]">
+                  <span>RECENT GRAPH MUTATIONS</span>
+                  <span className="text-[var(--accent)]">● LIVE</span>
+                </div>
+
+                <div className="flex items-start gap-2 text-left">
+                  <span className="text-[var(--accent)] mt-0.5 font-bold">+</span>
+                  <div>
+                    <div className="text-[var(--text-primary)] font-semibold text-[11px]">Migrated auth to Better Auth</div>
+                    <div className="text-[10px] text-[var(--text-secondary)]">Scope: @rules/auth • Relevance: 98%</div>
                   </div>
                 </div>
-                {/* Node 2 */}
-                <div className="flex items-center justify-between text-[9px] font-mono opacity-70">
-                  <span className="text-white/80">DESIGN.md</span>
-                  <div className="flex items-center gap-2">
-                    <span className="text-white/60">82%</span>
-                    <span className="h-1.5 w-1.5 rounded-full bg-white/40" />
+
+                <div className="flex items-start gap-2 text-left">
+                  <span className="text-[var(--accent)] mt-0.5 font-bold">+</span>
+                  <div>
+                    <div className="text-[var(--text-primary)] font-semibold text-[11px]">Added Lenis + GSAP animation rules</div>
+                    <div className="text-[10px] text-[var(--text-secondary)]">Scope: @rules/motion • Relevance: 95%</div>
                   </div>
                 </div>
-                {/* Node 3 */}
-                <div className="flex items-center justify-between text-[9px] font-mono opacity-30">
-                  <span className="text-white/50">legacy-config.json</span>
-                  <div className="flex items-center gap-2">
-                    <span className="text-white/30">35%</span>
-                    <span className="h-1.5 w-1.5 rounded-full bg-white/10" />
+
+                <div className="flex items-start gap-2 text-left opacity-60">
+                  <span className="text-[var(--text-muted)] mt-0.5 font-bold">~</span>
+                  <div>
+                    <div className="text-[var(--text-secondary)] text-[11px]">Deprecated NextAuth custom middleware</div>
+                    <div className="text-[10px] text-[var(--text-muted)]">Archived from active retrieval</div>
                   </div>
                 </div>
               </div>
             </div>
           </div>
 
-          {/* Card 4: Self-Sovereign Storage (col-span-2) */}
-          <div className="bento-tile col-span-1 md:col-span-2 group relative rounded-[2rem] p-1.5 bg-gradient-to-b from-white/[0.04] to-white/[0.01] border border-white/5 shadow-[var(--shadow-sm)] hover:border-white/10 transition-all duration-300">
+          {/* Card 3 (col-span-12 lg:col-span-5): Intelligent Relevance Decay */}
+          <div className="feature-card md:col-span-12 lg:col-span-5 group rounded-[2rem] p-1.5 bg-gradient-to-b from-[var(--card-raised)] to-[var(--card)] border border-[var(--border)] shadow-[var(--shadow-sm)] hover:border-[var(--border-strong)] transition-[border-color,box-shadow] duration-300">
             <div
-              className="rounded-[calc(2rem-6px)] p-8 flex flex-col md:flex-row h-full gap-8 justify-between"
+              className="rounded-[calc(2rem-6px)] p-6 sm:p-8 flex flex-col justify-between h-full text-left"
               style={{
                 background: 'linear-gradient(to bottom, var(--card-raised), var(--card))',
                 boxShadow: 'var(--shadow-inset)',
               }}
             >
-              {/* Text side */}
-              <div className="flex flex-col justify-between flex-1 text-left">
-                <div>
-                  <div className="flex h-10 w-10 items-center justify-center rounded-[var(--radius-md)] border border-white/5 bg-white/[0.02] text-[var(--text-primary)] transition-transform duration-300 group-hover:scale-105 shadow-[var(--shadow-inset)]">
-                    <svg className="w-5 h-5 opacity-70" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.25">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z" />
-                    </svg>
-                  </div>
-                  <h3 className="mt-6 text-heading-lg text-[var(--text-primary)] font-bold tracking-tight uppercase">
-                    Self-sovereign database
-                  </h3>
-                  <p className="mt-3 text-body-md text-[var(--text-secondary)] leading-relaxed">
-                    Your context is yours alone. All nodes reside in your own secure Supabase Postgres database. No centralized servers reading your codebase guidelines, rules, or private repositories.
-                  </p>
+              <div>
+                <div className="flex h-10 w-10 items-center justify-center rounded-[var(--radius-md)] border border-[var(--border-strong)] bg-[var(--surface)] text-[var(--accent)] shadow-[var(--shadow-xs)]">
+                  <Layers className="w-5 h-5" />
                 </div>
-                <div className="mt-8 text-[9px] font-mono text-[var(--text-muted)] uppercase tracking-wider">
-                  Storage Provider: Supabase Postgres
-                </div>
+
+                <h3 className="mt-6 text-heading-lg text-[var(--text-primary)] font-bold tracking-tight uppercase">
+                  Relevance Decay & Token Pruning
+                </h3>
+                <p className="mt-2 text-body-md text-[var(--text-secondary)] leading-relaxed">
+                  Model context windows are precious. ContextGraph ages inactive nodes so you don't waste tokens on dead tasks, keeping queries ultra-fast and laser focused.
+                </p>
               </div>
 
-              {/* Graphic side: Premium Postgres Cylinder table mock */}
-              <div className="flex-1 flex items-center justify-center bg-[#080808]/40 rounded-2xl border border-white/5 p-6 min-h-[220px] relative overflow-hidden">
-                <div 
-                  className="absolute inset-0 opacity-[0.015] pointer-events-none" 
-                  style={{
-                    backgroundImage: 'radial-gradient(var(--text-primary) 1px, transparent 1px)',
-                    backgroundSize: '16px 16px'
-                  }} 
-                />
-                
-                <div className="relative z-10 flex flex-col items-center gap-3 w-full max-w-[200px]">
-                  <div className="w-full flex items-center gap-2 border border-white/5 bg-[#0a0a0a]/80 p-2.5 rounded-xl shadow-sm text-left">
-                    <div className="h-5 w-5 flex items-center justify-center rounded bg-white/[0.03] border border-white/10 text-white/40">
-                      <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M20.25 6.375c0 2.278-3.694 4.125-8.25 4.125S3.75 8.653 3.75 6.375m16.5 0c0-2.278-3.694-4.125-8.25-4.125S3.75 4.097 3.75 6.375m16.5 0v11.25c0 2.278-3.694 4.125-8.25 4.125s-8.25-1.847-8.25-4.125V6.375m16.5 0v3.75m-16.5-3.75v3.75m16.5 0v3.75C20.25 16.153 16.556 18 12 18s-8.25-1.847-8.25-4.125v-3.75" />
-                      </svg>
-                    </div>
-                    <div className="flex flex-col">
-                      <span className="text-[9px] font-mono text-white/95 font-semibold leading-none">supabase_db</span>
-                      <span className="text-[7px] font-mono text-white/30 mt-1 uppercase tracking-wider">authorized RLS</span>
-                    </div>
-                  </div>
+              {/* Decay Indicator Visualizer */}
+              <div className="mt-8 flex flex-col gap-2.5 p-4 rounded-xl border border-[var(--border)] bg-[var(--surface)] font-mono text-[11px]">
+                <div className="flex justify-between items-center text-[10px] text-[var(--text-muted)] pb-2 border-b border-[var(--border)]">
+                  <span>NODE IDENTIFIER</span>
+                  <span>PRIORITY WEIGHT</span>
+                </div>
 
-                  <div className="w-full flex flex-col gap-1 text-[8px] font-mono text-white/40 bg-[#080808]/60 border border-white/5 p-3 rounded-lg shadow-sm">
-                    <div className="flex justify-between border-b border-white/5 pb-1 mb-1 font-bold text-white/60">
-                      <span>column_name</span>
-                      <span>type</span>
+                <div className="flex items-center justify-between">
+                  <span className="text-[var(--text-primary)] font-semibold">@rules/strict-ts</span>
+                  <div className="flex items-center gap-2">
+                    <div className="w-20 h-1.5 rounded-full bg-[var(--card)] overflow-hidden border border-[var(--border)]">
+                      <div className="h-full bg-[var(--accent)] w-[98%]" />
                     </div>
-                    <div className="flex justify-between">
-                      <span className="text-[var(--accent)]">id</span>
-                      <span>uuid</span>
+                    <span className="text-[var(--accent)] font-bold text-[10px]">98%</span>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <span className="text-[var(--text-primary)] font-semibold">@projects/taskflow</span>
+                  <div className="flex items-center gap-2">
+                    <div className="w-20 h-1.5 rounded-full bg-[var(--card)] overflow-hidden border border-[var(--border)]">
+                      <div className="h-full bg-[var(--accent)] w-[84%]" />
                     </div>
-                    <div className="flex justify-between">
-                      <span>node_type</span>
-                      <span>text</span>
+                    <span className="text-[var(--text-primary)] font-bold text-[10px]">84%</span>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between opacity-50">
+                  <span className="text-[var(--text-secondary)]">@temp/migration-notes</span>
+                  <div className="flex items-center gap-2">
+                    <div className="w-20 h-1.5 rounded-full bg-[var(--card)] overflow-hidden border border-[var(--border)]">
+                      <div className="h-full bg-[var(--text-muted)] w-[25%]" />
                     </div>
-                    <div className="flex justify-between">
-                      <span>embedding</span>
-                      <span>vector(1536)</span>
-                    </div>
+                    <span className="text-[var(--text-muted)] text-[10px]">25%</span>
                   </div>
                 </div>
               </div>
             </div>
           </div>
 
+          {/* Card 4 (col-span-12 lg:col-span-7): Self-Sovereign Postgres Storage */}
+          <div className="feature-card md:col-span-12 lg:col-span-7 group rounded-[2rem] p-1.5 bg-gradient-to-b from-[var(--card-raised)] to-[var(--card)] border border-[var(--border)] shadow-[var(--shadow-sm)] hover:border-[var(--border-strong)] transition-[border-color,box-shadow] duration-300">
+            <div
+              className="rounded-[calc(2rem-6px)] p-6 sm:p-8 flex flex-col justify-between h-full text-left"
+              style={{
+                background: 'linear-gradient(to bottom, var(--card-raised), var(--card))',
+                boxShadow: 'var(--shadow-inset)',
+              }}
+            >
+              <div>
+                <div className="flex items-center justify-between">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-[var(--radius-md)] border border-[var(--border-strong)] bg-[var(--surface)] text-[var(--accent)] shadow-[var(--shadow-xs)]">
+                    <Database className="w-5 h-5" />
+                  </div>
+                  <div className="flex items-center gap-1.5 text-[11px] font-mono text-[var(--text-secondary)] border border-[var(--border)] bg-[var(--surface)] px-3 py-1 rounded-full">
+                    <ShieldCheck className="w-3.5 h-3.5 text-[var(--accent)]" />
+                    Encrypted At Rest
+                  </div>
+                </div>
+
+                <h3 className="mt-6 text-heading-lg text-[var(--text-primary)] font-bold tracking-tight uppercase">
+                  Self-Sovereign Postgres Storage
+                </h3>
+                <p className="mt-2 text-body-md text-[var(--text-secondary)] leading-relaxed">
+                  Your architecture decisions and code conventions never live on closed vendor silos.
+                  Everything sits in your private Supabase Postgres instance, governed by programmatic tenant isolation and your personal API keys.
+                </p>
+              </div>
+
+              {/* Database Schema Blueprint Graphic */}
+              <div className="mt-8 rounded-xl border border-[var(--border)] bg-[var(--surface)] p-5 shadow-inner font-mono text-[11px]">
+                <div className="flex items-center justify-between pb-2 mb-3 border-b border-[var(--border)] text-[10px]">
+                  <span className="text-[var(--text-primary)] font-bold flex items-center gap-2">
+                    <span className="h-2 w-2 rounded-sm bg-[var(--accent)]" />
+                    DATABASE: public.context_nodes
+                  </span>
+                  <span className="text-[var(--text-muted)]">POSTGRESQL 16</span>
+                </div>
+
+                <div className="grid grid-cols-3 gap-2 py-1 text-[10px] text-[var(--text-muted)] uppercase tracking-wider font-semibold border-b border-[var(--border)]">
+                  <span>Column</span>
+                  <span>Type</span>
+                  <span>Attributes</span>
+                </div>
+
+                <div className="grid grid-cols-3 gap-2 py-1.5 text-[11px] text-[var(--text-secondary)] border-b border-[var(--border)]">
+                  <span className="text-[var(--text-primary)] font-semibold">user_id</span>
+                  <span>uuid</span>
+                  <span className="text-[var(--text-muted)]">Foreign Key</span>
+                </div>
+
+                <div className="grid grid-cols-3 gap-2 py-1.5 text-[11px] text-[var(--text-secondary)] border-b border-[var(--border)]">
+                  <span className="text-[var(--text-primary)] font-semibold">scope</span>
+                  <span>text</span>
+                  <span className="text-[var(--accent)] font-semibold">Unique Index</span>
+                </div>
+
+                <div className="grid grid-cols-3 gap-2 py-1.5 text-[11px] text-[var(--text-secondary)]">
+                  <span className="text-[var(--text-primary)] font-semibold">embedding</span>
+                  <span>vector(1536)</span>
+                  <span className="text-[var(--text-muted)]">HNSW Cosine</span>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </section>

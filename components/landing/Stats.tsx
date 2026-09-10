@@ -49,9 +49,9 @@ export function Stats() {
       {/* Surface background with a very subtle precision dot pattern */}
       <div className="absolute inset-0 z-0 bg-[var(--surface)] opacity-[0.25]" />
       <div
-        className="absolute inset-0 z-0 opacity-[0.01]"
+        className="absolute inset-0 z-0 opacity-[0.03]"
         style={{
-          backgroundImage: 'radial-gradient(rgba(255, 255, 255, 0.1) 1px, transparent 1px)',
+          backgroundImage: 'radial-gradient(var(--text-primary) 1px, transparent 1px)',
           backgroundSize: '24px 24px',
         }}
       />
@@ -61,10 +61,10 @@ export function Stats() {
           {STATS.map((stat, i) => (
             <div
               key={i}
-              className="stat-card group rounded-2xl p-1 bg-gradient-to-b from-white/[0.03] to-white/[0.01] border border-white/5 shadow-[var(--shadow-sm)]"
+              className="stat-card group rounded-2xl p-1 bg-gradient-to-b from-[var(--card-raised)] to-[var(--card)] border border-[var(--border)] shadow-[var(--shadow-sm)] hover:border-[var(--border-strong)] transition-[border-color,box-shadow] duration-200"
             >
               <div
-                className="rounded-[12px] p-6 flex flex-col justify-center items-start text-left h-full transition-[border-color,transform] duration-200 group-hover:border-white/10"
+                className="rounded-[12px] p-6 flex flex-col justify-center items-start text-left h-full transition-[border-color,transform] duration-200"
                 style={{
                   background: 'linear-gradient(to bottom, var(--card-raised), var(--card))',
                   boxShadow: 'var(--shadow-inset)',

@@ -16,7 +16,7 @@ export default function StepIdentity({ data, update }: Props) {
         label="Your name"
         value={data.name}
         onChange={e => update({ name: e.target.value })}
-        placeholder="Prajyot Porje"
+        placeholder="John Doe"
         autoFocus
       />
       <div className={s.fieldRow}>

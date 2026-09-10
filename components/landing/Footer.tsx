@@ -25,7 +25,7 @@ const COMPANY_LINKS = [
 
 export function Footer() {
   return (
-    <footer className="relative border-t border-[var(--border)] bg-[var(--bg)] pt-20 pb-12 overflow-hidden">
+    <footer className="relative border-t border-[var(--border)] bg-[var(--bg)] pt-20 pb-12 overflow-x-hidden">
       {/* Top subtle visual accent line */}
       <div
         className="pointer-events-none absolute left-0 right-0 top-0 h-[1px]"
@@ -46,8 +46,8 @@ export function Footer() {
               href="/"
               className="inline-flex items-center gap-2.5 transition-opacity duration-150 hover:opacity-90"
             >
-              <div className="relative h-8 w-8 flex items-center justify-center shrink-0 rounded-md bg-[rgba(255,255,255,0.03)] dark:bg-[rgba(255,255,255,0.02)] border border-[var(--border-strong)] shadow-[var(--shadow-sm)] dark:shadow-[0_0_10px_rgba(179,236,19,0.08)] p-1 transition-all duration-200">
-                <div className="absolute inset-0 rounded-md bg-[var(--accent)] opacity-[0.02] blur-sm pointer-events-none dark:block hidden" />
+              <div className="relative h-8 w-8 flex items-center justify-center shrink-0 rounded-md bg-[var(--surface)] border border-[var(--border-strong)] shadow-[var(--shadow-xs)] p-1 transition-[border-color,background-color] duration-150">
+                <div className="absolute inset-0 rounded-md bg-[var(--accent)] opacity-[var(--logo-glow-opacity)] blur-sm pointer-events-none" />
                 <img
                   src="/icons/logo-dark.png"
                   alt="ContextGraph Icon"
@@ -74,7 +74,7 @@ export function Footer() {
                 href="https://github.com/context-graph"
                 target="_blank"
                 rel="noreferrer"
-                className="w-8 h-8 rounded-md border border-[var(--border)] bg-[var(--surface)] flex items-center justify-center text-[var(--text-secondary)] transition-all hover:text-[var(--text-primary)] hover:border-[var(--border-strong)] active:scale-[0.96]"
+                className="w-8 h-8 rounded-md border border-[var(--border)] bg-[var(--surface)] flex items-center justify-center text-[var(--text-secondary)] transition-[color,border-color,transform] duration-150 hover:text-[var(--text-primary)] hover:border-[var(--border-strong)] active:scale-[0.96]"
                 aria-label="GitHub Repository"
               >
                 <svg viewBox="0 0 24 24" className="w-4 h-4 fill-current" aria-hidden="true" style={{ width: '14px', height: '14px' }}>
@@ -85,7 +85,7 @@ export function Footer() {
                 href="https://twitter.com"
                 target="_blank"
                 rel="noreferrer"
-                className="w-8 h-8 rounded-md border border-[var(--border)] bg-[var(--surface)] flex items-center justify-center text-[var(--text-secondary)] transition-all hover:text-[var(--text-primary)] hover:border-[var(--border-strong)] active:scale-[0.96]"
+                className="w-8 h-8 rounded-md border border-[var(--border)] bg-[var(--surface)] flex items-center justify-center text-[var(--text-secondary)] transition-[color,border-color,transform] duration-150 hover:text-[var(--text-primary)] hover:border-[var(--border-strong)] active:scale-[0.96]"
                 aria-label="Twitter Account"
               >
                 <svg viewBox="0 0 24 24" className="w-4 h-4 fill-current" aria-hidden="true" style={{ width: '14px', height: '14px' }}>
@@ -156,11 +156,15 @@ export function Footer() {
 
       </div>
 
-      {/* Massive Screen-wide Watermark Brand Name Text (Outside max-w container to prevent horizontal clipping) */}
-      <div className="relative select-none pointer-events-none w-full flex justify-center py-6 overflow-hidden">
+      {/* Massive Screen-wide Brand Name Text inspired by Antigravity's website */}
+      <div className="relative select-none pointer-events-none w-full flex justify-center pt-10 pb-6 overflow-x-hidden border-t border-[var(--border)]">
         <div 
-          className="font-display font-bold text-[8.5vw] uppercase leading-none tracking-[0.18em] text-[var(--text-primary)] opacity-[0.02]"
+          className="font-sans font-bold text-[10vw] uppercase leading-none tracking-[-0.05em] select-none whitespace-nowrap"
           style={{
+            background: 'var(--footer-watermark-gradient)',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+            backgroundClip: 'text',
             fontSmooth: 'always',
             WebkitFontSmoothing: 'antialiased',
           }}

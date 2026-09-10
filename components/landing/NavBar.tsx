@@ -7,7 +7,7 @@ import { useGSAP } from '@gsap/react'
 import { gsap, prefersReducedMotion } from '@/lib/gsap'
 import { cn } from '@/lib/utils'
 import { signOut, useSession } from '@/lib/auth-client'
-import { LogOut, ArrowRight } from 'lucide-react'
+import { LogOut } from 'lucide-react'
 
 import { ThemeToggle } from '@/components/ui/ThemeToggle'
 
@@ -17,8 +17,8 @@ function Logo() {
       href="/"
       className="inline-flex items-center gap-2.5 transition-opacity duration-150 ease-out hover:opacity-90 shrink-0"
     >
-      <div className="relative h-7 w-7 flex items-center justify-center shrink-0 rounded-md bg-[rgba(255,255,255,0.03)] dark:bg-[rgba(255,255,255,0.02)] border border-[var(--border-strong)] shadow-[var(--shadow-sm)] dark:shadow-[0_0_10px_rgba(179,236,19,0.08)] p-1 transition-all duration-200">
-        <div className="absolute inset-0 rounded-md bg-[var(--accent)] opacity-[0.02] blur-sm pointer-events-none dark:block hidden" />
+      <div className="relative h-7 w-7 flex items-center justify-center shrink-0 rounded-md bg-[var(--surface)] border border-[var(--border-strong)] shadow-[var(--shadow-xs)] p-1 transition-[border-color,background-color] duration-150">
+        <div className="absolute inset-0 rounded-md bg-[var(--accent)] opacity-[var(--logo-glow-opacity)] blur-sm pointer-events-none" />
         <img
           src="/icons/logo-dark.png"
           alt="ContextGraph Icon"
@@ -37,23 +37,35 @@ function Logo() {
   )
 }
 
-function NavLinks() {
+const NAV_SECTIONS = [
+  { label: 'Features', href: '#features' },
+  { label: 'How It Works', href: '#how-it-works' },
+  { label: 'Comparison', href: '#benchmarks' },
+  { label: 'Docs', href: '/docs' },
+]
+
+function NavCenterLinks() {
   return (
-    <Link
-      href="/docs"
-      className={cn(
-        'inline-flex items-center justify-center',
-        'h-[30px] px-3',
-        'rounded-[var(--radius-sm)]',
-        'text-[12px] font-semibold text-[var(--text-secondary)]',
-        'bg-transparent',
-        'transition-[color,background-color] duration-150 ease-out',
-        'hover:text-[var(--text-primary)] hover:bg-[rgba(255,255,255,0.04)]',
-        'focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[var(--accent)]'
-      )}
-    >
-      Docs
-    </Link>
+    <div className="hidden md:flex items-center gap-1">
+      {NAV_SECTIONS.map((item) => (
+        <Link
+          key={item.label}
+          href={item.href}
+          className={cn(
+            'inline-flex items-center justify-center',
+            'h-8 px-3.5',
+            'rounded-[var(--radius-sm)]',
+            'text-[13px] font-medium text-[var(--text-secondary)]',
+            'bg-transparent',
+            'transition-[color,background-color] duration-150 ease-out',
+            'hover:text-[var(--text-primary)] hover:bg-[var(--surface)]',
+            'focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[var(--accent)]'
+          )}
+        >
+          {item.label}
+        </Link>
+      ))}
+    </div>
   )
 }
 
@@ -74,7 +86,7 @@ function NavActions() {
   }, [])
 
   if (isPending) {
-    return <div className="h-8 w-[70px] animate-pulse rounded-[var(--radius-sm)] bg-[rgba(255,255,255,0.05)]" />
+    return <div className="h-8 w-[70px] animate-pulse rounded-[var(--radius-sm)] bg-[var(--surface)]" />
   }
 
   if (session) {
@@ -93,7 +105,7 @@ function NavActions() {
             'text-[12px] font-semibold text-[var(--text-primary)]',
             'border border-[var(--border-strong)] bg-transparent',
             'transition-[border-color,background-color,transform] duration-150 ease-out',
-            'hover:border-[rgba(255,255,255,0.15)] hover:bg-[rgba(255,255,255,0.02)] active:scale-[0.98]',
+            'hover:border-[var(--accent)] hover:bg-[var(--surface)] active:scale-[0.98]',
             'focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[var(--accent)]'
           )}
         >
@@ -123,7 +135,7 @@ function NavActions() {
                   await signOut()
                   router.push('/login')
                 }}
-                className="flex w-full items-center gap-2 rounded px-2.5 py-1.5 text-[12px] text-[var(--text-secondary)] transition-colors hover:bg-[rgba(255,255,255,0.04)] hover:text-[var(--text-primary)] text-left"
+                className="flex w-full items-center gap-2 rounded px-2.5 py-1.5 text-[12px] text-[var(--text-secondary)] transition-colors hover:bg-[var(--surface)] hover:text-[var(--text-primary)] text-left"
               >
                 <LogOut size={12} />
                 Sign out
@@ -141,31 +153,16 @@ function NavActions() {
         href="/login"
         className={cn(
           'inline-flex items-center justify-center',
-          'h-8 px-3.5',
-          'rounded-[var(--radius-sm)]',
-          'text-[12px] font-semibold text-[var(--text-primary)]',
-          'bg-transparent border border-[var(--border-strong)]',
-          'transition-[border-color,background-color,transform] duration-150 ease-out',
-          'hover:border-[rgba(255,255,255,0.15)] hover:bg-[rgba(255,255,255,0.02)] active:scale-[0.98]',
-          'focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[var(--accent)]'
-        )}
-      >
-        Log in
-      </Link>
-      <Link
-        href="/signup"
-        className={cn(
-          'inline-flex items-center justify-center',
           'h-8 px-4',
           'rounded-[var(--radius-sm)]',
           'text-[12px] font-bold',
-          'bg-[var(--text-primary)] text-[var(--bg)]',
-          'transition-[opacity,transform] duration-150 ease-out',
-          'hover:opacity-90 active:scale-[0.98]',
+          'bg-[var(--accent)] text-[var(--accent-fg)] shadow-[var(--shadow-xs)]',
+          'transition-[opacity,transform,filter] duration-150 ease-out',
+          'hover:opacity-95 hover:brightness-105 active:scale-[0.98]',
           'focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[var(--accent)]'
         )}
       >
-        Sign up
+        Get Started
       </Link>
     </div>
   )
@@ -186,7 +183,7 @@ export function NavBar() {
   useGSAP(
     () => {
       if (prefersReducedMotion()) {
-        gsap.set('.nav-logo, .nav-link, .nav-action', { opacity: 1, y: 0 })
+        gsap.set('.nav-logo, .nav-links, .nav-action, .nav-theme', { opacity: 1, y: 0 })
         return
       }
 
@@ -198,7 +195,7 @@ export function NavBar() {
         ease: 'cg-out',
       })
         .from(
-          '.nav-link',
+          '.nav-links a',
           {
             opacity: 0,
             y: -4,
@@ -209,7 +206,7 @@ export function NavBar() {
           0.1
         )
         .from(
-          '.nav-action',
+          '.nav-action, .nav-theme',
           {
             opacity: 0,
             y: -4,
@@ -224,35 +221,38 @@ export function NavBar() {
   )
 
   return (
-    <nav
+    <header
       ref={navRef}
       className={cn(
-        'fixed top-4 left-1/2 -translate-x-1/2 z-[300]',
-        'flex h-[54px] w-[calc(100%-2rem)] max-w-[800px] items-center justify-between',
-        'px-6 rounded-full border',
-        'bg-black/50 dark:bg-[#080808]/50 backdrop-blur-xl saturate-[160%]',
-        'transition-[border-color,box-shadow,background-color] duration-300 ease-out',
+        'sticky top-0 z-[300] w-full',
+        'border-b transition-[border-color,box-shadow,background-color] duration-200 ease-out',
+        'bg-[var(--nav-backdrop)] backdrop-blur-xl saturate-[160%]',
         scrolled
-          ? 'border-white/[0.08] dark:border-white/[0.06] shadow-[0_12px_40px_rgba(0,0,0,0.5)] bg-black/65 dark:bg-[#080808]/65'
-          : 'border-white/5 shadow-[0_8px_32px_rgba(0,0,0,0.3)]'
+          ? 'border-[var(--border-strong)] shadow-[var(--shadow-sm)]'
+          : 'border-[var(--border)]'
       )}
     >
-      <div className="nav-logo">
-        <Logo />
+      <div className="mx-auto flex h-[60px] max-w-[1200px] items-center justify-between px-[var(--space-6)]">
+        {/* Left: Logo */}
+        <div className="nav-logo flex items-center">
+          <Logo />
+        </div>
+
+        {/* Center: Section Anchor Links */}
+        <nav className="nav-links">
+          <NavCenterLinks />
+        </nav>
+
+        {/* Right: Actions + ThemeToggle */}
+        <div className="flex items-center gap-3">
+          <div className="nav-action">
+            <NavActions />
+          </div>
+          <div className="nav-theme">
+            <ThemeToggle />
+          </div>
+        </div>
       </div>
-      
-      {/* Navigation center/right items */}
-      <div className="flex items-center gap-3 sm:gap-4">
-        <div className="nav-link">
-          <ThemeToggle />
-        </div>
-        <div className="nav-link">
-          <NavLinks />
-        </div>
-        <div className="nav-action">
-          <NavActions />
-        </div>
-      </div>
-    </nav>
+    </header>
   )
 }

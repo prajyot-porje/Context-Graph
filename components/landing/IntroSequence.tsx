@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { useGSAP } from '@gsap/react'
-import { gsap, DUR, prefersReducedMotion } from '@/lib/gsap'
+import { gsap, prefersReducedMotion } from '@/lib/gsap'
 
 interface IntroSequenceProps {
   onComplete: () => void

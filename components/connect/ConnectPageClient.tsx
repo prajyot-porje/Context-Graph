@@ -158,6 +158,7 @@ export function ConnectPageClient({ keyPrefix, appUrl }: ConnectPageClientProps)
   const [nodeCount, setNodeCount] = useState<number | null>(null)
   const [copiedKey, setCopiedKey] = useState(false)
   const [freshKey, setFreshKey] = useState<string | null>(null)
+  const [isRegeneratingKey, setIsRegeneratingKey] = useState(false)
   const copyKeyTimerRef = useRef<NodeJS.Timeout | null>(null)
   // Panel crossfade state
   const [panelVisible, setPanelVisible] = useState(true)
@@ -217,10 +218,32 @@ export function ConnectPageClient({ keyPrefix, appUrl }: ConnectPageClientProps)
     }
   }, [freshKey, runTour])
 
-  const handleCopyKey = async () => {
-    const textToCopy = freshKey || `${keyPrefix}••••••••`
+  const handleRegenerateKey = async () => {
+    setIsRegeneratingKey(true)
     try {
-      await navigator.clipboard.writeText(textToCopy)
+      await fetch('/api/apikey', { method: 'DELETE' })
+      const res = await fetch('/api/apikey', { method: 'POST' })
+      if (res.ok) {
+        const data = await res.json()
+        setFreshKey(data.key)
+        showToast({ message: 'New API key generated and loaded into snippets', type: 'success' })
+      } else {
+        showToast({ message: 'Failed to generate key', type: 'error' })
+      }
+    } catch {
+      showToast({ message: 'Network error generating key', type: 'error' })
+    } finally {
+      setIsRegeneratingKey(false)
+    }
+  }
+
+  const handleCopyKey = async () => {
+    if (!freshKey) {
+      showToast({ message: 'Active key is masked for security. Click "Regenerate Key" to create a new copyable key.', type: 'error' })
+      return
+    }
+    try {
+      await navigator.clipboard.writeText(freshKey)
       setCopiedKey(true)
       showToast({ message: 'API key copied to clipboard', type: 'success' })
       if (copyKeyTimerRef.current) clearTimeout(copyKeyTimerRef.current)
@@ -454,23 +477,18 @@ export function ConnectPageClient({ keyPrefix, appUrl }: ConnectPageClientProps)
                       </span>
                     </div>
                     <p className="mt-1.5 text-[11px] text-[var(--text-muted)] leading-[1.5]">
-                      Full key hidden for security.{' '}
-                      <button
-                        onClick={() => router.push('/settings')}
-                        className="text-[var(--text-secondary)] underline underline-offset-2 decoration-[var(--border-strong)] hover:text-[var(--text-primary)] hover:decoration-[var(--text-secondary)] transition-[color] duration-150 cursor-pointer focus-visible:outline-none"
-                      >
-                        Regenerate in Settings
-                      </button>
+                      Active key masked for security. Need to connect a new AI client?
                     </p>
                   </div>
 
-                  {/* Copy prefix — secondary (neutral, no accent) */}
+                  {/* Regenerate key button */}
                   <button
-                    onClick={handleCopyKey}
-                    className="flex h-9 shrink-0 items-center gap-2 rounded-[var(--radius-md)] border border-[var(--border-strong)] bg-transparent px-4 text-[12px] font-medium text-[var(--text-secondary)] transition-[background-color,color,border-color,transform] duration-150 ease-out hover:border-[rgba(255,255,255,0.2)] hover:bg-[rgba(255,255,255,0.04)] hover:text-[var(--text-primary)] active:scale-[0.97] cursor-pointer focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[var(--accent)]"
+                    onClick={handleRegenerateKey}
+                    disabled={isRegeneratingKey}
+                    className="flex h-9 shrink-0 items-center gap-2 rounded-[var(--radius-md)] border border-[var(--border-strong)] bg-[var(--surface)] px-4 text-[12px] font-medium text-[var(--text-primary)] transition-[background-color,color,border-color,transform] duration-150 ease-out hover:border-[var(--accent)] hover:text-[var(--accent)] active:scale-[0.97] cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[var(--accent)]"
                   >
-                    {copiedKey ? <IconCheck size={12} /> : <IconCopy size={12} />}
-                    {copiedKey ? 'Copied' : 'Copy Prefix'}
+                    {isRegeneratingKey ? <IconLoader size={12} /> : <IconSignal size={12} />}
+                    {isRegeneratingKey ? 'Regenerating…' : 'Regenerate Key'}
                   </button>
                 </div>
               )}
@@ -613,6 +631,19 @@ export function ConnectPageClient({ keyPrefix, appUrl }: ConnectPageClientProps)
 
               {/* Code snippet */}
               <div data-tour="code-snippet" className="mb-6">
+                {!freshKey && (
+                  <div className="mb-3 flex items-center justify-between rounded-[var(--radius-md)] border border-[var(--border)] bg-[rgba(255,255,255,0.02)] px-3.5 py-2.5 text-[12px] text-[var(--text-secondary)]">
+                    <span>Key is masked in snippet below.</span>
+                    <button
+                      type="button"
+                      onClick={handleRegenerateKey}
+                      disabled={isRegeneratingKey}
+                      className="ml-3 shrink-0 font-semibold text-[var(--accent)] hover:underline cursor-pointer disabled:opacity-50"
+                    >
+                      {isRegeneratingKey ? 'Regenerating…' : 'Generate & load key'}
+                    </button>
+                  </div>
+                )}
                 <CodeSnippet
                   code={activeConnector.code}
                   label={activeConnector.codeLabel}

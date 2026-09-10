@@ -8,7 +8,7 @@ import type { ContextNode } from '@/types'
 const CORS = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Methods': 'GET, POST, DELETE, OPTIONS',
-  'Access-Control-Allow-Headers': 'Content-Type, mcp-session-id, x-api-key',
+  'Access-Control-Allow-Headers': 'Content-Type, mcp-session-id, x-api-key, Authorization',
 }
 
 export async function OPTIONS() {
@@ -21,14 +21,21 @@ export async function GET() {
 }
 
 function extractApiKey(request: Request): string | null {
-  // Claude Code, Codex, Antigravity — pass key as header
-  const headerKey = request.headers.get("x-api-key");
-  if (headerKey) return headerKey;
+  // 1. Authorization header: "Bearer ctx_..." or raw key
+  const authHeader = request.headers.get("authorization");
+  if (authHeader) {
+    const cleanAuth = authHeader.replace(/^Bearer\s+/i, '').trim();
+    if (cleanAuth) return cleanAuth;
+  }
 
-  // Claude.ai web, ChatGPT web — pass key as ?key= query param
+  // 2. Claude Code, Codex, Antigravity — pass key as x-api-key header
+  const headerKey = request.headers.get("x-api-key");
+  if (headerKey) return headerKey.trim();
+
+  // 3. Claude.ai web, ChatGPT web — pass key as query param (?key=, ?apiKey=, ?api_key=)
   const url = new URL(request.url);
-  const paramKey = url.searchParams.get("key");
-  if (paramKey) return paramKey;
+  const paramKey = url.searchParams.get("key") || url.searchParams.get("apiKey") || url.searchParams.get("api_key");
+  if (paramKey) return paramKey.trim();
 
   return null;
 }
