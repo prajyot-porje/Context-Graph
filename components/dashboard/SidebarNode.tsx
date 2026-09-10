@@ -16,12 +16,6 @@ export function SidebarNode({ node, isSelected, onClick }: SidebarNodeProps) {
   const isMe = node.depth === 0
   const isAgency = node.depth === 1
   const isProject = node.depth === 2
-
-  // Determine indicator dot colors from DESIGN.md
-  let dotBg = 'bg-[var(--text-secondary)]'
-  if (isMe) dotBg = 'bg-[var(--accent)]'
-  else if (isAgency) dotBg = 'bg-[var(--text-primary)]'
-
   return (
     <div className="relative flex items-center w-full">
       {/* Indentation guide line for branches/leaves */}

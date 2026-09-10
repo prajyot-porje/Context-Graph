@@ -51,6 +51,15 @@ interface ScreenLabel {
   visible: boolean
 }
 
+interface ForceGraphNode extends GraphNode {
+  x?: number
+  y?: number
+  z?: number
+  fx?: number
+  fy?: number
+  fz?: number
+}
+
 /* ------------------------------------------------------------------ */
 /*  Theme palette (CSS custom property values)                        */
 /* ------------------------------------------------------------------ */
@@ -275,7 +284,7 @@ export default function ContextGraph3D({
 
       const labels: ScreenLabel[] = []
 
-      for (const node of graphData.nodes as any[]) {
+      for (const node of graphData.nodes as ForceGraphNode[]) {
         // Depth 0+1 are always visible; depth 2+ only when that specific node is hovered
         const isHoveredNode = hoveredNode?.id === node.id
         const depthVisible = node.depth <= 1 || isHoveredNode
@@ -314,7 +323,7 @@ export default function ContextGraph3D({
       active = false
       cancelAnimationFrame(animFrameRef.current)
     }
-  }, [showLabels, graphData.nodes, hoveredNode])
+  }, [showLabels, graphData.nodes, hoveredNode, dimensions.width, dimensions.height])
 
   /* ---- Colors ---- */
   const colors = THEME_COLORS[theme]
@@ -325,8 +334,8 @@ export default function ContextGraph3D({
     setMousePos({ x: e.clientX - rect.left, y: e.clientY - rect.top })
   }, [])
 
-  const handleNodeHover = useCallback((node: any) => {
-    setHoveredNode(node as GraphNode | null)
+  const handleNodeHover = useCallback((node: object | null) => {
+    setHoveredNode((node as GraphNode) ?? null)
     if (containerRef.current) {
       containerRef.current.style.cursor = node ? 'pointer' : 'default'
     }
@@ -337,19 +346,20 @@ export default function ContextGraph3D({
     if (controls?.enabled) controls.enabled = false
   }, [])
 
-  const handleNodeDragEnd = useCallback((node: any) => {
-    if (node) { node.fx = undefined; node.fy = undefined; node.fz = undefined }
+  const handleNodeDragEnd = useCallback((node: object | null) => {
+    const fn = node as ForceGraphNode | null
+    if (fn) { fn.fx = undefined; fn.fy = undefined; fn.fz = undefined }
     const controls = graphRef.current?.controls?.()
     if (controls) controls.enabled = true
   }, [])
 
   const handleNodeClick = useCallback(
-    (node: any) => onNodeClick(node as GraphNode),
+    (node: object) => onNodeClick(node as GraphNode),
     [onNodeClick]
   )
 
   const getNodeColor = useCallback(
-    (node: any) => {
+    (node: object) => {
       const n = node as GraphNode
       if (n.id === selectedNodeId) return colors.selected
       if (n.depth === 0) return colors.root
@@ -385,7 +395,7 @@ export default function ContextGraph3D({
           backgroundColor={colors.bg}
           /* Node */
           nodeColor={getNodeColor}
-          nodeVal={(node: any) => nodeSize(node as GraphNode)}
+          nodeVal={(node: object) => nodeSize(node as GraphNode)}
           nodeLabel={nodeLabel}
           nodeOpacity={0.95}
           nodeResolution={32}
@@ -507,5 +517,4 @@ export default function ContextGraph3D({
       </div>
     </div>
   )
-  /* eslint-enable @typescript-eslint/no-explicit-any */
 }

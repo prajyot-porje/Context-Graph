@@ -2,7 +2,7 @@
 
 import { useRef } from 'react'
 import { useGSAP } from '@gsap/react'
-import { gsap, DUR, prefersReducedMotion } from '@/lib/gsap'
+import { gsap, prefersReducedMotion } from '@/lib/gsap'
 import Link from 'next/link'
 import dynamic from 'next/dynamic'
 import { ArrowUpRight } from 'lucide-react'

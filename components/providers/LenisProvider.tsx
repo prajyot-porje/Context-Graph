@@ -11,7 +11,7 @@ const Agentation = dynamic(
 
 export function LenisProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
-    const lenis = initLenis()
+    initLenis()
 
     return () => {
       destroyLenis()

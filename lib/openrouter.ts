@@ -53,9 +53,10 @@ export async function judgeContext(prompt: string, isJson: boolean = false): Pro
         const elapsed = Date.now() - startGemini
         console.warn(`[${new Date().toISOString()}] [JUDGE CONTEXT] Gemini API failed with status ${res.status} (took ${elapsed}ms): ${errText}. Falling back to OpenRouter...`)
       }
-    } catch (e: any) {
+    } catch (e: unknown) {
       const elapsed = Date.now() - startGemini
-      console.warn(`[${new Date().toISOString()}] [JUDGE CONTEXT] Gemini API error (took ${elapsed}ms): ${e.message || e}. Falling back to OpenRouter...`)
+      const message = e instanceof Error ? e.message : String(e)
+      console.warn(`[${new Date().toISOString()}] [JUDGE CONTEXT] Gemini API error (took ${elapsed}ms): ${message}. Falling back to OpenRouter...`)
     }
   }
 
@@ -88,7 +89,7 @@ export async function judgeContext(prompt: string, isJson: boolean = false): Pro
           prompt_tokens: response.usage?.prompt_tokens,
           completion_tokens: response.usage?.completion_tokens,
           total_tokens: response.usage?.total_tokens,
-          cost: (response as any).usage?.cost
+          cost: (response.usage as { cost?: number } | undefined)?.cost,
         }
       })
       console.log(`[${new Date().toISOString()}] [JUDGE CONTEXT] OpenRouter model ${model} SUCCESS (took ${elapsed}ms)`)

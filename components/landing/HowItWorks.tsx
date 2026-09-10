@@ -5,7 +5,6 @@ import { useGSAP } from '@gsap/react'
 import { gsap, prefersReducedMotion } from '@/lib/gsap'
 import { cn } from '@/lib/utils'
 import {
-  Check,
   Layers,
   Sparkles,
   CheckCircle2,

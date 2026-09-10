@@ -8,7 +8,6 @@ import { useGraph } from '@/components/providers/GraphProvider'
 import { computeDepths, sortNodesHierarchically, buildNodeTree, TreeNode } from '@/lib/graph-utils'
 import { AddNodeModal } from './AddNodeModal'
 import { Skeleton } from '@/components/ui/Skeleton'
-import type { ContextNode } from '@/types'
 
 // ── Inline thin-line SVGs (no Lucide) ─────────────────────────────────────────
 

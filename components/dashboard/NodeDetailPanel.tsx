@@ -1,9 +1,7 @@
 'use client'
 
 import { useRef, useState, useEffect, useMemo } from 'react'
-import { gsap } from '@/lib/gsap'
-import { prefersReducedMotion } from '@/lib/gsap'
-import { cn } from '@/lib/utils'
+import { gsap, prefersReducedMotion } from '@/lib/gsap'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Textarea } from '@/components/ui/Textarea'
@@ -49,14 +47,6 @@ function IconLoader({ size = 13 }: { size?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="animate-spin">
       <path d="M21 12a9 9 0 1 1-6.219-8.56" />
-    </svg>
-  )
-}
-
-function IconCheck({ size = 12 }: { size?: number }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-      <polyline points="20 6 9 17 4 12" />
     </svg>
   )
 }

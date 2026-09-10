@@ -1,6 +1,6 @@
 import { createHash } from 'crypto'
 import { createSupabaseServer } from '@/lib/supabase'
-import type { ContextNode, ContextEntry, ApiKey, ContextEdge } from '@/types'
+import type { ContextNode, ContextEdge } from '@/types'
 import type { SupabaseClient } from '@supabase/supabase-js'
 
 export async function getUserNodes(userId: string): Promise<ContextNode[]> {
@@ -300,22 +300,24 @@ export async function getAccountStatus(rawEmail: string): Promise<AccountStatus>
   }
 
   const supabase = createSupabaseServer()
-  // Query user table by email
-  const { data: userData, error: userError } = await (supabase as any)
+  // Query user table by email (managed by Better Auth)
+  const untypedSupabase = supabase as unknown as SupabaseClient
+  const { data: userData, error: userError } = await untypedSupabase
     .from('user')
     .select('id, emailVerified')
     .eq('email', cleanEmail)
-    .maybeSingle()
+    .maybeSingle<{ id: string; emailVerified: boolean | null }>()
 
   if (userError || !userData) {
     return { exists: false, emailVerified: false, hasPassword: false, hasGoogle: false }
   }
 
   // Query account table for linked providers and password presence
-  const { data: accountsData, error: accountError } = await (supabase as any)
+  const { data: accountsData, error: accountError } = await untypedSupabase
     .from('account')
     .select('providerId, password')
     .eq('userId', userData.id)
+    .returns<Array<{ providerId: string; password?: string | null }>>()
 
   if (accountError || !accountsData) {
     return {
@@ -327,9 +329,9 @@ export async function getAccountStatus(rawEmail: string): Promise<AccountStatus>
   }
 
   const hasPassword = accountsData.some(
-    (a: any) => a.providerId === 'credential' && a.password !== null && a.password !== undefined
+    (a) => a.providerId === 'credential' && a.password !== null && a.password !== undefined
   )
-  const hasGoogle = accountsData.some((a: any) => a.providerId === 'google')
+  const hasGoogle = accountsData.some((a) => a.providerId === 'google')
 
   return {
     exists: true,

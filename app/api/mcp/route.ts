@@ -58,7 +58,7 @@ export async function POST(req: NextRequest) {
   let body
   try {
     body = await req.json()
-  } catch (e) {
+  } catch {
     return NextResponse.json(
       { jsonrpc: '2.0', error: { code: -32700, message: 'Parse error' }, id: null },
       { status: 400, headers: CORS }

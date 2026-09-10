@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef, useState, useMemo } from 'react'
+import { useEffect, useRef, useState, useMemo, useCallback } from 'react'
 import { X, Copy, Check } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useGraph } from '@/components/providers/GraphProvider'
@@ -109,7 +109,7 @@ export function ContextPreviewModal({ isOpen, onClose }: Props) {
   }, [scopes, selectedScope])
 
   // Play exit animation and then notify parent
-  const handleClose = () => {
+  const handleClose = useCallback(() => {
     const tl = gsap.timeline({
       onComplete: () => {
         setMounted(false)
@@ -118,7 +118,7 @@ export function ContextPreviewModal({ isOpen, onClose }: Props) {
     })
     tl.to(modalRef.current, { y: 20, opacity: 0, duration: 0.25, ease: 'cg-in' })
       .to(backdropRef.current, { opacity: 0, duration: 0.15, ease: 'power2.in' }, 0.05)
-  }
+  }, [onClose])
 
   // Escape key handler
   useEffect(() => {
@@ -131,7 +131,7 @@ export function ContextPreviewModal({ isOpen, onClose }: Props) {
       window.addEventListener('keydown', handleKeyDown)
     }
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [isOpen])
+  }, [isOpen, handleClose])
 
   // Clipboard copy
   const handleCopy = async () => {

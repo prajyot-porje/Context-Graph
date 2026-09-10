@@ -293,7 +293,7 @@ export function Features() {
                   Relevance Decay & Token Pruning
                 </h3>
                 <p className="mt-2 text-body-md text-[var(--text-secondary)] leading-relaxed">
-                  Model context windows are precious. ContextGraph ages inactive nodes so you don't waste tokens on dead tasks, keeping queries ultra-fast and laser focused.
+                  Model context windows are precious. ContextGraph ages inactive nodes so you don&apos;t waste tokens on dead tasks, keeping queries ultra-fast and laser focused.
                 </p>
               </div>
 
