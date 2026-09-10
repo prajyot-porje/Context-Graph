@@ -16,9 +16,14 @@ export async function proxy(req: NextRequest) {
     pathname === '/signup'
 
   // Retrieve the user session from Better Auth
-  const session = await auth.api.getSession({
-    headers: req.headers,
-  })
+  let session = null
+  try {
+    session = await auth.api.getSession({
+      headers: req.headers,
+    })
+  } catch (err) {
+    console.error('[proxy.ts] Failed to fetch session:', err)
+  }
 
   // 1. Unauthenticated user trying to access a protected route -> redirect to login
   if (!session && isProtectedRoute) {

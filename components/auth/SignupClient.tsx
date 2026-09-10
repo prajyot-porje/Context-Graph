@@ -59,9 +59,15 @@ export default function SignupClient() {
     setIsGoogleLoading(true)
     setError('')
     try {
-      await signIn.social({ provider: 'google', callbackURL: '/dashboard' })
-    } catch {
-      setError('Failed to initialize Google sign in. Please try again.')
+      const result = await signIn.social({ provider: 'google', callbackURL: '/dashboard' })
+      if (result?.error) {
+        setError(result.error.message || 'Failed to initialize Google sign in. Please try again.')
+        setIsGoogleLoading(false)
+      }
+    } catch (err: unknown) {
+      console.error('[Google sign up] Initialization error:', err)
+      const message = err instanceof Error ? err.message : 'Failed to initialize Google sign in. Please try again.'
+      setError(message)
       setIsGoogleLoading(false)
     }
   }
