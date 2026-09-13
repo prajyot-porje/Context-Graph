@@ -195,8 +195,10 @@ export default function SignupClient() {
         return
       }
 
-      // User email verified & session established -> route to onboarding
-      router.push('/onboarding')
+      // User email verified & session established -> route straight to connect.
+      // ROADMAP.md P1.6: the onboarding wizard is now optional, not a forced step —
+      // connecting a tool is what actually starts filling the graph.
+      router.push('/connect')
       router.refresh()
     } catch (err: unknown) {
       setIsLoading(false)

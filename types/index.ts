@@ -31,12 +31,25 @@ export interface ContextEdge {
   created_at: string
 }
 
+export type ContextEntryKind = 'decision' | 'preference' | 'constraint' | 'open_problem' | 'resolved' | 'note'
+
 export interface ContextEntry {
   id: string
   node_id: string
   user_id: string
   entry_text: string
   score: number
+  kind: ContextEntryKind
+  created_at: string
+}
+
+export interface StagedContextEntry {
+  id: string
+  user_id: string
+  raw_text: string
+  kind_hint: string | null
+  scope_hint: string | null
+  source: string | null
   created_at: string
 }
 
@@ -47,6 +60,7 @@ export interface ApiKey {
   key_prefix: string
   created_at: string
   last_used: string | null
+  last_client_name: string | null
 }
 
 
@@ -197,6 +211,7 @@ export type Database = {
           user_id: string
           entry_text: string
           score: number
+          kind: string
           created_at: string
         }
         Insert: {
@@ -205,6 +220,7 @@ export type Database = {
           user_id: string
           entry_text: string
           score?: number
+          kind?: string
           created_at?: string
         }
         Update: {
@@ -213,6 +229,7 @@ export type Database = {
           user_id?: string
           entry_text?: string
           score?: number
+          kind?: string
           created_at?: string
         }
         Relationships: [
@@ -240,6 +257,7 @@ export type Database = {
           key_prefix: string
           created_at: string
           last_used: string | null
+          last_client_name: string | null
         }
         Insert: {
           id?: string
@@ -248,6 +266,7 @@ export type Database = {
           key_prefix: string
           created_at?: string
           last_used?: string | null
+          last_client_name?: string | null
         }
         Update: {
           id?: string
@@ -256,12 +275,80 @@ export type Database = {
           key_prefix?: string
           created_at?: string
           last_used?: string | null
+          last_client_name?: string | null
         }
         Relationships: [
           {
             foreignKeyName: "api_keys_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: true
+            referencedRelation: "user"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      rate_limits: {
+        Row: {
+          id: string
+          api_key_id: string
+          window_start: string
+          request_count: number
+        }
+        Insert: {
+          id?: string
+          api_key_id: string
+          window_start: string
+          request_count?: number
+        }
+        Update: {
+          id?: string
+          api_key_id?: string
+          window_start?: string
+          request_count?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rate_limits_api_key_id_fkey"
+            columns: ["api_key_id"]
+            isOneToOne: false
+            referencedRelation: "api_keys"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      staged_context_entries: {
+        Row: {
+          id: string
+          user_id: string
+          raw_text: string
+          kind_hint: string | null
+          scope_hint: string | null
+          source: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          raw_text: string
+          kind_hint?: string | null
+          scope_hint?: string | null
+          source?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          raw_text?: string
+          kind_hint?: string | null
+          scope_hint?: string | null
+          source?: string | null
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "staged_context_entries_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
             referencedRelation: "user"
             referencedColumns: ["id"]
           }

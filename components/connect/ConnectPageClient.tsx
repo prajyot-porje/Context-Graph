@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { driver, type Driver } from 'driver.js'
 import 'driver.js/dist/driver.css'
 import './driver-theme.css'
@@ -407,6 +408,14 @@ export function ConnectPageClient({ keyPrefix, appUrl }: ConnectPageClientProps)
 
           <p className="max-w-[480px] text-[15px] leading-[1.65] text-[var(--text-secondary)]">
             Configure your AI clients below. Each one will have persistent access to your personal context graph.
+          </p>
+
+          <p className="mt-2 text-[13px] leading-[1.6] text-[var(--text-muted)]">
+            Your graph fills in automatically as you work — no setup needed. Prefer to{' '}
+            <Link href="/onboarding" className="underline underline-offset-2 hover:text-[var(--text-secondary)]">
+              answer a few questions instead
+            </Link>
+            ?
           </p>
         </header>
 
