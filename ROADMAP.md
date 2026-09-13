@@ -90,7 +90,9 @@ Once capture is automatic, people will paste API keys and passwords into chats a
 
 **Goal:** the user never types "save my context" again.
 
-Shipped: `instructions` on `initialize`, imperative tool descriptions, protocol text (with bootstrap detection) in `get_context`'s reply, the `remember`/`recall`/`resolve`/`forget` tools alongside `get_context`/`list_nodes`, the two-stage save (`staged_context_entries` + `app/api/cron/process-staged` batched judge), per-tool-call logging for future measurement, `kind` on entries, and killing the forced onboarding wizard (`onboarding_done` now means "connected a tool," set on first MCP `initialize`). See ARCHITECTURE.md log, 2026-09-12, for the full breakdown and what was deliberately deferred to P2/P3.
+Shipped: `instructions` on `initialize`, imperative tool descriptions, protocol text (with bootstrap detection) in `get_context`'s reply, the `remember`/`recall`/`resolve`/`forget` tools alongside `get_context`/`list_nodes`, the two-stage save (`staged_context_entries` + `lib/process-staged.ts` batched judge), per-tool-call logging for future measurement, `kind` on entries, and killing the forced onboarding wizard (`onboarding_done` now means "connected a tool," set on first MCP `initialize`). See ARCHITECTURE.md log, 2026-09-12, for the full breakdown and what was deliberately deferred to P2/P3.
+
+**Corrected 2026-09-13:** the batched judge was originally triggered by a Vercel cron every 5 minutes — that failed to deploy on the Vercel Hobby plan (which only allows daily cron schedules). Fixed by triggering the drain via Next.js `after()` from real `get_context`/`remember` traffic instead of a clock, with the cron demoted to a once/day safety net. See ARCHITECTURE.md §6 and log, 2026-09-13. Worth remembering for any future phase that assumes frequent background jobs: check the target Vercel plan's cron limits before designing around cron frequency.
 
 An MCP server cannot push. It only answers when asked. So we can't force a save — we make the model *want* to save, through three slots that all reach the model's context.
 

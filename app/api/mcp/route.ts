@@ -1,4 +1,5 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest, NextResponse, after } from 'next/server'
+import { triggerBackgroundDrain } from '@/lib/process-staged'
 import {
   validateApiKey,
   checkRateLimit,
@@ -211,6 +212,12 @@ export async function POST(req: NextRequest) {
         const assembled = assembleContext(nodes, scope)
         logToolCall('get_context', clientName)
 
+        // Primary drain trigger (see lib/process-staged.ts) — runs after this
+        // response is sent, so it adds zero latency here. get_context fires at
+        // the start of every session, making it a reliable place to catch up
+        // on anything staged since the last drain.
+        after(triggerBackgroundDrain)
+
         return NextResponse.json({
           jsonrpc: '2.0',
           id,
@@ -249,6 +256,11 @@ export async function POST(req: NextRequest) {
           source: clientName,
         })
         logToolCall('remember', clientName)
+
+        // Primary drain trigger — see lib/process-staged.ts. Runs after this
+        // response is sent; the model already has "Noted." back by the time
+        // any judging happens.
+        after(triggerBackgroundDrain)
 
         return NextResponse.json({
           jsonrpc: '2.0',

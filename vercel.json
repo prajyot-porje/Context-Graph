@@ -6,7 +6,7 @@
     },
     {
       "path": "/api/cron/process-staged",
-      "schedule": "*/5 * * * *"
+      "schedule": "0 3 * * *"
     }
   ]
 }
