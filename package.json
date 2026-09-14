@@ -10,7 +10,6 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@better-auth/infra": "^0.2.8",
     "@gsap/react": "^2.1.2",
     "@supabase/ssr": "^0.10.3",
     "@supabase/supabase-js": "^2.105.4",
@@ -36,7 +35,7 @@
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
-    "@types/node": "^20",
+    "@types/node": "^22",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "@types/three": "^0.184.1",
