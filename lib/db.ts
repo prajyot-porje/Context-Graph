@@ -1,6 +1,6 @@
 import { createHash } from 'crypto'
 import { createSupabaseServer } from '@/lib/supabase'
-import type { ContextNode, ContextEdge } from '@/types'
+import type { ContextNode, ContextEdge, ContextEntry, ContextEntryKind, StagedContextEntry } from '@/types'
 import type { SupabaseClient } from '@supabase/supabase-js'
 
 export async function getUserNodes(userId: string): Promise<ContextNode[]> {
@@ -112,7 +112,8 @@ export async function appendEntry(
   nodeId: string,
   userId: string,
   entryText: string,
-  score: number
+  score: number,
+  kind: ContextEntryKind = 'note'
 ): Promise<void> {
   const supabase = createSupabaseServer()
 
@@ -123,6 +124,7 @@ export async function appendEntry(
       user_id: userId,
       entry_text: entryText,
       score,
+      kind,
     })
 
   if (entryError) {
@@ -141,6 +143,183 @@ export async function appendEntry(
   if (nodeError) {
     throw new Error(`Failed to update node relevance: ${nodeError.message}`)
   }
+}
+
+// ── Phase 1 (ROADMAP.md P1.4/P1.5): staged entries + two-stage save ─────────
+
+export async function stageEntry(params: {
+  userId: string
+  rawText: string
+  kindHint?: string
+  scopeHint?: string
+  source?: string | null
+}): Promise<{ staged: boolean; reason?: string }> {
+  const { userId, rawText, kindHint, scopeHint, source } = params
+  const trimmed = rawText.trim()
+
+  if (trimmed.length < 3) {
+    return { staged: false, reason: 'too short' }
+  }
+
+  const supabase = createSupabaseServer()
+
+  // Cheap dedupe: skip if the exact same text is already sitting in the queue
+  // or was already saved in the last 24 hours. Real fuzzy dedupe is P2.3 —
+  // this is just enough to stop a chatty client re-queuing the same line.
+  const { data: pendingDup } = await supabase
+    .from('staged_context_entries')
+    .select('id')
+    .eq('user_id', userId)
+    .eq('raw_text', trimmed)
+    .maybeSingle()
+
+  if (pendingDup) {
+    return { staged: false, reason: 'already queued' }
+  }
+
+  const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()
+  const { data: recentDup } = await supabase
+    .from('context_entries')
+    .select('id')
+    .eq('user_id', userId)
+    .eq('entry_text', trimmed)
+    .gt('created_at', oneDayAgo)
+    .maybeSingle()
+
+  if (recentDup) {
+    return { staged: false, reason: 'already saved recently' }
+  }
+
+  const { error } = await supabase
+    .from('staged_context_entries')
+    .insert({
+      user_id: userId,
+      raw_text: trimmed,
+      kind_hint: kindHint ?? null,
+      scope_hint: scopeHint ?? null,
+      source: source ?? null,
+    })
+
+  if (error) {
+    throw new Error(`Failed to stage entry: ${error.message}`)
+  }
+
+  return { staged: true }
+}
+
+export async function getPendingStagedEntries(limit: number): Promise<StagedContextEntry[]> {
+  const supabase = createSupabaseServer()
+  const { data, error } = await supabase
+    .from('staged_context_entries')
+    .select('*')
+    .order('created_at', { ascending: true })
+    .limit(limit)
+
+  if (error) {
+    throw new Error(`Failed to fetch staged entries: ${error.message}`)
+  }
+
+  return data ?? []
+}
+
+export async function deleteStagedEntries(ids: string[]): Promise<void> {
+  if (ids.length === 0) return
+  const supabase = createSupabaseServer()
+  const { error } = await supabase
+    .from('staged_context_entries')
+    .delete()
+    .in('id', ids)
+
+  if (error) {
+    throw new Error(`Failed to delete staged entries: ${error.message}`)
+  }
+}
+
+export async function countUserEntries(userId: string): Promise<number> {
+  const supabase = createSupabaseServer()
+  const { count, error } = await supabase
+    .from('context_entries')
+    .select('*', { count: 'exact', head: true })
+    .eq('user_id', userId)
+
+  if (error) {
+    throw new Error(`Failed to count entries: ${error.message}`)
+  }
+
+  return count ?? 0
+}
+
+export async function resolveEntry(entryId: string, userId: string): Promise<void> {
+  const supabase = createSupabaseServer()
+  const { error } = await supabase
+    .from('context_entries')
+    .update({ kind: 'resolved' })
+    .eq('id', entryId)
+    .eq('user_id', userId)
+
+  if (error) {
+    throw new Error(`Failed to resolve entry: ${error.message}`)
+  }
+}
+
+export async function forgetEntry(entryId: string, userId: string): Promise<void> {
+  const supabase = createSupabaseServer()
+  const { error } = await supabase
+    .from('context_entries')
+    .delete()
+    .eq('id', entryId)
+    .eq('user_id', userId)
+
+  if (error) {
+    throw new Error(`Failed to forget entry: ${error.message}`)
+  }
+}
+
+export interface SearchResult {
+  entry: ContextEntry
+  nodeScope: string
+  nodeTitle: string
+}
+
+// ponytail: substring search over entry_text, not semantic — ROADMAP.md P3
+// upgrades this to embeddings once the volume of entries makes ILIKE too blunt.
+export async function searchEntries(userId: string, query: string): Promise<SearchResult[]> {
+  const supabase = createSupabaseServer()
+  const { data, error } = await supabase
+    .from('context_entries')
+    .select('*, context_nodes!inner(scope, title, user_id)')
+    .eq('user_id', userId)
+    .eq('context_nodes.user_id', userId)
+    .ilike('entry_text', `%${query}%`)
+    .order('created_at', { ascending: false })
+    .limit(20)
+
+  if (error) {
+    throw new Error(`Failed to search entries: ${error.message}`)
+  }
+
+  type Row = ContextEntry & { context_nodes: { scope: string; title: string } }
+  return (data as unknown as Row[] ?? []).map((row) => ({
+    entry: {
+      id: row.id,
+      node_id: row.node_id,
+      user_id: row.user_id,
+      entry_text: row.entry_text,
+      score: row.score,
+      kind: row.kind,
+      created_at: row.created_at,
+    },
+    nodeScope: row.context_nodes.scope,
+    nodeTitle: row.context_nodes.title,
+  }))
+}
+
+export async function updateLastClientName(apiKeyId: string, clientName: string): Promise<void> {
+  const supabase = createSupabaseServer()
+  await supabase
+    .from('api_keys')
+    .update({ last_client_name: clientName.slice(0, 100) })
+    .eq('id', apiKeyId)
 }
 
 export function sanitizeApiKey(rawKey: string): string {
@@ -165,7 +344,13 @@ export function sanitizeApiKey(rawKey: string): string {
   return clean
 }
 
-export async function validateApiKey(rawKey: string): Promise<string | null> {
+export interface ValidatedApiKey {
+  userId: string
+  apiKeyId: string
+  lastClientName: string | null
+}
+
+export async function validateApiKey(rawKey: string): Promise<ValidatedApiKey | null> {
   const cleanKey = sanitizeApiKey(rawKey)
   if (!cleanKey) {
     return null
@@ -182,7 +367,7 @@ export async function validateApiKey(rawKey: string): Promise<string | null> {
 
   const { data, error } = await supabase
     .from('api_keys')
-    .select('user_id')
+    .select('id, user_id, last_client_name')
     .eq('key_hash', hash)
     .maybeSingle()
 
@@ -196,7 +381,44 @@ export async function validateApiKey(rawKey: string): Promise<string | null> {
     .update({ last_used: new Date().toISOString() })
     .eq('key_hash', hash)
 
-  return data.user_id
+  return { userId: data.user_id, apiKeyId: data.id, lastClientName: data.last_client_name }
+}
+
+// ponytail: hourly window, best-effort increment (read-then-write, not atomic under
+// heavy concurrency) — good enough to stop a single leaked/runaway key from racking up
+// unbounded LLM judge calls; move to a DB-side upsert+increment if this ever needs to be exact.
+const RATE_LIMIT_PER_HOUR = 300
+
+export async function checkRateLimit(apiKeyId: string): Promise<boolean> {
+  const supabase = createSupabaseServer()
+  const windowStart = new Date()
+  windowStart.setMinutes(0, 0, 0)
+  const windowStartIso = windowStart.toISOString()
+
+  const { data: existing } = await supabase
+    .from('rate_limits')
+    .select('id, request_count')
+    .eq('api_key_id', apiKeyId)
+    .eq('window_start', windowStartIso)
+    .maybeSingle()
+
+  if (!existing) {
+    await supabase
+      .from('rate_limits')
+      .insert({ api_key_id: apiKeyId, window_start: windowStartIso, request_count: 1 })
+    return true
+  }
+
+  if (existing.request_count >= RATE_LIMIT_PER_HOUR) {
+    return false
+  }
+
+  await supabase
+    .from('rate_limits')
+    .update({ request_count: existing.request_count + 1 })
+    .eq('id', existing.id)
+
+  return true
 }
 
 export async function storeApiKey(userId: string, hash: string, prefix: string): Promise<void> {

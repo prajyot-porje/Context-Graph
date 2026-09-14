@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { Copy, Check, RotateCcw, Trash2, ArrowLeft, Loader2 } from 'lucide-react'
 import Link from 'next/link'
-import { cn } from '@/lib/utils'
+import { cn, getAppUrl } from '@/lib/utils'
 import { useSession } from '@/lib/auth-client'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
@@ -14,7 +14,7 @@ import { Toast } from '@/components/ui/Toast'
 type Tab = 'Claude' | 'Claude Code' | 'ChatGPT' | 'Codex'
 const TABS: Tab[] = ['Claude', 'Claude Code', 'ChatGPT', 'Codex']
 
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
+const APP_URL = getAppUrl()
 
 const getSnippets = (prefix: string, rawKey?: string | null) => {
   const displayKey = rawKey || `${prefix}••••••••`

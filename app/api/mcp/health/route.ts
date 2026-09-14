@@ -38,13 +38,14 @@ export async function GET(request: NextRequest) {
     }
 
     // 2. Validate API key via centralized helper (strips Bearer, quotes, verifies SHA-256)
-    const userId = await validateApiKey(rawApiKey)
-    if (!userId) {
+    const validated = await validateApiKey(rawApiKey)
+    if (!validated) {
       return NextResponse.json(
         { error: 'Invalid API key' },
         { status: 401, headers: CORS }
       )
     }
+    const { userId } = validated
 
     // 3. Supabase lookup
     const supabase = createSupabaseServer()
