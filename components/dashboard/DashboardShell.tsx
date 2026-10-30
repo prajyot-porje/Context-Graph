@@ -8,6 +8,7 @@ import { Sidebar } from './Sidebar'
 import { prefersReducedMotion } from '@/lib/gsap'
 import { useGraph } from '@/components/providers/GraphProvider'
 import { ContextPreviewModal } from './ContextPreviewModal'
+import { ContextStatus } from './ContextStatus'
 
 export function DashboardShell({ children }: { children: React.ReactNode }) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
@@ -86,6 +87,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
         
         {/* Main Area */}
         <main className="cg-main relative flex flex-1 flex-col overflow-hidden">
+          <ContextStatus />
           {children}
         </main>
       </div>

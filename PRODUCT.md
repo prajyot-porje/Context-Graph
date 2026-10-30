@@ -1,98 +1,58 @@
 # ContextGraph — Product
 
-Version 2.0 | Consolidated 2026-09-05 (supersedes PRD.md, PRODUCT_DOCUMENT.md, technical_answers.md)
+Updated October 30, 2026. Product scope and behavior; implementation belongs in ARCHITECTURE.md, visual rules in DESIGN.md, work rules in AGENTS.md, and forward planning in ROADMAP.md.
 
-This is the business/product source of truth: who we build for, what problem we solve, what the product must do, and how it should feel. For how it's actually built, see [ARCHITECTURE.md](ARCHITECTURE.md). For exact visual tokens/rules, see [DESIGN.md](DESIGN.md).
+## What it is
 
----
+A personal context engine for developers who switch between AI tools. Users own a graph of identity, preferences, project context, decisions, constraints, and open problems. Connected AI tools can retrieve that context and suggest useful notes as work progresses.
 
-## What It Is
+The core demonstration is simple: approve context from one AI, then retrieve it from another without re-explaining it. The product does not promise access to every native memory or complete conversation history of an external provider.
 
-ContextGraph is a cross-AI personal context engine. It stores who you are, what you build, and how you work as a graph in a database. Any MCP-compatible AI (Claude, ChatGPT, Codex, Cursor) reads this graph at the start of a session and updates it when you type `/save`. The web dashboard lets you see and manage the graph visually.
+## Audience and personality
 
-## Problem
+Primary users are developers and AI power users working across tools and ongoing projects. Secondary users include freelancers managing client context; shared team permissions are not implemented. Voice is direct, precise, technical, and understated. The existing dark-dominant design system stays in place.
 
-Every AI session starts from zero. Developers using multiple AI tools across multiple projects or clients repeatedly re-explain who they are, what stack a project uses, and what's already been decided. Existing memory features (ChatGPT memory, Claude memory) are siloed per-platform, non-portable, and flat — they can't represent a hierarchy (a global preference vs. an agency-level constraint vs. one repo's architecture). Without scope containment, instructions from one project bleed into another.
+## Setup and return flow
 
-## Solution
+Sign in → choose Claude or ChatGPT → configure its connector → approve selected facts in that conversation → review/edit the received draft in ContextGraph → save → dashboard.
 
-A structured context graph, owned by the user, accessible to any AI via MCP protocol and a personal API key. Self-updating after sessions via an AI judgment layer that decides what's actually worth remembering. Visualized as an interactive 3D graph in a web dashboard.
+- New or empty accounts see guided setup, never a blank graph. Dashboard access depends on actual meaningful saved context, not a handshake or a stale onboarding flag.
+- Existing populated accounts open the dashboard directly. Interrupted setup resumes from stored state.
+- Connecting gives the AI tools it can call; it does not give ContextGraph access to the AI account. The website provides current instructions and a copyable natural-language setup prompt. It cannot command an idle external conversation to export memory.
+- The model must propose facts, allow corrections, and ask permission before transmitting. Drafts remain separate from the active graph; website review is the authoritative save boundary.
+- No useful memories or unavailable connectors: use a compact Create context graph editor or paste a memory export, then review. No invented example profile is saved.
+- Import more from the dashboard without deleting existing context or replacing credentials. One graph per account in this release.
 
-## Users
+## Dashboard and ongoing use
 
-Primary: developers and AI power users who use multiple AI tools daily, work across multiple ongoing projects, and already understand MCP configuration.
+The dashboard presents the real graph, node content, saved notes, provenance, and context preview. A notes view provides an alternative to WebGL. Nodes support creation, editing, and deletion. Notes can be deleted, and open problems marked resolved.
 
-Secondary: freelancers and agency owners managing context for multiple clients.
+get_context loads approved core content and active notes. Automatic capture can suggest decisions, preferences, constraints, and unresolved problems; Settings visibly enables/pauses it. Queued processing and failures are shown truthfully. Keyword recall is available; semantic recall is not yet implemented. Legacy save_context calls work for existing clients, but manual /save is not the required product path.
 
-## Phase History
+## Connections and account controls
 
-- **Phase 1 — Done.** Personal MCP server, TypeScript + Node.js, GitHub-markdown backed. Two tools (`get_context`, `save_context`). Connected to Claude.ai, Claude Desktop, Claude Code.
-- **Phase 2 — Skipped.** Moved directly to Phase 3.
-- **Phase 3 — This product.** Multi-user SaaS: Supabase-backed graph, Better Auth accounts, web dashboard, per-user API keys.
+Claude and ChatGPT are the primary guided clients. Web setup uses OAuth. Existing terminal clients retain header API keys. Instructions must be dated, linked to official sources, and verified on actual target accounts before claiming hosted-client compatibility. Workspace restrictions and clients with no accessible memories need explicit fallback guidance.
 
-## Brand Personality
+Connection success means observed authenticated client activity, not a website preview request. Client names are self-reported. Disconnecting preserves saved notes and revokes the client's access. API keys are shown only when created and are replaced only through an explicit user action.
 
-- **Voice**: Direct, precise, technical, understated.
-- **Personality**: Cinematic, dark-dominant, expert.
-- **Emotional goal**: Structured clarity, security, developer control.
+Account name/email are displayed read-only. Profile editing, full account deletion, and downloadable export remain unavailable in this demo. Do not show no-op success messages or dead destructive controls. The privacy page explains storage, provider processing, draft retention, and available deletion controls without claiming end-to-end encryption.
 
-## Anti-references
+## Required quality
 
-- **Generic SaaS/AI boilerplate**: warm sand/cream/beige backgrounds, gradient text, tracked-uppercase eyebrows on every section, side-stripe card borders.
-- **Corporate/enterprise navy**: generic flat tables, deep navy admin-panel templates, over-complex settings menus.
-- **Superficial motion**: bounce/elastic eases, scroll-hijacking, animation without a clear trigger or structural purpose.
+- A clear next action on every setup screen; no empty-graph flash, fake verification, fake progress, or silent empty import success.
+- Preserve context and credentials through repeated imports, retries, refreshes, and concurrent requests.
+- Responsive layouts, readable text, keyboard access, visible focus, reduced motion, and dark/light behavior against DESIGN.md.
+- Keep graph/WebGL work out of setup. Use bounded authenticated refresh and keep existing content visible during background refresh.
+- Validate local OAuth/MCP and persistence end to end. Distinguish local protocol fixtures from actual vendor chat UI smoke tests.
 
-(Design principles, accessibility standards, and all visual tokens that implement this personality live in [DESIGN.md](DESIGN.md) — not duplicated here.)
+## Deferred
 
-## Pages & Flows
+Semantic search and a search-first dashboard; fuzzy duplicate merging and automatic contradiction superseding; multiple independent graphs; teams and scoped sharing; version history; public sharing; marketplace/CLI packaging; directory publication; digital twin; and broad visual redesign. Full public-launch legal/account-management work follows the demo recovery.
 
-| Route | Auth | Purpose |
-|---|---|---|
-| `/` | Public | Landing page |
-| `/login`, `/signup` | Public | Email + password |
-| `/onboarding` | Protected | First-time context setup — a 5-step wizard, not a chat (see ARCHITECTURE.md log) |
-| `/dashboard` | Protected | Main graph view |
-| `/settings` | Protected | API key + account |
-| `/connect` | Protected | MCP connection setup guide per client |
+## Success criteria
 
-**Signup** → Better Auth creates user → API key auto-generated, shown once → onboarding.
-
-**Onboarding** → a short wizard collects identity, stack, active projects, and goals as real form fields (with an optional first step to import an existing ChatGPT/Claude memory export, which prefills the rest) → AI writes the graph node content from those answers → API key issued → a guided tour on `/connect` walks through connecting an AI client → dashboard.
-
-**Dashboard** → sidebar node tree + 3D graph canvas + detail panel on node click (content, decisions log, relevance bar, edit/delete). Add nodes from the sidebar.
-
-**Session update (`/save`)** → in any connected AI, user types `/save` → AI calls `save_context` → AI judgment decides if it's worth keeping → if yes, entry appears in the dashboard graph with an updated relevance score; if no, the AI explains why it skipped it.
-
-**Settings** → view API key prefix, copy connection snippets per client, regenerate key (with confirmation), manage account.
-
-## Features
-
-### Must Have (V1)
-- Email/password auth
-- Conversational onboarding generating an initial context graph
-- Dashboard with interactive graph visualization
-- Node detail panel (view, edit, delete), create nodes from dashboard
-- `/api/mcp` with `get_context`, `save_context`, `list_nodes`
-- API key generation, regeneration, and per-client connection snippets
-- Weekly relevance decay
-- Dark and light mode
-
-### Not yet real (tracked, not hidden)
-- Account tab in Settings (name/email edit, account deletion) — UI exists, nothing is wired up yet
-- Rate limiting on the MCP endpoint — table exists, nothing enforces it
-
-### Post V1 Roadmap
-- AI memory export parsing (ChatGPT/Claude memory → context graph) as a first-class import, not just the ad-hoc paste-in currently in onboarding
-- Multiple API keys with labels and scoped permissions (e.g. a read-only key for a docs bot)
-- Node version history
-- Public read-only graph sharing (e.g. share one project's context with a client)
-- Browser extension that auto-injects active context into web-based chat UIs
-
-## Success Criteria
-
-The project is complete when a user can:
-1. Sign up and complete onboarding
-2. See their context graph in the dashboard
-3. Connect any MCP-compatible AI using their API key
-4. Start a session where `get_context` loads their context automatically
-5. Type `/save` and see the new entry appear in the dashboard graph
+1. A new account follows useful setup rather than seeing an empty dashboard.
+2. The user controls what leaves a client and what becomes permanent context.
+3. Saved notes survive refresh and are returned to another connected client.
+4. Automatic capture is fast on the tool path, reviewable, pausable, and recoverable after processing failure.
+5. Deletion, resolution, and connection revocation have real observable effects.

@@ -2,7 +2,7 @@ import OpenAI from 'openai'
 import { logOpenRouterCall } from './logging'
 
 const client = new OpenAI({
-  baseURL: 'https://openrouter.ai/api/v1',
+  baseURL: process.env.OPENROUTER_BASE_URL || 'https://openrouter.ai/api/v1',
   apiKey: process.env.OPENROUTER_API_KEY || process.env.OPEN_ROUTER_API_KEY || '',
   defaultHeaders: {
     'HTTP-Referer': process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000',

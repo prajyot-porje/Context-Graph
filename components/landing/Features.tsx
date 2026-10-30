@@ -237,7 +237,7 @@ export function Features() {
                   Automatic Memory Evolution
                 </h3>
                 <p className="mt-2 text-body-md text-[var(--text-secondary)] leading-relaxed">
-                  Type <code className="px-1.5 py-0.5 rounded bg-[var(--surface)] border border-[var(--border)] font-mono text-[12px] font-semibold text-[var(--text-primary)]">/save</code> at the end of any coding session. The engine parses the conversation and updates nodes automatically.
+                  Connected AI tools can suggest useful notes as you work. Review your first import, and pause automatic capture whenever you want.
                 </p>
               </div>
 

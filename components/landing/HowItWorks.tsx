@@ -4,11 +4,11 @@ import { useRef, useState } from 'react'
 import { useGSAP } from '@gsap/react'
 import { gsap, prefersReducedMotion } from '@/lib/gsap'
 import { cn } from '@/lib/utils'
+import Link from 'next/link'
 import {
   Layers,
   Sparkles,
   CheckCircle2,
-  RefreshCw,
   Zap,
 } from 'lucide-react'
 
@@ -26,7 +26,7 @@ const STEPS: Step[] = [
     title: 'Structure your foundation',
     subtitle: 'Define role, stack, and conventions',
     description:
-      'Answer a few quick questions or paste your existing guidelines. ContextGraph structures your identity, tech stack, and architectural rules into an organized semantic graph.',
+      'Choose Claude or ChatGPT, connect ContextGraph, and ask your AI to propose facts to share. Review and save your selected notes.',
     badge: 'Step 1: Setup',
   },
   {
@@ -34,15 +34,15 @@ const STEPS: Step[] = [
     title: 'Plug into any AI tool',
     subtitle: 'Universal Model Context Protocol',
     description:
-      'Connect Claude, Cursor, Windsurf, or Codex CLI in seconds. One unified API key connects all your assistants to your single source of truth.',
+      'Use OAuth for Claude and ChatGPT web. Existing terminal clients can use an API key in a request header.',
     badge: 'Step 2: Connect',
   },
   {
     number: '03',
     title: 'Code without repeating yourself',
-    subtitle: 'Zero-prompt context injection & evolution',
+    subtitle: 'Approved context across conversations',
     description:
-      'Assistants automatically query relevant nodes on prompt 1. When you make architecture decisions, type /save to persist updates to your graph in real time.',
+      'Ask a connected assistant to load your context. With automatic capture enabled, it can suggest new decisions and constraints for background processing.',
     badge: 'Step 3: Build',
   },
 ]
@@ -50,17 +50,6 @@ const STEPS: Step[] = [
 export function HowItWorks() {
   const containerRef = useRef<HTMLElement>(null)
   const [activeStep, setActiveStep] = useState(0)
-  const [testingPing, setTestingPing] = useState(false)
-  const [pingVerified, setPingVerified] = useState(false)
-
-  const handleTestPing = () => {
-    setTestingPing(true)
-    setTimeout(() => {
-      setTestingPing(false)
-      setPingVerified(true)
-      setTimeout(() => setPingVerified(false), 3000)
-    }, 600)
-  }
 
   useGSAP(
     () => {
@@ -162,15 +151,11 @@ export function HowItWorks() {
                 </div>
               </div>
 
-              {/* Interactive Test Ping Button */}
-              <button
-                onClick={handleTestPing}
-                disabled={testingPing}
+              <Link href="/connect"
                 className="inline-flex items-center gap-1.5 px-3 py-1 rounded-[var(--radius-sm)] border border-[var(--border-strong)] bg-[var(--surface)] text-[11px] font-medium text-[var(--text-primary)] hover:border-[var(--accent)] transition-[border-color,background-color,color] duration-150 active:scale-95 cursor-pointer disabled:opacity-50"
               >
-                <RefreshCw className={cn('w-3 h-3 text-[var(--accent)]', testingPing && 'animate-spin')} />
-                <span>{pingVerified ? 'Verified (4ms)' : testingPing ? 'Pinging...' : 'Verify Link'}</span>
-              </button>
+                <span>Set up your connection</span>
+              </Link>
             </div>
 
             {/* Connected Clients Matrix */}
@@ -220,7 +205,7 @@ export function HowItWorks() {
             <div className="p-3 rounded-xl bg-[var(--surface)] border border-[var(--border)] text-left flex items-start gap-2.5">
               <span className="text-[var(--accent)] font-bold text-[13px] mt-0.5">●</span>
               <p className="text-[11px] text-[var(--text-secondary)] leading-relaxed">
-                One personal API key securely connects every tool. Context updates propagate across all clients in real time without manual copy-pasting.
+                Illustrative client connections. Your saved notes are returned when a connected client requests them.
               </p>
             </div>
           </div>
@@ -294,7 +279,7 @@ export function HowItWorks() {
           </h2>
 
           <p className="mt-[var(--space-4)] max-w-[56ch] text-body-md text-[var(--text-secondary)] leading-relaxed">
-            From zero to cross-AI memory in under two minutes. Designed to get out of your way and let you build.
+            Connect a client, review your notes, and use your context in another conversation. Setup time depends on your client and account permissions.
           </p>
         </div>
 

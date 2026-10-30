@@ -88,12 +88,11 @@ export async function sendVerificationOTPEmail({ email, otp, type }: SendOTPOpti
   const text = `${headline}\n\n${subtext}\n\nYour verification code: ${otp}\n\nThis code expires in 5 minutes.\nIf you did not request this, please ignore this email.\n\nContextGraph`
 
   if (!apiKey) {
-    console.warn(`[lib/email] RESEND_API_KEY is not configured. Verification code for ${email} is: ${otp}`)
-    return
+    throw new Error('Email delivery is not configured. Contact the project owner.')
   }
 
   try {
-    const response = await fetch('https://api.resend.com/emails', {
+    const response = await fetch(process.env.EMAIL_API_URL || 'https://api.resend.com/emails', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${apiKey}`,
@@ -110,13 +109,13 @@ export async function sendVerificationOTPEmail({ email, otp, type }: SendOTPOpti
 
     if (!response.ok) {
       const errorText = await response.text()
-      console.error(`[lib/email] Resend API error (${response.status}):`, errorText)
-      console.warn(`[lib/email] Resend delivery failed (${response.status}). Development fallback OTP for ${email} is: ${otp}`)
+      void errorText
+      throw new Error(`Email delivery failed (${response.status}). Please try again.`)
     } else {
       console.log(`[lib/email] Verification OTP email dispatched successfully to ${email}`)
     }
   } catch (error) {
-    console.error('[lib/email] Failed to send email via Resend:', error)
-    console.warn(`[lib/email] Network exception. Development fallback OTP for ${email} is: ${otp}`)
+    console.error('[lib/email] Email delivery failed.')
+    throw error
   }
 }

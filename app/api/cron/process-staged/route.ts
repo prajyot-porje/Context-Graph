@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { processStagedBatch } from '@/lib/process-staged'
 import { handleRouteError } from '@/lib/api/errors'
+import { cleanupExpiredData } from '@/lib/db'
 
 export const maxDuration = 60
 
@@ -11,11 +12,12 @@ export const maxDuration = 60
 // rejects any cron schedule more frequent than daily at deploy time.
 async function handleProcessStaged(req: NextRequest) {
   const authHeader = req.headers.get('authorization')
-  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+  if (!process.env.CRON_SECRET || authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
   const result = await processStagedBatch()
+  await cleanupExpiredData()
   return NextResponse.json({ success: true, ...result })
 }
 

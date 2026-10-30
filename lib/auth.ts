@@ -1,24 +1,13 @@
 import { betterAuth } from 'better-auth'
-import { emailOTP } from 'better-auth/plugins'
-import { Pool } from 'pg'
+import { emailOTP, jwt } from 'better-auth/plugins'
+import { oauthProvider } from '@better-auth/oauth-provider'
+import { database } from './database'
 import { sendVerificationOTPEmail } from '@/lib/email'
-
-function getBaseUrl(): string {
-  let url = 'http://localhost:3000'
-  // 1. On Vercel Preview deployments, use the dynamic deployment preview URL
-  if (process.env.VERCEL_ENV === 'preview' && process.env.VERCEL_URL) {
-    url = `https://${process.env.VERCEL_URL}`
-  } else if (process.env.BETTER_AUTH_URL) {
-    // 2. Explicitly configured BETTER_AUTH_URL
-    url = process.env.BETTER_AUTH_URL
-  } else if (process.env.VERCEL_URL) {
-    // 3. Fallback to VERCEL_URL if set
-    url = `https://${process.env.VERCEL_URL}`
-  }
-  return url.replace(/\/+$/, '')
-}
+import {getBaseUrl} from './auth-url'
+export {getBaseUrl} from './auth-url'
 
 export const auth = betterAuth({
+  basePath: '/api/auth',
   baseURL: getBaseUrl(),
   trustedOrigins: [
     'http://localhost:3000',
@@ -27,12 +16,7 @@ export const auth = betterAuth({
     ...(process.env.BETTER_AUTH_URL ? [process.env.BETTER_AUTH_URL] : []),
     ...(process.env.NEXT_PUBLIC_APP_URL ? [process.env.NEXT_PUBLIC_APP_URL] : []),
   ],
-  database: new Pool({
-    connectionString: process.env.SUPABASE_DATABASE_URL,
-    ssl: process.env.NODE_ENV === 'production' || process.env.SUPABASE_DATABASE_URL?.includes('supabase.com')
-      ? { rejectUnauthorized: false }
-      : undefined,
-  }),
+  database,
   emailAndPassword: {
     enabled: true,
     requireEmailVerification: true,
@@ -48,6 +32,17 @@ export const auth = betterAuth({
     },
   },
   plugins: [
+    jwt(),
+    oauthProvider({
+      loginPage: '/oauth/login',
+      consentPage: '/oauth/consent',
+      scopes: ['openid', 'profile', 'offline_access', 'context:read', 'context:write'],
+      resources: [{ identifier: `${getBaseUrl()}/api/mcp`, allowedScopes: ['context:read', 'context:write', 'offline_access'] }],
+      allowDynamicClientRegistration: true,
+      allowUnauthenticatedClientRegistration: true,
+      clientRegistrationDefaultResources: [`${getBaseUrl()}/api/mcp`],
+      grantTypes: ['authorization_code', 'refresh_token'],
+    }),
     emailOTP({
       async sendVerificationOTP({ email, otp, type }) {
         await sendVerificationOTPEmail({ email, otp, type })

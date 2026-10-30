@@ -11,12 +11,12 @@ export const VALID_KINDS: ContextEntryKind[] = ['decision', 'preference', 'const
 export const MEMORY_PROTOCOL = `ContextGraph gives you persistent memory across AI tools and sessions. Rules:
 1. Call get_context at the very start of a session, before anything else.
 2. Call remember(text, kind) immediately whenever the user decides something, states a preference or constraint, or gets stuck on an unresolved problem. Don't wait for the session to end. When in doubt, call it — you do not judge importance, the server does.
-3. If get_context comes back empty or nearly empty, or the user says "initialize contextgraph": state what you already know about this user (from your own memory, or from project files like package.json, README, CLAUDE.md, git remote/user if you're in a repo) and call remember for each fact.`
+3. If context is empty or the user asks to set up ContextGraph, call contextgraph_setup. Show only facts actually available to you, ask permission BEFORE sending them, then use submit_context_import. Never use remember to bypass setup review. Never claim complete access to native memories or past chats. Submitted imports stay drafts until the user reviews and saves them on the ContextGraph website.`
 
 export function buildGetContextReply(assembled: string, nodeCount: number, entryCount: number): string {
   const isNew = nodeCount === 0 || entryCount < 3
   const bootstrapNote = isNew
-    ? `\n\n---\nThis ContextGraph looks new or nearly empty. State what you already know about this user right now — from your own memory, or from the project you're sitting in (package.json, README, CLAUDE.md, git remote/user) — and call remember for each distinct fact.`
+    ? `\n\n---\nThis ContextGraph looks new or nearly empty. Use the reviewed setup flow; do not silently import or invent memories.`
     : ''
   return `${assembled}\n\n---\n${MEMORY_PROTOCOL}${bootstrapNote}`
 }

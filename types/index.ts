@@ -41,6 +41,8 @@ export interface ContextEntry {
   score: number
   kind: ContextEntryKind
   created_at: string
+  source?: string | null
+  source_connection_id?: string | null
 }
 
 export interface StagedContextEntry {

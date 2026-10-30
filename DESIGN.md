@@ -241,7 +241,7 @@ Landing page hero sections only. 200×200px seamless noise SVG at 3% opacity wit
 Creates tactile grain — makes the surface feel physical rather than digital.
 
 ### Graph Canvas
-React Flow background: dot grid pattern.
+The 3D graph canvas uses the theme surface; any surrounding 2D grid decoration follows this dot pattern.
 Dot color: rgba(255,255,255,0.08) on dark, rgba(0,0,0,0.06) on light.
 Dot spacing: 24px × 24px.
 
@@ -460,11 +460,11 @@ Mobile: bottom nav | main full screen | detail full-screen drawer
 - Focus-visible state required on every interactive element.
 - Every button needs default, hover, focus-visible, active, and disabled states.
 
-### Graph (React Flow)
-- Override all React Flow default styles. Never rely on React Flow's built-in appearance.
-- Node sizes are not fixed — nodes grow to fit content.
+### Graph (react-force-graph-3d)
+- Override default Three.js/force-graph styling with the node-tier and theme tokens.
+- Node sizes follow the semantic root/branch/leaf tiers and remain legible at the current zoom.
 - Edge stroke color: `rgba(255,255,255,0.12)` dark, `rgba(0,0,0,0.10)` light.
-- Animated edges on connection: GSAP strokeDashoffset animation.
+- Any 2D edge entrance uses GSAP; 3D motion must respect reduced motion and avoid continuous decorative work.
 
 ---
 

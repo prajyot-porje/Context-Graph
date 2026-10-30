@@ -1,15 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
-import { requireSessionUser } from '@/lib/auth/server'
+import { requireMutationUser } from '@/lib/api/session'
 import { updateNode, deleteNode } from '@/lib/db'
 import { handleRouteError } from '@/lib/api/errors'
 
 const updateNodeSchema = z.object({
-  title: z.string().min(1).optional(),
-  scope: z.string().min(1).optional(),
-  content: z.string().optional(),
+  title: z.string().min(1).max(120).optional(),
+  scope: z.string().min(1).max(120).optional(),
+  content: z.string().max(20000).optional(),
   relevance: z.number().min(0).max(1).optional(),
-  tags: z.array(z.string()).optional(),
+  tags: z.array(z.string().max(60)).max(30).optional(),
   parent_scope: z.string().nullable().optional(),
 })
 
@@ -19,7 +19,7 @@ interface RouteParams {
 
 export async function PATCH(req: NextRequest, { params }: RouteParams) {
   try {
-    const user = await requireSessionUser()
+    const user = await requireMutationUser(req)
     const { id } = await params
     const body = await req.json()
     const input = updateNodeSchema.parse(body)
@@ -32,7 +32,7 @@ export async function PATCH(req: NextRequest, { params }: RouteParams) {
 
 export async function DELETE(req: NextRequest, { params }: RouteParams) {
   try {
-    const user = await requireSessionUser()
+    const user = await requireMutationUser(req)
     const { id } = await params
     await deleteNode(id, user.id)
     return NextResponse.json({ success: true })

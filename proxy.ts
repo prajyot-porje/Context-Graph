@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/lib/auth'
+import { authDestination } from '@/lib/navigation'
 
 export async function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl
@@ -9,7 +10,7 @@ export async function proxy(req: NextRequest) {
     pathname.startsWith('/dashboard') || 
     pathname.startsWith('/settings') || 
     pathname.startsWith('/onboarding') ||
-    pathname.startsWith('/connect')
+    pathname.startsWith('/connect') || pathname === '/entry'
 
   const isAuthRoute = 
     pathname === '/login' || 
@@ -22,7 +23,7 @@ export async function proxy(req: NextRequest) {
       headers: req.headers,
     })
   } catch (err) {
-    console.error('[proxy.ts] Failed to fetch session:', err)
+    console.error('[proxy.ts] Session lookup failed:', err instanceof Error ? err.name : 'Unknown error')
   }
 
   // 1. Unauthenticated user trying to access a protected route -> redirect to login
@@ -34,15 +35,11 @@ export async function proxy(req: NextRequest) {
 
   // 2. Authenticated user trying to access login/signup -> redirect to dashboard
   if (session && isAuthRoute) {
-    return NextResponse.redirect(new URL('/dashboard', req.url))
+    return NextResponse.redirect(new URL(authDestination(req.nextUrl.searchParams.get('from')), req.url))
   }
 
-  // ROADMAP.md P1.6: the wizard is now an optional, always-revisitable path (reachable
-  // directly, linked from /connect) rather than a forced one-time gate. A fresh signup
-  // goes straight to /connect, and `onboarding_done` gets set on first successful MCP
-  // call instead of only via the wizard — so it no longer means "wizard completed" and
-  // can't be used to gate access to /onboarding or to force a redirect into it. An empty
-  // graph on /dashboard, /settings, or /connect is a valid, expected state now.
+  // Readiness is derived from saved context in /entry and the dashboard server page.
+  // The legacy onboarding_done flag is never an authorization or readiness gate.
 
   return NextResponse.next()
 }
@@ -55,5 +52,6 @@ export const config = {
     '/connect',
     '/login',
     '/signup',
+    '/entry',
   ],
 }

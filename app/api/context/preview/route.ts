@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requireSessionUser } from '@/lib/auth/server'
-import { getUserNodes } from '@/lib/db'
+import { getUserNodes, getUserEntries } from '@/lib/db'
 import { assembleContext } from '@/lib/context'
 import { handleRouteError } from '@/lib/api/errors'
 
@@ -10,8 +10,8 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url)
     const scope = searchParams.get('scope') || 'me'
 
-    const nodes = await getUserNodes(user.id)
-    const assembled = assembleContext(nodes, scope)
+    const [nodes,entries] = await Promise.all([getUserNodes(user.id),getUserEntries(user.id)])
+    const assembled = assembleContext(nodes, scope,4000,entries)
 
     // Count nodes that were actually included
     let nodeCount = 0

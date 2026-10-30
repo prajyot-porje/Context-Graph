@@ -9,8 +9,6 @@ import type { ContextNode, ContextEntry } from '@/types'
 import { Skeleton } from '@/components/ui/Skeleton'
 import { useGraph } from '@/components/providers/GraphProvider'
 import { computeDepths } from '@/lib/graph-utils'
-import { createBrowserSupabaseClient } from '@/lib/supabase/client'
-import { useSession } from '@/lib/auth-client'
 
 // ── Inline thin-line SVGs (no Lucide) ─────────────────────────────────────────
 
@@ -82,9 +80,6 @@ export function NodeDetailPanel({
   const panelRef = useRef<HTMLDivElement>(null)
 
   const { nodes } = useGraph()
-  const { data: session } = useSession()
-  const userId = session?.user?.id
-  const [supabaseClient] = useState(() => createBrowserSupabaseClient())
 
   const [isEditing, setIsEditing] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
@@ -146,28 +141,14 @@ export function NodeDetailPanel({
       })
   }, [node.id])
 
-  // Real-time entries subscription
+  // Authenticated polling keeps notes current without anonymous private-table access.
   useEffect(() => {
-    if (!userId) return
-    const channel = supabaseClient
-      .channel(`dashboard-realtime-entries-${node.id}`)
-      .on('postgres_changes', {
-        event: 'INSERT',
-        schema: 'public',
-        table: 'context_entries',
-        filter: `user_id=eq.${userId}`,
-      }, (payload) => {
-        if (payload.new.node_id === node.id) {
-          setEntries(prev => {
-            if (prev.some(e => e.id === payload.new.id)) return prev
-            return [payload.new as ContextEntry, ...prev]
-          })
-        }
-      })
-      .subscribe()
-
-    return () => { supabaseClient.removeChannel(channel) }
-  }, [node.id, userId, supabaseClient])
+    let active=true
+    const refresh=async()=>{if(document.hidden)return;try{const r=await fetch(`/api/context/${node.id}/entries`);if(r.ok&&active)setEntries((await r.json()).entries)}catch{}}
+    const timer=setInterval(refresh,10000)
+    window.addEventListener('focus',refresh)
+    return()=>{active=false;clearInterval(timer);window.removeEventListener('focus',refresh)}
+  }, [node.id])
 
   // Panel slide animation
   useEffect(() => {
@@ -520,10 +501,7 @@ export function NodeDetailPanel({
                 ) : entries.length === 0 ? (
                   <div className="py-6 text-center">
                     <p className="text-[12px] text-[var(--text-muted)] leading-[1.7]">
-                      No decisions saved yet.<br />
-                      Use{' '}
-                      <code className="font-mono text-[11px] text-[var(--text-secondary)]">/save</code>
-                      {' '}at the end of an AI session.
+                      No notes saved yet.<br />Connect an AI or import context to add reviewed notes.
                     </p>
                   </div>
                 ) : (
@@ -565,6 +543,11 @@ export function NodeDetailPanel({
                               <span>{formatDate(entry.created_at)}</span>
                               <span>·</span>
                               <span>score {entry.score.toFixed(2)}</span>
+                              <span>{entry.kind} · {entry.source || 'saved context'}</span>
+                            </div>
+                            <div className="flex gap-3 mt-2">
+                              {entry.kind==='open_problem'&&<button className="min-h-11 text-sm underline" onClick={async()=>{const r=await fetch(`/api/entries/${entry.id}`,{method:'PATCH'});if(r.ok){setEntries(old=>old.map(e=>e.id===entry.id?{...e,kind:'resolved'}:e));window.dispatchEvent(new Event('context-updated'))}}}>Mark resolved</button>}
+                              <button className="min-h-11 text-sm underline" onClick={async()=>{if(!window.confirm('Delete this saved note?'))return;const r=await fetch(`/api/entries/${entry.id}`,{method:'DELETE'});if(r.ok){setEntries(old=>old.filter(e=>e.id!==entry.id));window.dispatchEvent(new Event('context-updated'))}}}>Delete note</button>
                             </div>
                           </div>
                         )

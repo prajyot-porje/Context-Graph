@@ -28,7 +28,7 @@ Full detail and rationale in [ARCHITECTURE.md](ARCHITECTURE.md) §2. Summary: Ne
 - Better Auth is the source of truth for sessions and user identity.
 - Supabase access is server-side only for user-private data. Never query Supabase directly from client components for private data.
 - Do not assume Supabase Auth or `auth.uid()`/RLS exists — tenant isolation here is programmatic (`userId` filtered in every `lib/db.ts` call), not RLS. If a Supabase JWT bridge or RLS policy is added later, log it in ARCHITECTURE.md before relying on it.
-- API routes and server actions must authorize with Better Auth (`requireSessionUser()`) or the API-key path (`validateApiKey()`) before reading or writing user data. MCP requests use API-key auth, never Better Auth session cookies.
+- API routes and server actions must authorize with Better Auth (`requireSessionUser()`) or the MCP OAuth/API-key verifier before reading or writing user data. MCP accepts scoped OAuth or header API keys, never Better Auth session cookies or query keys.
 - Schema changes belong in a checked-in SQL file (`supabase/schema.sql` plus a new dated file for the change) — not an ad-hoc script that only you ran once. Log the change in ARCHITECTURE.md.
 - App queries belong in typed server helpers in `lib/db.ts`, not inline in components or routes.
 
@@ -87,7 +87,7 @@ Honest take, since you asked directly: this many overlapping "make it look premi
 
 ## Frontend Workflow
 
-- Build frontend first with mocked data where backend contracts are still evolving — but delete the mock once the real route lands. (This repo currently has leftover mock files from an earlier pass — see ARCHITECTURE.md's debt list. Don't repeat that.)
+- Build frontend first with mocked data where backend contracts are still evolving — delete the mock once the real route lands. Never present fixture data as saved user context.
 - Lock data shapes early: context node, context entry, API key summary, onboarding payload.
 - Build layout, typography, states, and responsive behavior before animation polish.
 - Keep all complex UI surfaces token-driven so the design system can scale cleanly.
@@ -97,4 +97,4 @@ Honest take, since you asked directly: this many overlapping "make it look premi
 - Do not rely on default `react-force-graph-3d`/Three.js styling — everything is theme-driven.
 - Use semantic node tiers (root/branch/leaf) in code and styles, matching DESIGN.md's node-tier tokens.
 - Refresh `ScrollTrigger` after the graph mounts if layout measurements affect animation.
-- Hierarchy currently has two representations (`parent_scope` field and `context_edges` table) that can drift — see ARCHITECTURE.md §8. If you change one, change the other, or fix the drift properly instead of patching around it.
+- `parent_scope` is canonical; edges are derived for reads and rebuilt transactionally on hierarchy changes. Preserve this invariant through the typed database helpers.

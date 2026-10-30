@@ -11,7 +11,7 @@ import { PasswordInput } from '@/components/auth/PasswordInput'
 import { Button } from '@/components/ui/Button'
 import { Loader2, ArrowRight, Mail, ArrowLeft } from 'lucide-react'
 
-export default function SignupClient() {
+export default function SignupClient({destination='/entry',googleEnabled=false}:{destination?:string;googleEnabled?:boolean}) {
   const router = useRouter()
   const [step, setStep] = useState<'form' | 'verify'>('form')
 
@@ -59,7 +59,7 @@ export default function SignupClient() {
     setIsGoogleLoading(true)
     setError('')
     try {
-      const result = await signIn.social({ provider: 'google', callbackURL: '/dashboard' })
+      const result = await signIn.social({ provider: 'google', callbackURL: destination })
       if (result?.error) {
         setError(result.error.message || 'Failed to initialize Google sign in. Please try again.')
         setIsGoogleLoading(false)
@@ -198,7 +198,7 @@ export default function SignupClient() {
       // User email verified & session established -> route straight to connect.
       // ROADMAP.md P1.6: the onboarding wizard is now optional, not a forced step —
       // connecting a tool is what actually starts filling the graph.
-      router.push('/connect')
+      router.push(destination)
       router.refresh()
     } catch (err: unknown) {
       setIsLoading(false)
@@ -243,10 +243,10 @@ export default function SignupClient() {
               Create your account
             </h1>
             <p className="cg-subtext mb-8 text-[15px] text-[var(--text-secondary)]">
-              Set up your context graph in 3 minutes
+              Connect an AI and choose what it remembers
             </p>
 
-            <Button
+            {googleEnabled&&<><Button
               type="button"
               variant="secondary"
               className="w-full"
@@ -262,6 +262,7 @@ export default function SignupClient() {
               <span className="text-[12px] text-[var(--text-muted)]">or</span>
               <span className="h-px flex-1 bg-[var(--border)]" />
             </div>
+            </>}
 
             <form onSubmit={handleFormSubmit} className="flex flex-col gap-4">
               <div className="cg-field">
@@ -331,7 +332,7 @@ export default function SignupClient() {
             <p className="cg-subtext mt-6 text-center text-[14px] text-[var(--text-secondary)]">
               Already have an account?{' '}
               <Link
-                href="/login"
+                href={`/login?from=${encodeURIComponent(destination)}`}
                 className="text-[var(--accent)] transition-colors hover:underline inline-flex items-center"
               >
                 Sign in <ArrowRight size={16} className="ml-1" />
@@ -366,11 +367,12 @@ export default function SignupClient() {
 
             <form onSubmit={handleVerifySubmit} className="flex flex-col gap-4">
               <div className="cg-field">
-                <label className="block text-[12px] font-semibold text-[var(--text-secondary)] uppercase tracking-[0.06em] mb-1.5">
+                <label htmlFor="verification-code" className="block text-[12px] font-semibold text-[var(--text-secondary)] uppercase tracking-[0.06em] mb-1.5">
                   6-Digit Verification Code
                 </label>
                 <input
                   ref={otpInputRef}
+                  id="verification-code"
                   type="text"
                   inputMode="numeric"
                   autoComplete="one-time-code"

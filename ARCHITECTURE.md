@@ -1,176 +1,79 @@
 # ContextGraph — Architecture
 
-Version 1.0 | Established 2026-09-05
-
-This is the technical source of truth: how ContextGraph is actually built today, and why it evolved that way. It is not the product spec (see [PRODUCT.md](PRODUCT.md)) and not the visual spec (see [DESIGN.md](DESIGN.md)). Agent workflow rules and skill usage live in [AGENTS.md](AGENTS.md).
-
-## How to use this file
-
-- Read this before touching auth, database schema, the MCP endpoint, API routes, or any cross-cutting `lib/` module — and before adding or removing a dependency.
-- This file has two parts: a **current-state reference** (sections 1–9) and an **append-only Architecture Log** (bottom). The reference describes what's true *now*. The log describes *how we got here* and *why*.
-- Every architectural decision — new table, new external service, an auth-model change, a structural refactor, deleting/replacing a core module, a deviation from the original plan — gets a new dated entry appended to the log. Never rewrite past log entries; if a decision is later reversed, log the reversal as a new entry and update the current-state reference above it.
-- Log entries dated before 2026-09-05 are reconstructed from git history and prior docs (no original log existed) — treat their dates as approximate. Everything from 2026-09-05 onward is exact.
-
----
+Current reference updated 2026-10-30. Product intent belongs in PRODUCT.md, visual rules in DESIGN.md, workflow in AGENTS.md. Sections 1–9 describe current behavior; the log below is append-only history, including decisions since superseded.
 
 ## 1. System Overview
 
-Next.js App Router monolith. One deployment (Vercel) serves the marketing site, the authenticated web app, and the MCP endpoint that external AI clients call. Supabase Postgres is the only datastore. Better Auth owns identity. There is no separate backend service — see §6 for why this matters (it resolves a doc inconsistency that existed before 2026-09-05).
+One Next.js deployment serves the website, Better Auth, and remote MCP at /api/mcp. Supabase PostgreSQL is the datastore. There is no separate Worker or Railway MCP server. Better Auth owns identity; private data is accessed only on the server. Tenant isolation is enforced in typed helpers by user ID, not Supabase Auth or auth.uid().
 
 ## 2. Tech Stack
 
-| Layer | Technology | Notes |
-|---|---|---|
-| Framework | Next.js 16 (App Router), TypeScript strict | |
-| Hosting | Vercel | single deployment, includes the MCP endpoint |
-| Auth | Better Auth v1.6 | owns `user`/`session`/`account`/`verification` tables |
-| Database | Supabase Postgres, `pg` driver | server-side only, service-role key |
-| Realtime | Supabase Realtime (`@supabase/ssr` browser client, anon key) | node/edge tables replicated, see §4 |
-| Graph rendering | `react-force-graph-3d` (Three.js/WebGL) | not React Flow — see log, 2026-06 |
-| Scroll | Lenis, synced to GSAP's RAF loop | |
-| Animation | GSAP + ScrollTrigger + CustomEase | no CSS keyframes for entrances |
-| AI judgment | `openai` SDK pointed at OpenRouter, plus a direct Gemini call | model-cascade fallback, see §7 |
-| Styling | Tailwind CSS v4 + CSS custom properties | tokens defined in DESIGN.md |
+Next.js 16.4.3, strict TypeScript, Tailwind v4, Better Auth and its OAuth provider 1.7.14, pg, official MCP SDK 1.32.2, Zod 4, react-force-graph-3d, Lenis, GSAP, OpenRouter/Gemini. See package-lock.json for exact dependencies. Node 22.13+ or Node 24 is recommended. Tailwind source discovery is restricted to app/components/lib so installed skills do not pollute generated CSS.
 
 ## 3. Directory Conventions
 
-```text
-/app
-  /(marketing)/page.tsx          → actually app/page.tsx (no route group in practice)
-  /(auth)/login/page.tsx
-  /(auth)/signup/page.tsx
-  /(app)/dashboard/page.tsx
-  /(app)/onboarding/page.tsx
-  /(app)/settings/page.tsx
-  /connect/page.tsx
-  /api/auth/[...all]/route.ts
-  /api/context/route.ts
-  /api/context/[id]/route.ts
-  /api/context/[id]/entries/route.ts
-  /api/context/preview/route.ts
-  /api/apikey/route.ts
-  /api/mcp/route.ts
-  /api/mcp/health/route.ts
-  /api/onboarding/chat/route.ts
-  /api/onboarding/finalize/route.ts
-  /api/cron/decay/route.ts
-  /api/cron/process-staged/route.ts    → daily safety-net cron only; see lib/process-staged.ts (added 2026-09-12, corrected 2026-09-13)
+- app/entry: readiness-aware post-login destination. app/connect and components/connect: guided setup and reviewed import. app/oauth: signed login continuation and explicit consent.
+- app/(app)/dashboard: guarded useful-context dashboard, lazy graph and text notes. Settings exposes real capture, connections and API key controls.
+- app/api/setup, imports, connections, entries, context: session-authorized application routes; mutations validate Origin. All queries delegate to lib/db.ts.
+- app/api/mcp: scoped OAuth/header-key protocol endpoint. Public discovery lives under app/.well-known. Health is not connection proof.
+- lib/database.ts: shared bounded pg pool, numeric conversion, typed query/transaction boundary. lib/db.ts: parameterized tenant-scoped app SQL.
+- lib/setup.ts: import contracts and consent-aware prompts. lib/context.ts: bounded active-context assembly. lib/process-staged.ts: leased queue processing.
+- supabase: checked-in fresh auth snapshot, application snapshot, dated additive recovery and OAuth SQL. scripts/migrate-recovery.mts generates pinned-provider upgrades and defaults to dry run.
+- tests and colocated tests: real disposable PostgreSQL integration, unit and Playwright browser tests. scripts/test-server.mts provides isolated local email/model boundaries.
 
-/components
-  /graph        → ContextGraph3D.tsx (live)
-  /landing      → marketing sections
-  /dashboard    → shell, sidebar, node panels, settings client
-  /onboarding   → step-wizard onboarding flow (StepIdentity/Stack/Projects/Goals/Review, MemoryImportStep, GraphPreview)
-  /auth         → login/signup client components
-  /connect      → MCP connection setup UI
-  /providers    → GraphProvider (realtime), LenisProvider
-  /ui           → design-system atoms
-
-/lib
-  /auth.ts, /auth/server.ts, /auth-client.ts   → Better Auth config + session helpers
-  /db.ts                                        → all Supabase reads/writes, user-scoped
-  /supabase.ts, /supabase/client.ts             → server + browser Supabase clients
-  /context.ts                                    → assembleContext (core graph→text logic)
-  /graph-utils.ts                                → depth/tree/sort helpers for the UI
-  /openrouter.ts                                  → AI judgment cascade
-  /mcp-protocol.ts                               → MCP protocol text + prompt builders (added 2026-09-12, see §6)
-  /process-staged.ts                             → batches + judges staged_context_entries (added 2026-09-13, see §6)
-  /api/errors.ts                                  → error → HTTP status mapping
-  /logging.ts                                     → OpenRouter call logging
-
-/types        → hand-maintained interfaces + Supabase Database type (see §8 debt)
-proxy.ts      → route protection. Next.js 16 renamed the `middleware.ts`/`middleware()`
-                convention to `proxy.ts`/`proxy()` — the old name still "works" but only
-                runs in the (here, incompatible) edge runtime. Do NOT rename this to
-                middleware.ts. See log, 2026-09-05, for a correction of an earlier mistake.
-```
+Keep proxy.ts: this is the Next.js 16 convention. It is complemented by server-page/session guards; it is not the only authorization boundary.
 
 ## 4. Data Model
 
-Better Auth owns `user` (extended with a custom `onboarding_done` boolean), `session`, `account`, `verification`. App tables:
+Better Auth owns user/session/account/verification plus JWKS and OAuth provider tables. Preserve exact provider migration definitions when upgrading. The legacy onboarding_done flag is retained for compatibility but does not establish readiness. capture_enabled controls routine capture.
 
-**`context_nodes`** — `id` (uuid), `user_id` (fk → user), `scope` (text, e.g. `me`, `agency`, `personal/project-slug`), `title`, `content` (markdown injected into AI context), `relevance` (float 0–1), `tags` (text[]), `parent_scope` (nullable text), `last_updated`, `created_at`.
+context_nodes stores scoped core content. context_entries stores source-attributed, typed notes with dedupe hashes, resolution state and timestamps. Readiness requires nonempty core content or an active saved note; an empty root does not qualify. Imports and routine capture ensure root/intermediate scopes exist.
 
-**`context_edges`** — `id`, `user_id`, `source_node_id` → `target_node_id` (both fk → context_nodes), `edge_type` (default `part_of`), `created_at`. Unique on `(source_node_id, target_node_id)`.
+parent_scope is canonical. Edges are derived for reads and rebuilt transactionally on hierarchy changes; a stale context_edges row cannot override hierarchy. Parent validation rejects cycles and invalid parents. All reads and writes filter by authenticated user.
 
-**`context_entries`** — `id`, `node_id` (fk, cascade delete), `user_id`, `entry_text`, `score` (float), `kind` (added 2026-09-12: `decision` | `preference` | `constraint` | `open_problem` | `resolved` | `note`, default `note`), `created_at`. The "decisions log" per node. `resolve`/`forget` (MCP tools, §6) update/delete rows here directly.
+context_imports stores bounded drafts, provider, state, revision and submission digest. Submit is idempotent by digest; edits/commit check revisions. Commit locks the account and atomically adds selected notes, preserving existing graph and credentials. Cancellation, completion and expiry clear draft payloads. One approved note is sufficient. Expiry/retention constants are defined in lib/db.ts and checked-in SQL.
 
-**`staged_context_entries`** (added 2026-09-12) — `id`, `user_id`, `raw_text`, `kind_hint`, `scope_hint`, `source`, `created_at`. Write-only landing zone for the `remember` MCP tool (§6); drained and deleted by `processStagedBatch()` (`lib/process-staged.ts`). Never read by the app UI.
+client_connections records observed authenticated MCP activity, self-reported client identity and a persistent revoked_before cutoff. Authorization alone is distinct from receiving a draft or saving context. OAuth reconnect cannot revive older tokens.
 
-**`api_keys`** — `id`, `user_id` (fk, unique — one active key per user), `key_hash` (SHA-256, unique), `key_prefix` (first 12 chars, shown in UI), `created_at`, `last_used`, `last_client_name` (added 2026-09-12 — see §6).
+staged_context_entries has attempt counts, lease owner/expiry and processing state. Workers claim with FOR UPDATE SKIP LOCKED, recover expired leases, and cap automatic attempts at five. Pending and failed counts are visible; manual retry is explicit. Original text/kind/scope survive the judgment stage. A transaction saves accepted content and removes the queued item together.
 
-**`rate_limits`** — `id`, `api_key_id` (fk → api_keys), `window_start`, `request_count`. **Enforced as of 2026-09-12** — `checkRateLimit()` in `lib/db.ts` reads and writes this table on every `/api/mcp` request; 300 requests/hour/key, see §5 and §6.
-
-Realtime: `context_nodes`, `context_entries`, `context_edges` all have `REPLICA IDENTITY FULL` and are added to the `supabase_realtime` publication so `GraphProvider` can subscribe to live changes from the browser (anon key).
-
-**Corrected 2026-09-12:** the "no RLS exists" note below was wrong — it described the repo's checked-in SQL, not the live project, and nobody had verified the two matched. Verified directly against the live project: RLS is **enabled** on `context_nodes`, `context_entries`, `context_edges`, and `api_keys`, with zero policies attached — confirmed by anon-key requests returning `[]` (RLS-on-no-policy behavior) rather than a permission error (RLS-off-no-grant behavior) on all four tables, while a service-role query against the same tables returned real rows. `supabase/schema.sql` now carries explicit `ENABLE ROW LEVEL SECURITY` statements so the checked-in schema matches reality and survives a fresh project setup. See log, 2026-09-12.
-
-Consequence worth knowing: RLS-enabled-with-no-policies also blocks the anon key from the realtime `postgres_changes` feed described above, since Realtime evaluates the same policies for the subscribing role. `GraphProvider`'s live subscription may not actually be delivering updates today — this needs a functional check (open two sessions, edit a node in one, watch for the update in the other), separate from the security verification above.
+mcp_request_limits enforces account-level 300 requests/hour atomically. Cleanup prunes old windows and expires drafts. Legacy API-key rate rows are also pruned. RLS is enabled as an anon-role backstop without browser policies. The server database role must have access; RLS is not the tenant authorization mechanism.
 
 ## 5. Auth Architecture
 
-Two independent schemes, deliberately not bridged:
+Website: Better Auth email/password plus verified OTP via Resend; Google appears only with both credentials. Both auth paths go through /entry unless continuing a signed OAuth flow. Session cookie cache is enabled. Secrets, database and user-private queries never reach the browser.
 
-1. **Web session** — Better Auth cookie, 7-day expiry, 5-minute cookie cache. `requireSessionUser()` resolves the user server-side; throws `'Unauthorized'` (string-matched in `lib/api/errors.ts` → 401) if absent.
-2. **MCP clients** — `x-api-key` header or `?key=` query param. Server hashes the incoming key (SHA-256) and looks it up in `api_keys`. No cookies, no CSRF surface for this path. Every `/api/mcp` request is also rate-limited (`checkRateLimit()`, `lib/db.ts`) against `rate_limits` — 300 requests/hour/key, read-then-write (not atomic under heavy concurrency; deliberate, see log 2026-09-12) — before any tool executes.
+MCP: authorization code + PKCE through the maintained Better Auth OAuth provider, dynamic registration bound to the MCP resource, exact registered callbacks, context:read/context:write scopes and optional offline_access. Public issuer/resource discovery and explicit /api/auth/jwks verification share one canonical URL. Tokens must satisfy issuer/audience, active session/client checks and connection revocation cutoff. Refresh/consent credentials are removed on disconnect. Client names are unverified registration metadata.
 
-Both paths converge on the same rule: every `lib/db.ts` function takes a `userId` and filters by it explicitly. This is programmatic tenant isolation, not database-level RLS — deliberate, see log 2026-05-08. (RLS is *also* independently enabled with no policies as a backstop against the anon key specifically — see §4 — but authorization here never depends on it.)
-
-Route protection: `proxy.ts` (Next.js 16's route-protection convention — see log, 2026-09-05, for a correction: this was briefly and incorrectly renamed to `middleware.ts` during an earlier audit) redirects unauthenticated visitors away from `/dashboard`, `/settings`, `/onboarding`, `/connect`. **Corrected 2026-09-12:** it no longer redirects based on `onboarding_done`, in either direction — see §6 and log for why. This is the only route-level guard for `/dashboard` and `/settings`; those two pages have no additional per-page `requireSessionUser()` check, so if the proxy's matcher config ever breaks, those pages currently have no fallback guard. Worth adding one if this becomes a repeated failure mode.
+Legacy terminal clients may send x-api-key or Bearer API keys. Only normalized SHA-256 hashes and prefixes persist. Replacement is atomic; imports never rotate keys. URL/query keys are rejected. MCP never authenticates using website cookies. Session routes use requireSessionUser; protocol routes use the OAuth/API-key verifier.
 
 ## 6. MCP Endpoint
 
-`app/api/mcp/route.ts` is a JSON-RPC 2.0 Streamable HTTP endpoint: `initialize`, `notifications/initialized`, `tools/list`, `tools/call`. `app/api/mcp/health/route.ts` is a separate lightweight health check, same auth. CORS is open (`Access-Control-Allow-Origin: *`) since external desktop/web AI clients call it cross-origin.
+Official SDK streamable HTTP with JSON responses and negotiated protocol replaces hand-rolled request dispatch. Tool surface: contextgraph_setup, submit_context_import, get_context, remember, recall, resolve, forget, list_nodes. Legacy save_context is accepted but not advertised. Read/write scopes are enforced at execution; request bodies and note payloads are bounded. Errors never echo credentials.
 
-**Tools (rewritten 2026-09-12, see log for the full rationale):** `get_context(scope?)`, `remember(text, kind?, scope?)`, `recall(query)`, `resolve(entry_id)`, `forget(entry_id)`, `list_nodes()` (omits `content` to save tokens). `save_context(summary, scope, goal, achieved)` still works but is no longer advertised in `tools/list` — kept only for any client that already discovered/cached it.
+Connection does not import native ChatGPT/Claude memory. Setup returns a prompt; the client asks permission before sending a structured draft. Website review is the enforceable permanent-save boundary. A dashboard cannot command an idle external chat. Instructions therefore copy a prompt and open the appropriate client. No fake verification timer, invented facts, registered slash-command claim or full-memory claim is presented.
 
-`remember` never calls an LLM on the request path — it does cheap dedupe (`stageEntry()` in `lib/db.ts`) and writes to `staged_context_entries`, returning immediately. `processStagedBatch()` (`lib/process-staged.ts`) judges up to 20 staged rows in a single LLM call, writes the kept ones into `context_entries` with a `kind`, and deletes all processed rows (kept or dropped) so the staging table never grows unbounded. This exists specifically so no chat response ever waits on an LLM call to save something (see ROADMAP.md P1.4 for the reasoning — the two-stage split is load-bearing, not incidental).
-
-**Corrected 2026-09-13:** this was originally triggered by a Vercel cron running every 5 minutes. That failed at deploy time — Vercel's Hobby plan rejects any cron schedule more frequent than once/day (`*/5 * * * *` errors out during deployment, it doesn't silently degrade). Fixed by moving primary triggering off the clock entirely: both the `get_context` and `remember` MCP handlers call `processStagedBatch()` via Next.js's `after()` (`triggerBackgroundDrain()` in `lib/process-staged.ts`) — which runs *after* the response is already sent, so it adds no latency to a chat reply, and it drains on real traffic instead of a schedule. `app/api/cron/process-staged` still exists, now scheduled once/day (`vercel.json`), purely as a safety net for a user who stages something and never triggers another MCP call again. Trade-off accepted: two `after()` drains firing at nearly the same moment (concurrent requests) could both grab the same pending rows and double-process them — the judge-then-delete order means the worst case is a duplicate `context_entries` row, not data loss or corruption, and P2.3's planned fuzzy dedupe cleans this up anyway. Not worth a locking column for a low-probability, low-severity race at this stage.
-
-`initialize` also does two side effects, both fire-and-forget: it persists `params.clientInfo.name` onto the `api_keys` row (`last_client_name`) since MCP only sends `clientInfo` on `initialize`, not on later calls — this is how `remember`/`recall`/etc. still get a `source` to tag entries with — and it calls `markOnboardingDone(userId)`, since a successful MCP handshake is now what "onboarded" means (see below).
-
-`initialize`'s response also carries an `instructions` field, and `get_context`'s reply appends a standing protocol block (with a bootstrap variant when the graph is new/sparse) — both defined once in `lib/mcp-protocol.ts` and reused by the cron job's batch-judge prompt, so the "what's worth keeping" rule only lives in one place. See ROADMAP.md P1.1–P1.4 for why three separate slots carry the same rule (client support for `instructions` is inconsistent) and why the save decision moved server-side (a mechanical "always call, when in doubt" instruction is more reliable across clients than asking the model to judge importance itself).
-
-**Onboarding wall removed:** `onboarding_done` no longer means "completed the wizard" — it means "connected at least one tool," set by the `initialize` handler above. `proxy.ts` no longer redirects into `/onboarding` when it's false, `SignupClient.tsx` routes straight to `/connect` after verification, and the wizard page itself no longer redirects away when `onboarding_done` is true (it can't gate on that anymore, since connecting a tool sets it before someone might still want to run the wizard). The wizard (`OnboardingWizard.tsx`, `/api/onboarding/finalize`) still exists and works, linked as an optional shortcut from `/connect` — "answer a few questions instead."
-
-**Deployment reality (corrected 2026-09-05):** this Next.js app, deployed on Vercel, is the only real MCP server. There is no separate Railway service and no Cloudflare Worker MCP server — prior docs and `SettingsClient.tsx` referenced a `your-cf-worker.workers.dev` placeholder (and a separate `your-app.vercel.app` placeholder) for some client snippets; both were stale/aspirational and have been corrected to use `NEXT_PUBLIC_APP_URL` so the snippet always matches wherever this app is actually deployed. `ConnectPageClient.tsx` already did this correctly (via an `appUrl` prop) and needed no change. If a separate edge-deployed MCP server is ever actually built, log that decision here when it happens — don't just update a UI snippet again.
+get_context assembles core content and active entries, including ancestor scopes, within one approximate budget. Resolved problems are excluded. recall is keyword search, not semantic search. remember queues capture only after setup and when capture is enabled. Next.js after() awaits draining; daily cron is a safety net, not a promise of continuous processing.
 
 ## 7. AI Judgment Layer
 
-`lib/openrouter.ts` implements a fallback cascade for `save_context` judgment calls: a direct Gemini call first, then OpenRouter models in order, retrying on transient errors (`402/404/429/502/503`) and aborting immediately on non-transient ones (auth, bad request). The judgment prompt evaluates whether a session summary is worth permanently saving (goal achieved, factual/architectural significance, filters out trivial progress), returns `{ should_save, reason, entry, score, target_scope }`. If accepted: writes `context_entries`, bumps the node's `relevance` (clamped to 1.0).
+Gemini/OpenRouter fallback judgment validates a bounded batch response. Malformed/missing judgments retain work for bounded retry. Accepted notes retain submitted source text and scope rather than a fabricated model rewrite. Reviewed structured/manual imports bypass model judgment. Settings exposes capture pause, queue failure and retry. External model outages must not silently drop notes or pretend capture succeeded.
 
-`judgeContext()` is also reused by `/api/onboarding/finalize` (see log, 2026-09-06) to turn structured onboarding-wizard answers into rich node `content` prose — a much smaller, more reliable prompt than the earlier chat-transcript-parsing approach it replaced.
+## 8. Known Architecture Debt and Limits
 
-## 8. Known Architecture Debt
-
-Track items here; when one is fixed, add a dated log entry below and remove it from this list (don't just delete the learning).
-
-- No checked-in SQL migrations folder — schema currently lives across `types/index.ts`'s hand-maintained `Database` type and two ad-hoc scripts (`scripts/migrate.ts`, `scripts/migrate-edges.ts`). Risk of drift between the type and the live DB. *(Partially addressed 2026-09-05 — see log; a checked-in schema snapshot now exists under `supabase/schema.sql`, but it's still not a real migration framework.)*
-- Two parallel hierarchy representations: `parent_scope` (string field) and `context_edges` (join table). `PATCH /api/context/[id]` can change `parent_scope` without updating the corresponding edge row — they can silently drift.
-- ~~`rate_limits` table exists, nothing uses it. No rate limiting is enforced on `/api/mcp` today.~~ **Fixed 2026-09-12** — see §4, §5, §6, and log.
-- ~~No RLS policies found in-repo; realtime subscriptions run over the anon key. Needs verification against the live Supabase project.~~ **Verified and fixed 2026-09-12** — see §4 and log. RLS was already enabled live with no policies (safe); the checked-in schema now matches. Follow-up open: confirm whether `GraphProvider`'s realtime subscription still delivers updates now that RLS applies to the anon role on the realtime feed too.
-- Settings → Account tab: hardcoded placeholder values, "Save" is a no-op toast with no API call. Danger Zone delete button has no handler and no backing route — account deletion isn't implemented. *(Not yet fixed — needs a real `PATCH`/`DELETE` account route plus wiring.)*
-- `/dashboard` and `/settings` still have no per-page `requireSessionUser()` guard as a fallback behind `proxy.ts` — acceptable given `proxy.ts` runs correctly (see log, 2026-09-05 correction), but worth adding if its matcher config ever silently breaks.
-- The dev-only `Agentation` overlay (`components/providers/LenisProvider.tsx`, gated to `NODE_ENV === 'development'`) installs a global keydown listener that can swallow Enter/comma keystrokes app-wide while `npm run dev` is running (observed while testing the onboarding wizard's tag input — the `onBlur` commit path is unaffected). Harmless in production since it's dev-gated, but worth knowing if a keyboard shortcut mysteriously doesn't fire during local development.
-- **New 2026-09-12:** `rate_limits` rows are never pruned — one row per API key per hour-window, forever. Not urgent (tiny rows, one per key), but worth a cleanup cron eventually.
-- ~~The `/api/cron/process-staged` schedule (`*/5 * * * *` in `vercel.json`) assumes frequent cron execution. Verify this actually runs at that cadence on whatever Vercel plan is deployed.~~ **Fixed 2026-09-13** — this assumption was wrong: Vercel Hobby rejects sub-daily cron schedules at deploy time, it doesn't just run imprecisely. Primary draining moved to Next.js `after()` triggered by real MCP traffic; the cron is now a once/day safety net only. See §6 and log.
-- If `judgeContext()` fails repeatedly (both Gemini and the OpenRouter cascade down), `processStagedBatch()` leaves the whole batch staged for retry rather than dropping it — correct for not losing data. Retries now happen far more often than before (every `get_context`/`remember` call, not just once/day), so this matters less than it did, but there's still no cap on how long a batch can sit retrying, nor alerting if it does.
+- Hosted ChatGPT/Claude UI and actual Google OAuth still require target-account smoke tests on a reachable HTTPS preview. Local protocol fixtures are not vendor UI verification.
+- Existing production schema requires a reviewed dry-run and backup before additive upgrade. No production migration/deployment was performed during recovery implementation.
+- Account editing/deletion and downloadable export are deferred and shown as unavailable; privacy disclosure states the actual storage/model boundaries.
+- No semantic search, fuzzy superseding, teams, multiple graph workspaces, public sharing or digital twin in this iteration.
+- Authenticated polling (10 seconds on dashboard, bounded backoff during setup, hidden-tab pause/focus refresh) replaces broken anon realtime. A future push transport needs its own authorization design.
+- Historical unused Supabase helper/type artifacts may remain; runtime private-data paths use pg. Do not reintroduce browser queries by copying them.
+- Automated load/capacity testing and operational alert delivery remain separate work. Queue failure is visible in the app.
 
 ## 9. Testing
 
-Added 2026-09-12 (see ROADMAP.md's testing guidance: unit-test what's stable now, grow E2E/load tests alongside each phase's own code rather than as a catch-up project at the end). `npm test` runs Vitest (`vitest.config.mts`, `*.test.ts` colocated with source).
+npm test runs unit tests and a real temporary embedded PostgreSQL cluster. Browser tests run an independent temporary cluster, local capture-only email and model fixture servers and the actual Next.js application. Configuration is overwritten before app/auth imports so these tests never load live data or send provider traffic. See README for ports, fresh schema and optimized-build commands.
 
-Scope deliberately narrow so far — security-critical and newly-stable logic, not the UI or the parts of the MCP tool surface still expected to change shape in P2/P3:
-
-- `lib/utils.test.ts` — `scrubSecrets` (P0.4 pattern matching), `getAppUrl` (trailing-slash normalization).
-- `lib/db.test.ts` — `sanitizeApiKey` (pure), plus `checkRateLimit` / `stageEntry` / `resolveEntry` / `forgetEntry` against a minimal hand-rolled fake Supabase query builder (`vi.mock('@/lib/supabase')`, queued per-call results). That fake verifies branching logic (duplicate/over-limit/error handling), not the exact query shape sent to Supabase — a real integration test against a test database would be needed to catch a wrong `.eq()` column, and doesn't exist yet.
-- `lib/mcp-protocol.test.ts` — `buildGetContextReply`'s bootstrap-detection threshold and `buildBatchJudgePrompt`'s formatting, both pulled out of the two MCP route files specifically so they'd be unit-testable (see log).
-- `lib/process-staged.test.ts` — `processStagedBatch()`'s branching (empty queue, invalid/mismatched judge response left staged for retry, kept-vs-dropped writes, unknown `kind` falling back to `note`, a kept item with no matching node skipping cleanly), against `@/lib/db` and `@/lib/openrouter` mocked with `vi.mock`.
-
-No Playwright/E2E and no load testing yet — intentionally deferred. P1.6 (this session) already changed the onboarding/connect flow once; per ROADMAP.md, E2E coverage is worth adding once that UI settles rather than locking in behavior that's still likely to shift again, and load testing is deferred to after P5 (OAuth), since that's when the request pattern actually changes shape.
-
----
+Tests cover readiness, transaction/idempotency behavior, duplicate capture, hierarchy, scoped context budgets, tenant isolation, leases/retries, auth continuation and revocation; Playwright covers actual signup/OTP/login forms, resumable manual/import review, OAuth PKCE/consent/refresh, second-client retrieval, remember/recall/forget, mobile layout and unauthorized/CSRF access. CI runs lint, unit/integration, build and Chromium E2E. Vendor API/browser boundaries use local fixtures; that limitation must accompany any completion claim.
 
 ## Architecture Log
 
@@ -276,3 +179,14 @@ Fix: extracted the batch-judging logic out of the cron route into `lib/process-s
 This is actually a better fit for the goal than the original cron design: draining now happens as often as the app is actually used (every `get_context`/`remember` call) rather than on a fixed 5-minute clock, and it required no infrastructure Hobby doesn't already provide. Accepted trade-off: two `after()` drains firing near-simultaneously (concurrent requests) could both claim the same pending rows, since the judge-then-delete order isn't locked — worst case is a duplicate `context_entries` row (P2.3's planned fuzzy dedupe cleans this up), never data loss or corruption. Not worth a locking column for a low-probability, low-severity race at this stage.
 
 Added `lib/process-staged.test.ts` (6 tests) covering `processStagedBatch()`'s branching now that it's an importable module — this logic was previously untested since it lived inline in a Next.js route file.
+
+
+### 2026-10-30 — Guided demo recovery, reviewed imports and OAuth
+
+Supersedes the September empty-dashboard/wizard and API-key-only setup decisions. New/empty accounts enter guided setup; readiness comes from real saved context, not onboarding_done. Removed the destructive legacy wizard and retired parser/finalize routes with HTTP 410. Added revisioned, expiring import drafts and atomic additive commits. Connecting alone never saves memories or rotates keys.
+
+Brought minimal OAuth forward from roadmap P5 because ChatGPT cannot use custom API-key headers. Pinned Better Auth/provider 1.7.14, added provider/JWKS schema, signed continuation/consent, discovery, PKCE, resource-bound scopes, refresh and disconnect revocation. Replaced manual MCP transport with official SDK 1.32.2. Header API keys remain; query credentials are retired.
+
+Replaced application Supabase REST queries with typed server-side pg helpers and a shared bounded pool to support row locks, transactions, queue leases and consistent tenant isolation. Better Auth remains identity authority; no Supabase Auth/RLS bridge was added. parent_scope is canonical and edges are derived/rebuilt. Added source/dedupe metadata, bounded retries, atomic processing, queue/capture status and account request limits. get_context now includes active saved entries. Authenticated refresh replaces anon realtime blocked by RLS.
+
+Added checked-in schema snapshots, additive SQL and a dry-run-first provider migration runner. Added isolated real-Postgres and browser fixtures. Updated Next.js to 16.4.3 and related tooling after dependency audit; removed unused onboarding driver. Restricted Tailwind discovery and opt-in Agentation. Locked DESIGN.md tokens were preserved. No production migration or deployment was applied; hosted client and Google account verification are release checks.

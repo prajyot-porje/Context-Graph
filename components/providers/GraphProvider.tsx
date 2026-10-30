@@ -1,148 +1,88 @@
-'use client'
-
-import { createContext, useContext, useState, useEffect, useCallback } from 'react'
-import type { ContextNode, ContextEdge } from '@/types'
-import { createBrowserSupabaseClient } from '@/lib/supabase/client'
-import { useSession } from '@/lib/auth-client'
+"use client";
+import {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  useCallback,
+  useRef,
+} from "react";
+import { useRouter } from "next/navigation";
+import type { ContextNode, ContextEdge, ContextEntry } from "@/types";
 
 interface GraphContextType {
-  nodes: ContextNode[]
-  setNodes: React.Dispatch<React.SetStateAction<ContextNode[]>>
-  edges: ContextEdge[]
-  setEdges: React.Dispatch<React.SetStateAction<ContextEdge[]>>
-  isLoading: boolean
-  setIsLoading: (loading: boolean) => void
-  selectedNodeId: string | null
-  setSelectedNodeId: (id: string | null) => void
-  refreshNodes: () => Promise<void>
-  addNodeOpen: boolean
-  setAddNodeOpen: (open: boolean) => void
+  entries: ContextEntry[];
+  nodes: ContextNode[];
+  setNodes: React.Dispatch<React.SetStateAction<ContextNode[]>>;
+  edges: ContextEdge[];
+  setEdges: React.Dispatch<React.SetStateAction<ContextEdge[]>>;
+  isLoading: boolean;
+  setIsLoading: (loading: boolean) => void;
+  selectedNodeId: string | null;
+  setSelectedNodeId: (id: string | null) => void;
+  refreshNodes: () => Promise<void>;
+  addNodeOpen: boolean;
+  setAddNodeOpen: (open: boolean) => void;
+  error: string;
 }
-
-const GraphContext = createContext<GraphContextType | undefined>(undefined)
-
+const GraphContext = createContext<GraphContextType | undefined>(undefined);
 export function GraphProvider({ children }: { children: React.ReactNode }) {
-  const [nodes, setNodes] = useState<ContextNode[]>([])
-  const [edges, setEdges] = useState<ContextEdge[]>([])
-  const [isLoading, setIsLoading] = useState(true)
-  const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null)
-  const [addNodeOpen, setAddNodeOpen] = useState(false)
-  
-  const { data: session } = useSession()
-  const userId = session?.user?.id
-
-  const [supabaseClient] = useState(() => createBrowserSupabaseClient())
-
+  const [entries, setEntries] = useState<ContextEntry[]>([]);
+  const [nodes, setNodes] = useState<ContextNode[]>([]),
+    [edges, setEdges] = useState<ContextEdge[]>([]);
+  const [isLoading, setIsLoading] = useState(true),
+    [selectedNodeId, setSelectedNodeId] = useState<string | null>(null),
+    [addNodeOpen, setAddNodeOpen] = useState(false),
+    [error, setError] = useState("");
+  const inFlight = useRef(false),
+    mounted = useRef(true);
+  const router = useRouter();
   const refreshNodes = useCallback(async () => {
-    setIsLoading(true)
+    if (inFlight.current) return;
+    inFlight.current = true;
     try {
-      const r = await fetch('/api/context')
-      if (!r.ok) {
-        throw new Error(`API returned ${r.status}`)
-      }
-      const data = await r.json()
-      setNodes(data.nodes || [])
-      setEdges(data.edges || [])
-    } catch (err) {
-      console.error('Failed to load nodes:', err)
+      const r = await fetch("/api/context", { cache: "no-store" });
+      if (!r.ok)
+        throw new Error("Context could not be refreshed. Please retry.");
+      const data = await r.json();
+      if (!mounted.current) return;
+      setNodes(data.nodes);
+      setEntries(data.entries);
+      setEdges(data.edges);
+      setError("");
+      if (!data.ready) router.replace("/connect");
+    } catch (e) {
+      if (mounted.current)
+        setError(
+          e instanceof Error ? e.message : "Context could not be loaded.",
+        );
     } finally {
-      setIsLoading(false)
+      inFlight.current = false;
+      if (mounted.current) setIsLoading(false);
     }
-  }, [])
-
+  }, [router]);
   useEffect(() => {
-    refreshNodes()
-  }, [refreshNodes])
-
-  useEffect(() => {
-    if (!userId) return
-
-    const channel = supabaseClient
-      .channel('dashboard-realtime-nodes')
-      .on(
-        'postgres_changes',
-        {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'context_nodes',
-          filter: `user_id=eq.${userId}`
-        },
-        (payload) => {
-          setNodes(prev =>
-            prev.map(n =>
-              n.id === payload.new.id ? { ...n, ...payload.new as ContextNode } : n
-            )
-          )
-        }
-      )
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'context_nodes',
-          filter: `user_id=eq.${userId}`
-        },
-        (payload) => {
-          setNodes(prev => {
-            if (prev.some(n => n.id === payload.new.id)) return prev
-            return [...prev, payload.new as ContextNode]
-          })
-        }
-      )
-      .on(
-        'postgres_changes',
-        {
-          event: 'DELETE',
-          schema: 'public',
-          table: 'context_nodes',
-          filter: `user_id=eq.${userId}`
-        },
-        (payload) => {
-          setNodes(prev => prev.filter(n => n.id !== payload.old.id))
-        }
-      )
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'context_edges',
-          filter: `user_id=eq.${userId}`
-        },
-        (payload) => {
-          setEdges(prev => {
-            if (prev.some(e => e.id === payload.new.id)) return prev
-            return [...prev, payload.new as ContextEdge]
-          })
-        }
-      )
-      .on(
-        'postgres_changes',
-        {
-          event: 'DELETE',
-          schema: 'public',
-          table: 'context_edges',
-          filter: `user_id=eq.${userId}`
-        },
-        (payload) => {
-          setEdges(prev => prev.filter(e => e.id !== payload.old.id))
-        }
-      )
-      .subscribe((status) => {
-        if (status === 'SUBSCRIBED') {
-          console.log('✓ Real-time dashboard nodes and edges connected')
-        }
-      })
-
+    mounted.current = true;
+    void refreshNodes();
+    const refresh = () => {
+      if (!document.hidden) void refreshNodes();
+    };
+    const timer = setInterval(refresh, 10000);
+    window.addEventListener("focus", refresh);
+    window.addEventListener("context-updated", refresh);
+    document.addEventListener("visibilitychange", refresh);
     return () => {
-      supabaseClient.removeChannel(channel)
-    }
-  }, [userId, supabaseClient])
-
+      mounted.current = false;
+      clearInterval(timer);
+      window.removeEventListener("focus", refresh);
+      window.removeEventListener("context-updated", refresh);
+      document.removeEventListener("visibilitychange", refresh);
+    };
+  }, [refreshNodes]);
   return (
     <GraphContext.Provider
       value={{
+        entries,
         nodes,
         setNodes,
         edges,
@@ -154,17 +94,15 @@ export function GraphProvider({ children }: { children: React.ReactNode }) {
         refreshNodes,
         addNodeOpen,
         setAddNodeOpen,
+        error,
       }}
     >
       {children}
     </GraphContext.Provider>
-  )
+  );
 }
-
 export function useGraph() {
-  const context = useContext(GraphContext)
-  if (context === undefined) {
-    throw new Error('useGraph must be used within a GraphProvider')
-  }
-  return context
+  const context = useContext(GraphContext);
+  if (!context) throw new Error("useGraph must be used within a GraphProvider");
+  return context;
 }

@@ -21,7 +21,7 @@ export function LenisProvider({ children }: { children: React.ReactNode }) {
   return (
     <>
       {children}
-      {process.env.NODE_ENV === 'development' && (
+      {process.env.NODE_ENV === 'development' && process.env.NEXT_PUBLIC_AGENTATION_ENABLED === 'true' && (
         <Agentation endpoint="http://localhost:4747" />
       )}
     </>

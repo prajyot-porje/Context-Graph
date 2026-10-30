@@ -11,7 +11,7 @@ import { PasswordInput } from '@/components/auth/PasswordInput'
 import { Button } from '@/components/ui/Button'
 import { Loader2, ArrowRight, Mail, ArrowLeft } from 'lucide-react'
 
-export default function LoginClient() {
+export default function LoginClient({destination='/entry',googleEnabled=false}:{destination?:string;googleEnabled?:boolean}) {
   const router = useRouter()
   const [step, setStep] = useState<'login' | 'verify'>('login')
 
@@ -51,7 +51,7 @@ export default function LoginClient() {
     setIsGoogleLoading(true)
     setError('')
     try {
-      const result = await signIn.social({ provider: 'google', callbackURL: '/dashboard' })
+      const result = await signIn.social({ provider: 'google', callbackURL: destination })
       if (result?.error) {
         setError(result.error.message || 'Failed to initialize Google sign in. Please try again.')
         setIsGoogleLoading(false)
@@ -164,7 +164,7 @@ export default function LoginClient() {
         return
       }
 
-      router.push('/dashboard')
+      router.push(destination)
       router.refresh()
     } catch (err: unknown) {
       setIsLoading(false)
@@ -208,7 +208,7 @@ export default function LoginClient() {
       }
 
       // Email verified and session active
-      router.push('/dashboard')
+      router.push(destination)
       router.refresh()
     } catch (err: unknown) {
       setIsLoading(false)
@@ -256,7 +256,7 @@ export default function LoginClient() {
               Sign in to your context graph
             </p>
 
-            <Button
+            {googleEnabled&&<><Button
               type="button"
               variant="secondary"
               className="w-full"
@@ -272,6 +272,7 @@ export default function LoginClient() {
               <span className="text-[12px] text-[var(--text-muted)]">or</span>
               <span className="h-px flex-1 bg-[var(--border)]" />
             </div>
+            </>}
 
             <form onSubmit={handleSubmit} className="flex flex-col gap-4">
               <div className="cg-field">
@@ -318,7 +319,7 @@ export default function LoginClient() {
             <p className="cg-subtext mt-6 text-center text-[14px] text-[var(--text-secondary)]">
               Don&apos;t have an account?{' '}
               <Link
-                href="/signup"
+                href={`/signup?from=${encodeURIComponent(destination)}`}
                 className="text-[var(--accent)] transition-colors hover:underline inline-flex items-center"
               >
                 Sign up <ArrowRight size={16} className="ml-1" />
@@ -353,11 +354,12 @@ export default function LoginClient() {
 
             <form onSubmit={handleVerifySubmit} className="flex flex-col gap-4">
               <div className="cg-field">
-                <label className="block text-[12px] font-semibold text-[var(--text-secondary)] uppercase tracking-[0.06em] mb-1.5">
+                <label htmlFor="verification-code" className="block text-[12px] font-semibold text-[var(--text-secondary)] uppercase tracking-[0.06em] mb-1.5">
                   6-Digit Verification Code
                 </label>
                 <input
                   ref={otpInputRef}
+                  id="verification-code"
                   type="text"
                   inputMode="numeric"
                   autoComplete="one-time-code"
