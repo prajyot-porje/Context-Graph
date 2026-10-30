@@ -28,6 +28,9 @@ try {
     await database.query(
       await readFile("supabase/2026-10-30-demo-recovery.sql", "utf8"),
     );
+    await database.query(
+      await readFile("supabase/2026-10-30-legacy-uniqueness.sql", "utf8"),
+    );
     console.log(
       "Additive recovery migrations applied. Existing context and API keys preserved.",
     );

@@ -39,6 +39,8 @@ Existing database:
 
 The runner uses the pinned provider's actual migration definitions, then applies the checked-in additive OAuth and application changes. Context, entries, identities, and API keys are preserved. RLS has no browser policies; the server database role must be permitted to access these tables. Keep the PostgreSQL connection secret server-side. No Supabase Auth/JWT bridge is introduced.
 
+The upgrade also applies `2026-10-30-legacy-uniqueness.sql`: older live schemas can lack the scope/key-owner uniqueness present in fresh installs. Duplicate legacy rows cause this migration to fail for review; it never deletes or merges them automatically.
+
 The old wizard finalization/parser endpoints return HTTP 410. `/onboarding` redirects to `/connect`; no reachable endpoint resets a user's graph during setup.
 
 ## Connecting clients

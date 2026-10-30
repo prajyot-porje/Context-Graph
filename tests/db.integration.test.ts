@@ -2,6 +2,7 @@ import { beforeAll, afterAll, beforeEach, describe, it, expect } from "vitest";
 import { testDatabase } from "./database";
 import type * as Db from "../lib/db";
 import { assembleContext } from "../lib/context";
+import { readFile } from "node:fs/promises";
 let fixture: Awaited<ReturnType<typeof testDatabase>>, db: typeof Db;
 beforeAll(async () => {
   fixture = await testDatabase();
@@ -26,6 +27,20 @@ async function seed(text = "Prefers concise technical answers.") {
   return db.commitImport("alice", run.id, draft.revision);
 }
 describe("real PostgreSQL memory lifecycle", () => {
+  it('upgrades legacy schemas without scope/key-owner uniqueness before using upserts', async () => {
+    await fixture.database.query('ALTER TABLE context_nodes DROP CONSTRAINT IF EXISTS context_nodes_user_id_scope_key');
+    await fixture.database.query('ALTER TABLE api_keys DROP CONSTRAINT IF EXISTS api_keys_user_id_key');
+    await fixture.database.query('DROP INDEX IF EXISTS context_nodes_user_id_scope_key');
+    await fixture.database.query('DROP INDEX IF EXISTS api_keys_user_id_key');
+    const migration=await readFile('supabase/2026-10-30-legacy-uniqueness.sql','utf8');
+    await fixture.database.query(migration);
+    await fixture.database.query(migration);
+    await seed();
+    await db.storeApiKey('alice','first-hash','ctx_first');
+    await db.storeApiKey('alice','replacement-hash','ctx_second');
+    expect((await db.getApiKeyInfo('alice'))?.prefix).toBe('ctx_second');
+    expect(await db.countUserEntries('alice')).toBe(1);
+  });
   it('expires unsaved drafts and respects capture pause',async()=>{
     const run=await db.createImport('alice','manual');await db.submitImport('alice',run.id,[{text:'A draft that must not become active'}]);
     await fixture.database.query("UPDATE context_imports SET expires_at=now()-interval '1 second' WHERE id=$1",[run.id]);

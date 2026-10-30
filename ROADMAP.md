@@ -376,7 +376,7 @@ Zero dependency on anything above. Build it when you want a fun week.
 
 # Demo recovery implementation plan — 2026-10-29
 
-Status: **implemented locally, release verification pending** (2026-10-30). The approved scope below is implemented in this checkout. No production migration or deployment has been applied. See the implementation record after the plan for evidence and remaining release gates.
+Status: **deployed; hosted vendor-account verification pending** (2026-10-30). The approved recovery scope is deployed at https://context-graph-amber.vercel.app. See the implementation and release records below for evidence and remaining account-specific checks.
 
 ## 1. Outcome and product decisions
 
@@ -672,3 +672,13 @@ Local logs/screenshots are in ignored .test-output; browser traces/report are ig
 Final evidence: .test-output/tests-release.log (41 passed), build-ship.log (optimized build), types-final.log, lint-final.log (zero errors), audit-release.log (zero vulnerabilities), e2e-final-verified.log (four full scenarios passed), and e2e-visual-final.log (three focused scenarios passed again after final hit-target/privacy-link corrections). Fresh screenshots cover the desktop/mobile chooser, connection steps, OAuth consent, light/mobile and dark/desktop note review, and populated Notes view. The final focused run explicitly checks that setup has no canvas and that the privacy link remains visible on mobile.
 
 Release gates still open: backup and test the additive upgrade on an isolated production copy; configure stable HTTPS issuer/resource URLs and real email/model credentials; smoke-test actual Google login if enabled and the hosted ChatGPT/Claude connector UIs using the target accounts; deploy preview, verify fresh-account/cross-client behavior, then promote. No live migration, push or deployment was performed by this implementation. Digital twin and the other section 13 items remain deferred.
+
+## 16. Production release — 2026-10-30
+
+The owner authorized direct production deployment. Pushed the recovery code to GitHub, verified the dev CI/preview, then promoted to main; Vercel reported a successful production deployment. Live URL: https://context-graph-amber.vercel.app.
+
+Backed up the public application tables to a private ignored local file. Rehearsed the additive upgrade on a complete copy in a separate schema inside a transaction, verified original data preservation, then rolled the rehearsal back. Applied OAuth/recovery SQL to production with original table counts unchanged. The first live import uncovered missing legacy uniqueness indexes; the follow-up dated migration repairs those without deleting records. The rehearsal now exercises both scope and key-owner upserts, and a regression test covers the previously missing invariants.
+
+Final local suite: 42 passing tests, strict TypeScript, lint with zero errors (four existing marketing image warnings). GitHub CI passed the initial complete release. The live smoke test passed canonical discovery, real login, empty-account dashboard gating, OAuth authorization/consent/PKCE/JWKS, draft-only receipt, reviewed commit, readiness activation, saved-memory retrieval through both OAuth and a separate API-key client, observed connection status and token rejection after disconnect. The synthetic account and its data were removed after testing.
+
+The owner can now verify the deployed experience. Actual Google sign-in and the hosted ChatGPT/Claude conversation UIs remain account-specific manual checks; the live OAuth/MCP smoke verifies our deployed server, not those vendor interfaces. Deferred product scope remains unchanged.
