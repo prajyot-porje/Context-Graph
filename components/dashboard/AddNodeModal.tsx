@@ -276,7 +276,7 @@ export function AddNodeModal({ isOpen, onClose, onCreated, existingNodes }: Prop
               autoFocus
               disabled={isSubmitting}
               style={fieldStyle}
-              onFocus={e => e.target.style.borderColor = '#b3ec13'}
+              onFocus={e => e.target.style.borderColor = 'var(--accent)'}
               onBlur={e => e.target.style.borderColor = 'var(--border-strong)'}
             />
             
@@ -294,7 +294,7 @@ export function AddNodeModal({ isOpen, onClose, onCreated, existingNodes }: Prop
               onChange={e => setParentScope(e.target.value)}
               disabled={isSubmitting}
               style={{ ...fieldStyle, cursor: 'pointer' }}
-              onFocus={e => e.target.style.borderColor = '#b3ec13'}
+              onFocus={e => e.target.style.borderColor = 'var(--accent)'}
               onBlur={e => e.target.style.borderColor = 'var(--border-strong)'}
             >
               <option value="">No parent (root node)</option>
@@ -316,7 +316,7 @@ export function AddNodeModal({ isOpen, onClose, onCreated, existingNodes }: Prop
               required
               disabled={isSubmitting}
               style={{ ...fieldStyle, minHeight: '120px', resize: 'vertical' }}
-              onFocus={e => e.target.style.borderColor = '#b3ec13'}
+              onFocus={e => e.target.style.borderColor = 'var(--accent)'}
               onBlur={e => e.target.style.borderColor = 'var(--border-strong)'}
             />
           </div>
@@ -331,7 +331,7 @@ export function AddNodeModal({ isOpen, onClose, onCreated, existingNodes }: Prop
               placeholder="nextjs, typescript, saas"
               disabled={isSubmitting}
               style={fieldStyle}
-              onFocus={e => e.target.style.borderColor = '#b3ec13'}
+              onFocus={e => e.target.style.borderColor = 'var(--accent)'}
               onBlur={e => e.target.style.borderColor = 'var(--border-strong)'}
             />
           </div>
@@ -376,7 +376,7 @@ export function AddNodeModal({ isOpen, onClose, onCreated, existingNodes }: Prop
               type="submit"
               disabled={isSubmitting}
               style={{
-                background: 'var(--accent, #b3ec13)',
+                background: 'var(--accent, var(--accent))',
                 color: 'var(--on-accent, #000000)',
                 border: 'none',
                 fontSize: '14px',

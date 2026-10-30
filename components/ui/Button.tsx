@@ -29,8 +29,8 @@ const variantStyles: Record<ButtonVariant, string> = {
   accent: [
     'bg-[var(--accent)] text-[var(--on-accent)]',
     'hover:bg-[var(--accent-soft)] active:opacity-90',
-    'shadow-[0_0_0_1px_rgba(179,236,19,0.2)]',
-    'hover:shadow-[0_0_16px_rgba(179,236,19,0.15),0_0_0_1px_rgba(179,236,19,0.3)]',
+    'shadow-[0_0_0_1px_color-mix(in_srgb,_var(--accent)_20%,_transparent)]',
+    'hover:shadow-[0_0_16px_color-mix(in_srgb,_var(--accent)_15%,_transparent),0_0_0_1px_color-mix(in_srgb,_var(--accent)_30%,_transparent)]',
   ].join(' '),
 }
 

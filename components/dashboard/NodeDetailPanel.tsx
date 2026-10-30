@@ -296,7 +296,7 @@ export function NodeDetailPanel({
                 <h2 className="text-[16px] font-semibold leading-snug tracking-[-0.01em] text-[var(--text-primary)] truncate" title={node.title}>
                   {node.title}
                 </h2>
-                <p className="mt-0.5 text-[10px] font-medium uppercase tracking-[0.07em] text-[var(--text-muted)]">
+                <p className="mt-0.5 text-[13px] font-medium uppercase tracking-[0.07em] text-[var(--text-muted)]">
                   {nodeTierName}
                 </p>
               </div>
@@ -311,13 +311,13 @@ export function NodeDetailPanel({
 
             {/* Scope + tags */}
             <div className="mt-3 flex flex-wrap gap-1.5">
-              <span className="inline-flex items-center rounded-[var(--radius-xs)] border border-[var(--border)] bg-[var(--card)] px-2 py-0.5 font-mono text-[10px] text-[var(--text-muted)]">
+              <span className="inline-flex items-center rounded-[var(--radius-xs)] border border-[var(--border)] bg-[var(--card)] px-2 py-0.5 text-[13px] text-[var(--text-muted)]">
                 {node.scope}
               </span>
               {node.tags && node.tags.map(tag => (
                 <span
                   key={tag}
-                  className="inline-flex items-center rounded-[var(--radius-xs)] border border-[var(--border)] bg-[var(--card)] px-2 py-0.5 text-[10px] text-[var(--text-muted)]"
+                  className="inline-flex items-center rounded-[var(--radius-xs)] border border-[var(--border)] bg-[var(--card)] px-2 py-0.5 text-[13px] text-[var(--text-muted)]"
                 >
                   {tag}
                 </span>
@@ -329,7 +329,7 @@ export function NodeDetailPanel({
           <div className="shrink-0 grid grid-cols-2 border-b border-[var(--border)]">
             {/* Relevance */}
             <div className="flex flex-col justify-center px-5 py-4">
-              <span className="text-[9px] font-semibold uppercase tracking-[0.09em] text-[var(--text-muted)]">
+              <span className="text-[13px] font-semibold uppercase tracking-[0.09em] text-[var(--text-muted)]">
                 Relevance
               </span>
               <span
@@ -353,13 +353,13 @@ export function NodeDetailPanel({
 
             {/* Last updated */}
             <div className="flex flex-col justify-center border-l border-[var(--border)] px-5 py-4">
-              <span className="text-[9px] font-semibold uppercase tracking-[0.09em] text-[var(--text-muted)]">
+              <span className="text-[13px] font-semibold uppercase tracking-[0.09em] text-[var(--text-muted)]">
                 Last Updated
               </span>
               <span className="mt-1 text-[13px] font-medium leading-snug text-[var(--text-primary)]">
                 {formatDate(node.last_updated)}
               </span>
-              <span className="mt-0.5 text-[10px] text-[var(--text-muted)]">
+              <span className="mt-0.5 text-[13px] text-[var(--text-muted)]">
                 {getRelativeTime(node.last_updated)}
               </span>
             </div>
@@ -371,14 +371,14 @@ export function NodeDetailPanel({
             {/* Context section */}
             <div className="border-b border-[var(--border)] px-5 py-4">
               <div className="flex items-center justify-between mb-3">
-                <span className="text-[9px] font-semibold uppercase tracking-[0.09em] text-[var(--text-muted)]">
+                <span className="text-[13px] font-semibold uppercase tracking-[0.09em] text-[var(--text-muted)]">
                   Context
                 </span>
                 {isEditing ? (
                   <button
                     type="button"
                     onClick={handleCancelEdit}
-                    className="text-[11px] text-[var(--text-muted)] underline underline-offset-2 decoration-[var(--border-strong)] hover:text-[var(--text-secondary)] hover:decoration-[var(--text-muted)] transition-[color] duration-100 cursor-pointer focus-visible:outline-none"
+                    className="text-[13px] text-[var(--text-muted)] underline underline-offset-2 decoration-[var(--border-strong)] hover:text-[var(--text-secondary)] hover:decoration-[var(--text-muted)] transition-[color] duration-100 cursor-pointer focus-visible:outline-none"
                   >
                     Cancel
                   </button>
@@ -386,7 +386,7 @@ export function NodeDetailPanel({
                   <button
                     type="button"
                     onClick={() => setIsEditing(true)}
-                    className="flex items-center gap-1 text-[11px] text-[var(--text-muted)] hover:text-[var(--text-secondary)] transition-[color] duration-100 cursor-pointer focus-visible:outline-none"
+                    className="flex items-center gap-1 text-[13px] text-[var(--text-muted)] hover:text-[var(--text-secondary)] transition-[color] duration-100 cursor-pointer focus-visible:outline-none"
                   >
                     <IconPencil size={11} />
                     Edit
@@ -397,7 +397,7 @@ export function NodeDetailPanel({
               {isEditing ? (
                 <div className="flex flex-col gap-3">
                   <div>
-                    <label className="mb-1.5 block text-[9px] font-semibold uppercase tracking-[0.08em] text-[var(--text-muted)]">Title</label>
+                    <label className="mb-1.5 block text-[13px] font-semibold uppercase tracking-[0.08em] text-[var(--text-muted)]">Title</label>
                     <Input
                       value={editTitle}
                       onChange={e => setEditTitle(e.target.value)}
@@ -406,17 +406,17 @@ export function NodeDetailPanel({
                     />
                   </div>
                   <div>
-                    <label className="mb-1.5 block text-[9px] font-semibold uppercase tracking-[0.08em] text-[var(--text-muted)]">Scope</label>
+                    <label className="mb-1.5 block text-[13px] font-semibold uppercase tracking-[0.08em] text-[var(--text-muted)]">Scope</label>
                     <Input
                       value={editScope}
                       onChange={e => setEditScope(e.target.value)}
                       disabled={isSaving}
                       placeholder="e.g. me, agency, agency/project"
-                      className="font-mono text-[12px]"
+                      className="text-[13px]"
                     />
                   </div>
                   <div>
-                    <label className="mb-1.5 block text-[9px] font-semibold uppercase tracking-[0.08em] text-[var(--text-muted)]">Content</label>
+                    <label className="mb-1.5 block text-[13px] font-semibold uppercase tracking-[0.08em] text-[var(--text-muted)]">Content</label>
                     <Textarea
                       value={editContent}
                       onChange={e => setEditContent(e.target.value)}
@@ -427,12 +427,12 @@ export function NodeDetailPanel({
                   </div>
                   {/* Tags */}
                   <div>
-                    <label className="mb-1.5 block text-[9px] font-semibold uppercase tracking-[0.08em] text-[var(--text-muted)]">Tags</label>
+                    <label className="mb-1.5 block text-[13px] font-semibold uppercase tracking-[0.08em] text-[var(--text-muted)]">Tags</label>
                     <div className="flex flex-wrap gap-1.5 mb-2">
                       {editTags.map(tag => (
                         <span
                           key={tag}
-                          className="inline-flex items-center gap-1 rounded-[var(--radius-xs)] border border-[var(--border)] bg-[var(--card)] px-2 py-0.5 text-[10px] text-[var(--text-secondary)]"
+                          className="inline-flex items-center gap-1 rounded-[var(--radius-xs)] border border-[var(--border)] bg-[var(--card)] px-2 py-0.5 text-[13px] text-[var(--text-secondary)]"
                         >
                           {tag}
                           <button
@@ -458,7 +458,7 @@ export function NodeDetailPanel({
                         }}
                         placeholder="Add tag + Enter"
                         disabled={isSaving}
-                        className="text-[12px]"
+                        className="text-[13px]"
                       />
                       <button
                         type="button"
@@ -487,7 +487,7 @@ export function NodeDetailPanel({
 
             {/* Decisions Log section */}
             <div className="px-5 py-4 pb-8">
-              <span className="text-[9px] font-semibold uppercase tracking-[0.09em] text-[var(--text-muted)]">
+              <span className="text-[13px] font-semibold uppercase tracking-[0.09em] text-[var(--text-muted)]">
                 Decisions Log
               </span>
 
@@ -500,7 +500,7 @@ export function NodeDetailPanel({
                   </div>
                 ) : entries.length === 0 ? (
                   <div className="py-6 text-center">
-                    <p className="text-[12px] text-[var(--text-muted)] leading-[1.7]">
+                    <p className="text-[13px] text-[var(--text-muted)] leading-[1.7]">
                       No notes saved yet.<br />Connect an AI or import context to add reviewed notes.
                     </p>
                   </div>
@@ -534,12 +534,12 @@ export function NodeDetailPanel({
                               height: '7px',
                               borderRadius: '50%',
                               background: dotColor,
-                              boxShadow: entry.score >= 0.8 ? '0 0 6px rgba(179,236,19,0.25)' : 'none',
+                              boxShadow: entry.score >= 0.8 ? '0 0 6px color-mix(in srgb, var(--accent) 25%, transparent)' : 'none',
                             }} />
-                            <p className="text-[12.5px] leading-[1.6] text-[var(--text-secondary)]">
+                            <p className="text-[13px] leading-[1.6] text-[var(--text-secondary)]">
                               {entry.entry_text}
                             </p>
-                            <div className="mt-1 flex items-center gap-2 text-[10px] text-[var(--text-muted)]">
+                            <div className="mt-1 flex items-center gap-2 text-[13px] text-[var(--text-muted)]">
                               <span>{formatDate(entry.created_at)}</span>
                               <span>·</span>
                               <span>score {entry.score.toFixed(2)}</span>
@@ -563,21 +563,21 @@ export function NodeDetailPanel({
           <div className="shrink-0 border-t border-[var(--border)] bg-[var(--surface)] px-5 py-3 flex items-center justify-between">
             {isConfirmingDelete ? (
               <>
-                <span className="text-[12px] text-[var(--text-secondary)]">
+                <span className="text-[13px] text-[var(--text-secondary)]">
                   Delete this node?
                 </span>
                 <div className="flex items-center gap-2">
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="h-8 px-3 text-[12px]"
+                    className="h-8 px-3 text-[13px]"
                     disabled={isDeleting}
                     onClick={() => setIsConfirmingDelete(false)}
                   >
                     Cancel
                   </Button>
                   <button
-                    className="flex h-8 items-center gap-1.5 rounded-[var(--radius-md)] bg-[var(--error)] px-3 text-[12px] font-medium text-white transition-opacity duration-150 hover:opacity-90 disabled:opacity-50 cursor-pointer focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[var(--error)]"
+                    className="flex h-8 items-center gap-1.5 rounded-[var(--radius-md)] bg-[var(--error)] px-3 text-[13px] font-medium text-white transition-opacity duration-150 hover:opacity-90 disabled:opacity-50 cursor-pointer focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[var(--error)]"
                     disabled={isDeleting}
                     onClick={handleDeleteNode}
                   >
@@ -590,7 +590,7 @@ export function NodeDetailPanel({
                 <button
                   type="button"
                   onClick={() => setIsConfirmingDelete(true)}
-                  className="flex items-center gap-1.5 text-[12px] text-[var(--text-muted)] hover:text-[var(--error)] transition-[color] duration-150 cursor-pointer focus-visible:outline-none"
+                  className="flex items-center gap-1.5 text-[13px] text-[var(--text-muted)] hover:text-[var(--error)] transition-[color] duration-150 cursor-pointer focus-visible:outline-none"
                 >
                   <IconTrash size={12} />
                   Delete
@@ -600,7 +600,7 @@ export function NodeDetailPanel({
                   <Button
                     variant="primary"
                     size="sm"
-                    className="h-8 px-4 text-[12px] font-medium active:scale-[0.97]"
+                    className="h-8 px-4 text-[13px] font-medium active:scale-[0.97]"
                     disabled={isSaving}
                     onClick={handleSave}
                   >

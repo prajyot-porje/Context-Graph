@@ -63,7 +63,10 @@ async function oauth(page: Page, name: string) {
   await expect(
     page.getByRole("button", { name: "Allow connection" }),
   ).toBeVisible();
-  await page.screenshot({path:'.test-output/oauth-consent-desktop.png',fullPage:true});
+  await page.screenshot({
+    path: ".test-output/oauth-consent-desktop.png",
+    fullPage: true,
+  });
   await page.getByRole("button", { name: "Allow connection" }).click();
   await page.waitForURL((url) => url.pathname === "/oauth-test-callback");
   const callback = new URL(page.url());
@@ -112,17 +115,27 @@ test("fresh login never exposes an empty graph; manual context is reviewed and r
   await expect(
     page.getByRole("heading", { name: "Start with your AI" }),
   ).toBeVisible();
-  await expect(page.locator('canvas')).toHaveCount(0);
+  await expect(page.locator("canvas")).toHaveCount(0);
   await page.evaluate(() => {
-    localStorage.setItem('cg-theme','dark');
-    document.documentElement.setAttribute('data-theme','dark');
+    localStorage.setItem("cg-theme", "dark");
+    document.documentElement.setAttribute("data-theme", "dark");
   });
   await page.waitForTimeout(500);
-  await page.screenshot({path:'.test-output/setup-choose-dark.png',fullPage:true,animations:'disabled'});
-  await page.setViewportSize({width:390,height:844});
-  await expect(page.getByRole('link',{name:'How your context is processed'})).toBeVisible();
-  await page.screenshot({path:'.test-output/setup-choose-mobile.png',fullPage:true,animations:'disabled'});
-  await page.setViewportSize({width:1280,height:800});
+  await page.screenshot({
+    path: ".test-output/setup-choose-dark.png",
+    fullPage: true,
+    animations: "disabled",
+  });
+  await page.setViewportSize({ width: 390, height: 844 });
+  await expect(
+    page.getByRole("link", { name: "How your context is processed" }),
+  ).toBeVisible();
+  await page.screenshot({
+    path: ".test-output/setup-choose-mobile.png",
+    fullPage: true,
+    animations: "disabled",
+  });
+  await page.setViewportSize({ width: 1280, height: 800 });
   expect(bundles.some((url) => /force-graph|three\.module/.test(url))).toBe(
     false,
   );
@@ -151,12 +164,135 @@ test("fresh login never exposes an empty graph; manual context is reviewed and r
   expect((await preview.json()).assembled).toContain(
     "concise technical answers",
   );
+  await expect(page.getByLabel("Graph summary")).toContainText(
+    "2 saved notes · 4 connected items",
+  );
+  await expect(
+    page.getByRole("button", { name: "Preview Context", exact: true }),
+  ).toHaveCount(0);
+  await expect(
+    page.getByRole("button", { name: "Add node", exact: true }),
+  ).toHaveCount(0);
+  await expect(
+    page.getByText("Automatic capture enabled", { exact: true }),
+  ).toHaveCount(0);
+  await expect(
+    page.getByRole("link", { name: "Manage connections", exact: true }),
+  ).toBeVisible();
+  await expect(page.locator("canvas").first()).toBeVisible();
+  await page.getByRole("button", { name: "Fit graph", exact: true }).click();
+  await page.waitForTimeout(650);
+  await page.screenshot({
+    path: ".test-output/ux-graph-desktop.png",
+    fullPage: true,
+  });
   await page.getByRole("button", { name: "Notes view", exact: true }).click();
   await expect(
     page.getByRole("heading", { name: "Your context", exact: true }),
   ).toBeVisible();
   await page.screenshot({
     path: ".test-output/dashboard-desktop.png",
+    fullPage: true,
+  });
+  await page
+    .getByRole("button", { name: /I prefer concise technical answers/ })
+    .click();
+  await expect(
+    page.getByRole("complementary", { name: "Saved note details" }),
+  ).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(
+    page.getByRole("complementary", { name: "Saved note details" }),
+  ).toHaveCount(0);
+  const longDraft = await (
+    await page.request.post("/api/imports", {
+      headers: { Origin: origin },
+      data: {
+        provider: "manual",
+        notes: Array.from({ length: 20 }, (_, i) => ({
+          text: `Long saved note ${i}: ${"Useful actual context for testing scrolling. ".repeat(8)}`,
+          kind: "note",
+        })),
+      },
+    })
+  ).json();
+  const saved = await page.request.post(`/api/imports/${longDraft.id}`, {
+    headers: { Origin: origin },
+    data: { action: "commit", revision: longDraft.revision },
+  });
+  expect(saved.ok()).toBeTruthy();
+  await page
+    .getByRole("button", { name: "Refresh context", exact: true })
+    .click();
+  await expect(page.getByLabel("Graph summary")).toContainText(
+    "22 saved notes",
+  );
+  await page.setViewportSize({ width: 390, height: 844 });
+  const scrolling = page.getByTestId("notes-scroll");
+  const drawer = page.getByRole("complementary", { name: "Context scopes" });
+  await expect(drawer).toBeHidden();
+  await page.getByRole("button", { name: "Toggle menu", exact: true }).click();
+  await expect(drawer).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(drawer).toBeHidden();
+  await scrolling.hover();
+  await page.mouse.wheel(0, 900);
+  await expect
+    .poll(() => scrolling.evaluate((el) => el.scrollTop))
+    .toBeGreaterThan(100);
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= innerWidth,
+    ),
+  ).toBe(true);
+  await page.screenshot({
+    path: ".test-output/ux-notes-mobile.png",
+    fullPage: true,
+  });
+  await page.goto("/settings");
+  expect(
+    await page.evaluate(() =>
+      document.documentElement.classList.contains("lenis"),
+    ),
+  ).toBe(false);
+  await page.mouse.wheel(0, 900);
+  await expect
+    .poll(() => page.evaluate(() => window.scrollY))
+    .toBeGreaterThan(100);
+  await page.screenshot({
+    path: ".test-output/ux-settings-mobile.png",
+    fullPage: true,
+  });
+  await page.setViewportSize({ width: 1280, height: 800 });
+  await page.goto("/settings");
+  await page.screenshot({
+    path: ".test-output/ux-settings-desktop.png",
+    fullPage: true,
+  });
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/connect");
+  const back = page.getByRole("link", {
+    name: "Back to dashboard",
+    exact: true,
+  });
+  await expect(back).toBeVisible();
+  expect(await back.evaluate((el) => getComputedStyle(el).borderTopStyle)).toBe(
+    "solid",
+  );
+  await page
+    .getByRole("button", { name: /Claude Connect a remote connector/ })
+    .click();
+  await page.mouse.wheel(0, 900);
+  await expect
+    .poll(() => page.evaluate(() => window.scrollY))
+    .toBeGreaterThan(100);
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= innerWidth,
+    ),
+  ).toBe(true);
+  await page.screenshot({
+    path: ".test-output/ux-setup-mobile.png",
     fullPage: true,
   });
 });
@@ -179,12 +315,20 @@ test("real OAuth and MCP round trip: reviewed import, second client recall, dele
     arguments: { attempt_id: attempt },
   });
   expect(setup.result.isError).not.toBe(true);
-  await page.goto('/connect');
-  await expect(page.getByRole('heading',{name:'Connect Claude',exact:true})).toBeVisible();
-  await page.screenshot({path:'.test-output/setup-connect-desktop.png',fullPage:true});
-  await page.setViewportSize({width:390,height:844});
-  await page.screenshot({path:'.test-output/setup-connect-mobile.png',fullPage:true});
-  await page.setViewportSize({width:1280,height:800});
+  await page.goto("/connect");
+  await expect(
+    page.getByRole("heading", { name: "Connect Claude", exact: true }),
+  ).toBeVisible();
+  await page.screenshot({
+    path: ".test-output/setup-connect-desktop.png",
+    fullPage: true,
+  });
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.screenshot({
+    path: ".test-output/setup-connect-mobile.png",
+    fullPage: true,
+  });
+  await page.setViewportSize({ width: 1280, height: 800 });
   const imported = await claude.call("tools/call", {
     name: "submit_context_import",
     arguments: {
@@ -200,7 +344,9 @@ test("real OAuth and MCP round trip: reviewed import, second client recall, dele
     },
   });
   expect(imported.result.isError).not.toBe(true);
-  await expect(page.getByRole('heading',{name:'Choose what to remember'})).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "Choose what to remember" }),
+  ).toBeVisible();
   await page.goto("/dashboard");
   await expect(page).toHaveURL(/connect/);
   await page
@@ -324,7 +470,7 @@ test("cancel, invalid input, keyboard/mobile layout, and ownership checks", asyn
   });
   await page.setViewportSize({ width: 1280, height: 800 });
   await page.evaluate(() => {
-    localStorage.setItem('cg-theme','dark');
+    localStorage.setItem("cg-theme", "dark");
     document.documentElement.setAttribute("data-theme", "dark");
   });
   await page.waitForTimeout(500);
@@ -386,7 +532,7 @@ test("email signup, OTP verification and returning login through actual forms", 
   await page.getByRole("button", { name: "Sign in", exact: true }).click();
   await expect(page).toHaveURL(/connect/);
   await page.evaluate(() => {
-    localStorage.setItem('cg-theme','dark');
+    localStorage.setItem("cg-theme", "dark");
     document.documentElement.setAttribute("data-theme", "dark");
   });
   await page.waitForTimeout(500);
@@ -395,6 +541,73 @@ test("email signup, OTP verification and returning login through actual forms", 
     fullPage: true,
     animations: "disabled",
   });
-  await page.setViewportSize({width:390,height:844});
-  await page.screenshot({path:'.test-output/setup-choose-mobile.png',fullPage:true});
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.screenshot({
+    path: ".test-output/setup-choose-mobile.png",
+    fullPage: true,
+  });
+});
+
+test("shared branding, typography and darker lime stay consistent across public pages", async ({
+  page,
+}) => {
+  await page.emulateMedia({ reducedMotion: "reduce", colorScheme: "dark" });
+  await page.goto("/");
+  await expect(page.locator(".cg-brand").first()).toBeVisible();
+  const displayFont = await page
+    .locator("h1")
+    .first()
+    .evaluate((el) => getComputedStyle(el).fontFamily.split(",")[0]);
+  const bodyFont = await page
+    .locator(".cg-brand")
+    .first()
+    .evaluate((el) => getComputedStyle(el).fontFamily.split(",")[0]);
+  expect(
+    await page
+      .locator(".cg-brand svg > circle")
+      .first()
+      .evaluate((el) => getComputedStyle(el).fill),
+  ).toBe("rgb(143, 190, 40)");
+  await page.screenshot({ path: ".test-output/ux-landing-desktop.png" });
+  await page
+    .getByRole("button", { name: "Switch to light mode", exact: true })
+    .click();
+  expect(
+    await page
+      .locator(".cg-brand svg > circle")
+      .first()
+      .evaluate((el) => getComputedStyle(el).fill),
+  ).toBe("rgb(82, 121, 24)");
+  const start=page.getByRole('link',{name:'Get Started',exact:true});
+  expect(await start.evaluate(el=>getComputedStyle(el).color)).toBe('rgb(255, 255, 255)');
+  expect((await start.boundingBox())!.height).toBeGreaterThanOrEqual(44);
+  await page.setViewportSize({ width: 390, height: 844 });
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= innerWidth,
+    ),
+  ).toBe(true);
+  await page.screenshot({ path: ".test-output/ux-landing-mobile.png" });
+  await page.goto("/login");
+  expect(
+    await page
+      .locator(".cg-brand")
+      .first()
+      .evaluate((el) => getComputedStyle(el).fontFamily.split(",")[0]),
+  ).toBe(bodyFont);
+  expect(
+    await page
+      .locator("h1")
+      .first()
+      .evaluate((el) => getComputedStyle(el).fontFamily.split(",")[0]),
+  ).toBe(displayFont);
+  expect(
+    await page.evaluate(() =>
+      document.documentElement.classList.contains("lenis"),
+    ),
+  ).toBe(false);
+  await page.screenshot({
+    path: ".test-output/ux-login-mobile.png",
+    fullPage: true,
+  });
 });

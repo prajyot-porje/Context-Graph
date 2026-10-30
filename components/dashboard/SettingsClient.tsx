@@ -1,4 +1,6 @@
 "use client";
+import { Brand } from '@/components/ui/Brand'
+
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useSession } from "@/lib/auth-client";
@@ -53,7 +55,7 @@ export default function SettingsClient() {
     <main className={s.page}>
       <header className={s.header}>
         <Link className={s.logo} href="/entry">
-          ContextGraph
+          <Brand />
         </Link>
         <Link href="/entry">Back to context</Link>
       </header>

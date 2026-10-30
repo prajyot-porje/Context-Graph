@@ -1,4 +1,6 @@
 "use client";
+import { Brand } from '@/components/ui/Brand'
+
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
@@ -221,7 +223,7 @@ export default function SetupClient({
     <main className={s.page}>
       <header className={s.header}>
         <Link href={status.ready ? "/dashboard" : "/"} className={s.logo}>
-          ContextGraph
+          <Brand />
         </Link>
         <div className={s.headerActions}>
           {status.ready && <Link href="/dashboard">Back to dashboard</Link>}

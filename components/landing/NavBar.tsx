@@ -1,4 +1,6 @@
 'use client'
+import { Brand } from '@/components/ui/Brand'
+
 
 import { useRef, useState, useEffect } from 'react'
 import Link from 'next/link'
@@ -11,31 +13,7 @@ import { LogOut } from 'lucide-react'
 
 import { ThemeToggle } from '@/components/ui/ThemeToggle'
 
-function Logo() {
-  return (
-    <Link
-      href="/"
-      className="inline-flex items-center gap-2.5 transition-opacity duration-150 ease-out hover:opacity-90 shrink-0"
-    >
-      <div className="relative h-7 w-7 flex items-center justify-center shrink-0 rounded-md bg-[var(--surface)] border border-[var(--border-strong)] shadow-[var(--shadow-xs)] p-1 transition-[border-color,background-color] duration-150">
-        <div className="absolute inset-0 rounded-md bg-[var(--accent)] opacity-[var(--logo-glow-opacity)] blur-sm pointer-events-none" />
-        <img
-          src="/icons/logo-dark.png"
-          alt="ContextGraph Icon"
-          className="theme-logo-light h-full w-full object-contain"
-        />
-        <img
-          src="/icons/logo-light.png"
-          alt="ContextGraph Icon"
-          className="theme-logo-dark h-full w-full object-contain"
-        />
-      </div>
-      <span className="font-display text-[15px] font-bold tracking-tight text-[var(--text-primary)]">
-        Context<span className="text-[var(--accent)] font-extrabold">Graph</span>
-      </span>
-    </Link>
-  )
-}
+function Logo() {return <Link href="/" className="cg-brand-link"><Brand /></Link>}
 
 const NAV_SECTIONS = [
   { label: 'Features', href: '#features' },
@@ -153,10 +131,10 @@ function NavActions() {
         href="/login"
         className={cn(
           'inline-flex items-center justify-center',
-          'h-8 px-4',
+          'min-h-11 px-4',
           'rounded-[var(--radius-sm)]',
-          'text-[12px] font-bold',
-          'bg-[var(--accent)] text-[var(--accent-fg)] shadow-[var(--shadow-xs)]',
+          'text-[14px] font-medium',
+          'bg-[var(--accent)] text-[var(--on-accent)] shadow-[var(--shadow-xs)]',
           'transition-[opacity,transform,filter] duration-150 ease-out',
           'hover:opacity-95 hover:brightness-105 active:scale-[0.98]',
           'focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[var(--accent)]'

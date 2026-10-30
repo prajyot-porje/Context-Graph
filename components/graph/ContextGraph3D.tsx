@@ -1,4 +1,4 @@
-'use client'
+"use client";
 
 /**
  * ContextGraph3D — WebGL 3D Force Graph
@@ -14,80 +14,86 @@
  *  - Tooltip keyframes moved out of per-render <style> tags
  */
 
-import dynamic from 'next/dynamic'
-import { useRef, useCallback, useEffect, useState, useMemo } from 'react'
-import type { GraphNode } from '@/lib/graph-utils'
-import { computeDepths } from '@/lib/graph-utils'
-import type { ContextNode, ContextEdge } from '@/types'
-import { Maximize2, ZoomIn, ZoomOut } from 'lucide-react'
+import dynamic from "next/dynamic";
+import {
+  useRef,
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useState,
+  useMemo,
+} from "react";
+import type { GraphNode } from "@/lib/graph-utils";
+import { computeDepths } from "@/lib/graph-utils";
+import type { ContextNode, ContextEdge } from "@/types";
+import { Maximize2, ZoomIn, ZoomOut } from "lucide-react";
 
 // react-force-graph-3d uses Three.js/WebGL — client-only, no SSR
-const ForceGraph3D = dynamic(
-  () => import('react-force-graph-3d'),
-  { ssr: false }
-)
+const ForceGraph3D = dynamic(() => import("react-force-graph-3d"), {
+  ssr: false,
+});
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                             */
 /* ------------------------------------------------------------------ */
 
 interface Props {
-  nodes: ContextNode[]
-  edges: ContextEdge[]
-  onNodeClick: (node: GraphNode) => void
-  selectedNodeId?: string | null
-  relevanceFilter?: number
-  showLabels?: boolean
-  zoomTrigger?: number
+  nodes: ContextNode[];
+  edges: ContextEdge[];
+  onNodeClick: (node: GraphNode) => void;
+  selectedNodeId?: string | null;
+  relevanceFilter?: number;
+  showLabels?: boolean;
+  zoomTrigger?: number;
 }
 
 interface ScreenLabel {
-  id: string
-  label: string
-  depth: number
-  relevance: number
-  x: number
-  y: number
-  visible: boolean
+  id: string;
+  label: string;
+  depth: number;
+  relevance: number;
+  x: number;
+  y: number;
+  visible: boolean;
+  offsetY: number;
 }
 
 interface ForceGraphNode extends GraphNode {
-  x?: number
-  y?: number
-  z?: number
-  fx?: number
-  fy?: number
-  fz?: number
+  x?: number;
+  y?: number;
+  z?: number;
+  fx?: number;
+  fy?: number;
+  fz?: number;
 }
 
 /* ------------------------------------------------------------------ */
 /*  Theme palette (CSS custom property values)                        */
 /* ------------------------------------------------------------------ */
 
-const THEME_COLORS = {
-  dark: {
-    bg:      '#080808',
-    root:    '#b3ec13',
-    agency:  '#EEEEEE',
-    project: '#888888',
-    link:    'rgba(255,255,255,0.10)',
-    selected:'#b3ec13',
-  },
-  light: {
-    bg:      '#F4F4F5',
-    root:    '#b3ec13',
-    agency:  '#1a1a1a',
-    project: '#555555',
-    link:    'rgba(0,0,0,0.08)',
-    selected:'#b3ec13',
-  },
-} as const
+function readGraphColors(theme: ThemeMode) {
+  const element =
+    document.querySelector('[data-theme="' + theme + '"]') ||
+    document.documentElement;
+  const css = getComputedStyle(element);
+  const value = (name: string) => css.getPropertyValue(name).trim();
+  return {
+    bg: value("--bg"),
+    root: value("--accent"),
+    selected: value("--accent"),
+    agency: value("--text-primary"),
+    project: value("--text-secondary"),
+    link: value("--graph-edge"),
+  };
+}
 
-type ThemeMode = 'dark' | 'light'
+type ThemeMode = "dark" | "light";
 
 function getTheme(): ThemeMode {
-  if (typeof document === 'undefined') return 'dark'
-  return (document.documentElement.getAttribute('data-theme') as ThemeMode) || 'dark'
+  if (typeof document === "undefined") return "dark";
+  return (
+    (document.documentElement.getAttribute("data-theme") as ThemeMode) || "dark"
+  );
 }
 
 /* ------------------------------------------------------------------ */
@@ -95,24 +101,24 @@ function getTheme(): ThemeMode {
 /* ------------------------------------------------------------------ */
 
 function nodeSize(node: GraphNode): number {
-  const base = node.depth === 0 ? 8 : node.depth === 1 ? 5 : 3.5
-  return base + node.relevance * 2
+  const base = node.depth === 0 ? 8 : node.depth === 1 ? 5 : 3.5;
+  return base + node.relevance * 2;
 }
 
 const formatDate = (dateString?: string) => {
-  if (!dateString) return 'Updated --'
+  if (!dateString) return "Updated --";
   try {
-    const d = new Date(dateString)
-    return `Updated ${d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`
+    const d = new Date(dateString);
+    return `Updated ${d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}`;
   } catch {
-    return 'Updated --'
+    return "Updated --";
   }
-}
+};
 
 function relevanceColor(r: number) {
-  if (r >= 0.7) return 'var(--accent)'
-  if (r >= 0.4) return 'var(--warning)'
-  return 'var(--text-muted)'
+  if (r >= 0.7) return "var(--accent)";
+  if (r >= 0.4) return "var(--warning)";
+  return "var(--text-muted)";
 }
 
 /* ------------------------------------------------------------------ */
@@ -129,100 +135,134 @@ export default function ContextGraph3D({
   zoomTrigger = 0,
 }: Props) {
   /* eslint-disable @typescript-eslint/no-explicit-any */
-  const containerRef = useRef<HTMLDivElement>(null)
-  const graphRef = useRef<any>(null)
-  const hasZoomedRef = useRef(false)
-  const animFrameRef = useRef<number>(0)
+  const containerRef = useRef<HTMLDivElement>(null);
+  const graphRef = useRef<any>(null);
+  const hasZoomedRef = useRef(false);
+  const cachedNodes = useRef(new Map<string, ForceGraphNode>());
+  const animFrameRef = useRef<number>(0);
 
-  const [theme, setTheme] = useState<ThemeMode>('dark')
-  const [dimensions, setDimensions] = useState({ width: 0, height: 0 })
-  const [hoveredNode, setHoveredNode] = useState<GraphNode | null>(null)
-  const [mousePos, setMousePos] = useState({ x: 0, y: 0 })
-  const [screenLabels, setScreenLabels] = useState<ScreenLabel[]>([])
+  const [theme, setTheme] = useState<ThemeMode>("dark");
+  const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
+  const [hoveredNode, setHoveredNode] = useState<GraphNode | null>(null);
+  const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
+  const [screenLabels, setScreenLabels] = useState<ScreenLabel[]>([]);
 
   /* ---- Graph data ---- */
   const graphData = useMemo(() => {
-    const withDepth = computeDepths(nodes)
-    const filtered = withDepth.filter(n => n.relevance >= relevanceFilter)
-    const nodeIds = new Set(filtered.map(n => n.id))
+    const withDepth = computeDepths(nodes);
+    const filtered = withDepth.filter((n) => n.relevance >= relevanceFilter);
+    const nodeIds = new Set(filtered.map((n) => n.id));
 
     return {
-      nodes: filtered.map(n => ({
-        id:           n.id,
-        label:        n.title,
-        depth:        n.depth,
-        relevance:    n.relevance,
-        scope:        n.scope,
-        tags:         n.tags,
-        content:      n.content,
-        last_updated: n.last_updated,
-      })),
+      nodes: filtered.map((n) => {
+        const value = {
+          id: n.id,
+          label: n.title,
+          depth: n.depth,
+          relevance: n.relevance,
+          scope: n.scope,
+          tags: n.tags,
+          content: n.content,
+          last_updated: n.last_updated,
+        };
+        return value;
+      }),
       links: edges
-        .filter(e => nodeIds.has(e.source_node_id) && nodeIds.has(e.target_node_id))
-        .map(e => ({
+        .filter(
+          (e) => nodeIds.has(e.source_node_id) && nodeIds.has(e.target_node_id),
+        )
+        .map((e) => ({
           source: e.source_node_id,
           target: e.target_node_id,
-          type:   e.edge_type,
+          type: e.edge_type,
         })),
+    };
+  }, [nodes, edges, relevanceFilter]);
+
+  // D3 owns positions; restore them after commit, outside React rendering.
+  useLayoutEffect(() => {
+    const ids = new Set(graphData.nodes.map((n) => n.id));
+    for (const node of graphData.nodes as ForceGraphNode[]) {
+      const previous = cachedNodes.current.get(node.id);
+      if (previous)
+        Object.assign(node, {
+          x: previous.x,
+          y: previous.y,
+          z: previous.z,
+          fx: previous.fx,
+          fy: previous.fy,
+          fz: previous.fz,
+        });
+      cachedNodes.current.set(node.id, node);
     }
-  }, [nodes, edges, relevanceFilter])
+    for (const id of cachedNodes.current.keys())
+      if (!ids.has(id)) cachedNodes.current.delete(id);
+  }, [graphData]);
 
   /* ---- Container dimensions via ResizeObserver ---- */
   useEffect(() => {
-    const el = containerRef.current
-    if (!el) return
+    const el = containerRef.current;
+    if (!el) return;
 
-    const ro = new ResizeObserver(entries => {
+    const ro = new ResizeObserver((entries) => {
       for (const entry of entries) {
-        const { width, height } = entry.contentRect
+        const { width, height } = entry.contentRect;
         if (width > 0 && height > 0) {
-          setDimensions({ width: Math.floor(width), height: Math.floor(height) })
+          setDimensions({
+            width: Math.floor(width),
+            height: Math.floor(height),
+          });
         }
       }
-    })
-    ro.observe(el)
+    });
+    ro.observe(el);
     // Seed immediately in case observer fires late
-    const { width, height } = el.getBoundingClientRect()
-    if (width > 0 && height > 0) setDimensions({ width: Math.floor(width), height: Math.floor(height) })
-    return () => ro.disconnect()
-  }, [])
+    const { width, height } = el.getBoundingClientRect();
+    if (width > 0 && height > 0)
+      setDimensions({ width: Math.floor(width), height: Math.floor(height) });
+    return () => ro.disconnect();
+  }, []);
 
   /* ---- Theme detection ---- */
   useEffect(() => {
-    const update = () => setTheme(getTheme())
-    update()
+    const update = () => setTheme(getTheme());
+    update();
 
-    const observer = new MutationObserver(muts => {
+    const observer = new MutationObserver((muts) => {
       for (const m of muts) {
-        if (m.type === 'attributes' && m.attributeName === 'data-theme') update()
+        if (m.type === "attributes" && m.attributeName === "data-theme")
+          update();
       }
-    })
-    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] })
-    window.addEventListener('cg-theme-change', update)
+    });
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ["data-theme"],
+    });
+    window.addEventListener("cg-theme-change", update);
     return () => {
-      observer.disconnect()
-      window.removeEventListener('cg-theme-change', update)
-    }
-  }, [])
+      observer.disconnect();
+      window.removeEventListener("cg-theme-change", update);
+    };
+  }, []);
 
   /* ---- Refresh graph on theme change ---- */
   useEffect(() => {
-    graphRef.current?.refresh()
-  }, [theme])
+    graphRef.current?.refresh();
+  }, [theme]);
 
   /* ---- Configure OrbitControls + guard against stale-pointer crash ---- */
   useEffect(() => {
     const timer = setTimeout(() => {
-      const fg = graphRef.current
-      if (!fg || typeof fg.controls !== 'function') return
+      const fg = graphRef.current;
+      if (!fg || typeof fg.controls !== "function") return;
       /* eslint-disable @typescript-eslint/no-explicit-any */
-      const ctrl = fg.controls() as any
-      if (!ctrl) return
+      const ctrl = fg.controls() as any;
+      if (!ctrl) return;
 
-      ctrl.enableRotate = false
-      ctrl.enablePan = true
-      ctrl.screenSpacePanning = true
-      ctrl.panSpeed = 0.8
+      ctrl.enableRotate = false;
+      ctrl.enablePan = true;
+      ctrl.screenSpacePanning = true;
+      ctrl.panSpeed = 0.8;
 
       // Patch _onPointerUp to prevent the stale-pointer crash.
       //
@@ -235,149 +275,204 @@ export default function ContextGraph3D({
       // and controls state is cleaned up gracefully. We also re-register the
       // canvas 'pointercancel' listener because the constructor registered it
       // with the original (now-replaced) function reference.
-      const origUp: ((e: Event) => void) | undefined = ctrl._onPointerUp
-      if (typeof origUp === 'function') {
+      const origUp: ((e: Event) => void) | undefined = ctrl._onPointerUp;
+      if (typeof origUp === "function") {
         const safeUp = (e: Event) => {
           try {
-            origUp.call(ctrl, e)
+            origUp.call(ctrl, e);
           } catch {
             // Pointer position was undefined — reset OrbitControls state cleanly
-            try { (ctrl._pointers as unknown[]).length = 0 } catch {}
-            try { ctrl.state = 0 } catch {}
+            try {
+              (ctrl._pointers as unknown[]).length = 0;
+            } catch {}
+            try {
+              ctrl.state = 0;
+            } catch {}
           }
-        }
-        ctrl._onPointerUp = safeUp
+        };
+        ctrl._onPointerUp = safeUp;
         // The constructor registered origUp with 'pointercancel' on the canvas —
         // swap it for safeUp so future pointercancel events use the safe version.
-        const canvas = ctrl.domElement as HTMLElement | undefined
+        const canvas = ctrl.domElement as HTMLElement | undefined;
         if (canvas) {
-          canvas.removeEventListener('pointercancel', origUp)
-          canvas.addEventListener('pointercancel', safeUp)
+          canvas.removeEventListener("pointercancel", origUp);
+          canvas.addEventListener("pointercancel", safeUp);
         }
       }
       /* eslint-enable @typescript-eslint/no-explicit-any */
-    }, 300)
-    return () => clearTimeout(timer)
-  }, [])
+    }, 300);
+    return () => clearTimeout(timer);
+  }, []);
+
+  const graphSignature = graphData.nodes
+    .map((n) => n.id)
+    .sort()
+    .join("|");
 
   /* ---- Zoom-to-fit trigger ---- */
   useEffect(() => {
-    if (!graphRef.current || graphData.nodes.length === 0) return
-    const timer = setTimeout(() => graphRef.current?.zoomToFit?.(400, 60), 80)
-    return () => clearTimeout(timer)
-  }, [zoomTrigger, graphData])
+    if (!graphRef.current || !graphSignature) return;
+    const timer = setTimeout(() => graphRef.current?.zoomToFit?.(400, 60), 80);
+    return () => clearTimeout(timer);
+  }, [zoomTrigger, graphSignature]);
 
   /* ---- CSS-overlay labels: project 3D positions to screen ---- */
   useEffect(() => {
     if (!showLabels || graphData.nodes.length === 0) {
-      setScreenLabels([])
-      return
+      setScreenLabels([]);
+      return;
     }
 
-    let active = true
+    let active = true;
     const tick = () => {
-      const fg = graphRef.current
+      const fg = graphRef.current;
       if (!fg || !containerRef.current) {
-        if (active) animFrameRef.current = requestAnimationFrame(tick)
-        return
+        if (active) animFrameRef.current = requestAnimationFrame(tick);
+        return;
       }
 
-      const labels: ScreenLabel[] = []
+      const labels: ScreenLabel[] = [];
 
       for (const node of graphData.nodes as ForceGraphNode[]) {
         // Depth 0+1 are always visible; depth 2+ only when that specific node is hovered
-        const isHoveredNode = hoveredNode?.id === node.id
-        const depthVisible = node.depth <= 1 || isHoveredNode
-        if (!depthVisible) continue
+        const isHoveredNode = hoveredNode?.id === node.id;
+        const depthVisible =
+          graphData.nodes.length <= 12 || node.depth <= 1 || isHoveredNode;
+        if (!depthVisible) continue;
 
         try {
           // Returns canvas-relative CSS pixel coords (0..canvasWidth, 0..canvasHeight)
-          const pos = fg.graph2ScreenCoords?.(node.x ?? 0, node.y ?? 0, node.z ?? 0)
-          if (!pos) continue
+          const pos = fg.graph2ScreenCoords?.(
+            node.x ?? 0,
+            node.y ?? 0,
+            node.z ?? 0,
+          );
+          if (!pos) continue;
 
-          const { x, y } = pos
+          const { x, y } = pos;
 
           // Cull nodes outside the canvas + small margin
-          if (x < -40 || x > dimensions.width + 40 || y < -20 || y > dimensions.height + 20) continue
+          if (
+            x < -40 ||
+            x > dimensions.width + 40 ||
+            y < -20 ||
+            y > dimensions.height + 20
+          )
+            continue;
 
           labels.push({
-            id:        node.id,
-            label:     node.label ?? '',
-            depth:     node.depth,
+            offsetY:
+              -Math.max(
+                12,
+                Math.abs(
+                  (fg.graph2ScreenCoords?.(
+                    (node.x ?? 0) + Math.cbrt(nodeSize(node)) * 4,
+                    node.y ?? 0,
+                    node.z ?? 0,
+                  )?.x ?? pos.x + 12) - pos.x,
+                ),
+              ) - 18,
+            id: node.id,
+            label: node.label ?? "",
+            depth: node.depth,
             relevance: node.relevance,
             x,
             y,
-            visible:   true,
-          })
+            visible: true,
+          });
         } catch {
           // Swallow projection errors during physics warm-up
         }
       }
 
-      setScreenLabels(labels)
-      if (active) animFrameRef.current = requestAnimationFrame(tick)
-    }
+      setScreenLabels(labels);
+      if (active) animFrameRef.current = requestAnimationFrame(tick);
+    };
 
-    animFrameRef.current = requestAnimationFrame(tick)
+    animFrameRef.current = requestAnimationFrame(tick);
     return () => {
-      active = false
-      cancelAnimationFrame(animFrameRef.current)
-    }
-  }, [showLabels, graphData.nodes, hoveredNode, dimensions.width, dimensions.height])
+      active = false;
+      cancelAnimationFrame(animFrameRef.current);
+    };
+  }, [
+    showLabels,
+    graphData.nodes,
+    hoveredNode,
+    dimensions.width,
+    dimensions.height,
+  ]);
 
   /* ---- Colors ---- */
-  const colors = THEME_COLORS[theme]
+  const colors = useMemo(() => readGraphColors(theme), [theme]);
 
   /* ---- Callbacks ---- */
-  const handleMouseMove = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
-    const rect = e.currentTarget.getBoundingClientRect()
-    setMousePos({ x: e.clientX - rect.left, y: e.clientY - rect.top })
-  }, [])
+  const handleMouseMove = useCallback(
+    (e: React.MouseEvent<HTMLDivElement>) => {
+      const rect = e.currentTarget.getBoundingClientRect();
+      setMousePos({ x: e.clientX - rect.left, y: e.clientY - rect.top });
+    },
+    [setMousePos],
+  );
 
-  const handleNodeHover = useCallback((node: object | null) => {
-    setHoveredNode((node as GraphNode) ?? null)
-    if (containerRef.current) {
-      containerRef.current.style.cursor = node ? 'pointer' : 'default'
-    }
-  }, [])
+  const handleNodeHover = useCallback(
+    (node: object | null) => {
+      setHoveredNode((node as GraphNode) ?? null);
+      if (containerRef.current) {
+        containerRef.current.style.cursor = node ? "pointer" : "default";
+      }
+    },
+    [setHoveredNode],
+  );
 
   const handleNodeDrag = useCallback(() => {
-    const controls = graphRef.current?.controls?.()
-    if (controls?.enabled) controls.enabled = false
-  }, [])
+    const controls = graphRef.current?.controls?.();
+    if (controls?.enabled) controls.enabled = false;
+  }, []);
 
   const handleNodeDragEnd = useCallback((node: object | null) => {
-    const fn = node as ForceGraphNode | null
-    if (fn) { fn.fx = undefined; fn.fy = undefined; fn.fz = undefined }
-    const controls = graphRef.current?.controls?.()
-    if (controls) controls.enabled = true
-  }, [])
+    const fn = node as ForceGraphNode | null;
+    if (fn) {
+      fn.fx = undefined;
+      fn.fy = undefined;
+      fn.fz = undefined;
+    }
+    const controls = graphRef.current?.controls?.();
+    if (controls) controls.enabled = true;
+  }, []);
 
   const handleNodeClick = useCallback(
     (node: object) => onNodeClick(node as GraphNode),
-    [onNodeClick]
-  )
+    [onNodeClick],
+  );
 
   const getNodeColor = useCallback(
     (node: object) => {
-      const n = node as GraphNode
-      if (n.id === selectedNodeId) return colors.selected
-      if (n.depth === 0) return colors.root
-      if (n.depth === 1) return colors.agency
-      return colors.project
+      const n = node as GraphNode;
+      if (n.id === selectedNodeId) return colors.selected;
+      if (n.depth === 0) return colors.root;
+      if (n.depth === 1) return colors.agency;
+      return colors.project;
     },
-    [selectedNodeId, colors]
-  )
+    [selectedNodeId, colors],
+  );
 
   // Suppress the library's built-in Three.js tooltip — we use our own React overlay
-  const nodeLabel = useCallback(() => '', [])
+  const nodeLabel = useCallback(() => "", []);
 
   /* ---- Zoom helpers ---- */
-  const zoomIn  = useCallback(() => { const fg = graphRef.current; if (fg) fg.zoom(fg.zoom() * 1.3, 300) }, [])
-  const zoomOut = useCallback(() => { const fg = graphRef.current; if (fg) fg.zoom(fg.zoom() / 1.3, 300) }, [])
-  const fitView = useCallback(() => { graphRef.current?.zoomToFit?.(400, 50) }, [])
+  const zoomIn = useCallback(() => {
+    const fg = graphRef.current;
+    if (fg) fg.zoom(fg.zoom() * 1.3, 300);
+  }, []);
+  const zoomOut = useCallback(() => {
+    const fg = graphRef.current;
+    if (fg) fg.zoom(fg.zoom() / 1.3, 300);
+  }, []);
+  const fitView = useCallback(() => {
+    graphRef.current?.zoomToFit?.(400, 50);
+  }, []);
 
-  const canRender = dimensions.width > 0 && dimensions.height > 0
+  const canRender = dimensions.width > 0 && dimensions.height > 0;
 
   return (
     <div
@@ -403,8 +498,8 @@ export default function ContextGraph3D({
           nodeThreeObjectExtend={false}
           /* Link */
           linkColor={() => colors.link}
-          linkWidth={0.8}
-          linkOpacity={0.45}
+          linkWidth={1.2}
+          linkOpacity={0.9}
           /* Interaction */
           onNodeClick={handleNodeClick}
           onNodeDrag={handleNodeDrag}
@@ -414,12 +509,21 @@ export default function ContextGraph3D({
           enablePointerInteraction
           controlType="orbit"
           /* Physics */
+          numDimensions={2}
+          warmupTicks={100}
+          cooldownTicks={120}
+          onEngineTick={() => {
+            if (!hasZoomedRef.current && graphRef.current) {
+              hasZoomedRef.current = true;
+              graphRef.current.zoomToFit?.(400, 90);
+            }
+          }}
           d3AlphaDecay={0.02}
           d3VelocityDecay={0.3}
           onEngineStop={() => {
-            if (hasZoomedRef.current) return
-            hasZoomedRef.current = true
-            graphRef.current?.zoomToFit?.(800, 60)
+            if (hasZoomedRef.current) return;
+            hasZoomedRef.current = true;
+            graphRef.current?.zoomToFit?.(800, 60);
           }}
           showNavInfo={false}
         />
@@ -431,30 +535,30 @@ export default function ContextGraph3D({
           className="pointer-events-none absolute inset-0 overflow-hidden"
           aria-hidden="true"
         >
-          {screenLabels.map(lbl => {
-            const isRoot    = lbl.depth === 0
-            const isAgency  = lbl.depth === 1
-            const isHovered = hoveredNode?.id === lbl.id
-            const isSelected = lbl.id === selectedNodeId
+          {screenLabels.map((lbl) => {
+            const isRoot = lbl.depth === 0;
+            const isAgency = lbl.depth === 1;
+            const isHovered = hoveredNode?.id === lbl.id;
+            const isSelected = lbl.id === selectedNodeId;
 
-            const offsetY = isRoot ? -22 : isAgency ? -18 : -16
+            const offsetY = lbl.offsetY;
 
             return (
               <span
                 key={lbl.id}
                 className="cg-graph-label"
-                data-tier={isRoot ? 'root' : isAgency ? 'agency' : 'leaf'}
+                data-tier={isRoot ? "root" : isAgency ? "agency" : "leaf"}
                 data-selected={isSelected || undefined}
                 data-hovered={isHovered || undefined}
                 style={{
                   transform: `translate(-50%, ${offsetY}px)`,
                   left: `${lbl.x}px`,
-                  top:  `${lbl.y}px`,
+                  top: `${lbl.y}px`,
                 }}
               >
                 {lbl.label}
               </span>
-            )
+            );
           })}
         </div>
       )}
@@ -465,7 +569,7 @@ export default function ContextGraph3D({
           className="cg-graph-tooltip pointer-events-none absolute z-[60]"
           style={{
             left: `${mousePos.x + 16}px`,
-            top:  `${mousePos.y - 12}px`,
+            top: `${mousePos.y - 12}px`,
           }}
         >
           <div className="cg-graph-tooltip__title">{hoveredNode.label}</div>
@@ -477,12 +581,16 @@ export default function ContextGraph3D({
             <span
               className="cg-graph-tooltip__dot"
               style={{ color: relevanceColor(hoveredNode.relevance) }}
-            >●</span>
+            >
+              ●
+            </span>
             <span className="cg-graph-tooltip__value">
               {Math.round(hoveredNode.relevance * 100)}%
             </span>
           </div>
-          <div className="cg-graph-tooltip__date">{formatDate(hoveredNode.last_updated)}</div>
+          <div className="cg-graph-tooltip__date">
+            {formatDate(hoveredNode.last_updated)}
+          </div>
           <div className="cg-graph-tooltip__divider" />
           <div className="cg-graph-tooltip__hint">Click to open</div>
         </div>
@@ -516,5 +624,5 @@ export default function ContextGraph3D({
         </button>
       </div>
     </div>
-  )
+  );
 }

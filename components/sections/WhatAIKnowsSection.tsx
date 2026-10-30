@@ -348,7 +348,7 @@ export default function WhatAIKnowsSection() {
                   <span className="text-[10px] font-mono text-[var(--text-primary)] font-bold tracking-wider uppercase">
                     With ContextGraph
                   </span>
-                  <div className="flex items-center gap-1.5 text-[var(--accent)] bg-[var(--accent-muted)] px-2 py-0.5 rounded-full border border-[rgba(179,236,19,0.2)]">
+                  <div className="flex items-center gap-1.5 text-[var(--accent)] bg-[var(--accent-muted)] px-2 py-0.5 rounded-full border border-[color-mix(in_srgb,_var(--accent)_20%,_transparent)]">
                     <span className="relative flex h-1 w-1">
                       <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[var(--accent)] opacity-75"></span>
                       <span className="relative inline-flex rounded-full h-1 w-1 bg-[var(--accent)]"></span>

@@ -29,9 +29,9 @@ Three principles govern every decision:
 One accent color. Used in exactly three roles: active/selected states, the primary CTA on the landing page, and relevance encoding in the graph. One accent element per viewport — maximum.
 
 ```
---accent:        #b3ec13   ← primary accent (electric lime)
---accent-soft:   #9fd411   ← hover/pressed state
---accent-muted:  rgba(179, 236, 19, 0.12)   ← glow, backgrounds
+--accent:        #8fbe28   ← primary accent (muted lime)
+--accent-soft:   #7da720   ← hover/pressed state
+--accent-muted:  rgba(143, 190, 40, 0.12)   ← glow, backgrounds
 --on-accent:     #0A0A0A   ← text on accent surfaces
 ```
 
@@ -44,8 +44,8 @@ One accent color. Used in exactly three roles: active/selected states, the prima
 --border:          rgba(255, 255, 255, 0.07)   ← subtle dividers
 --border-strong:   rgba(255, 255, 255, 0.14)   ← active borders, form outlines
 --text-primary:    #F0F0F0   ← primary text. Off-white, not pure white.
---text-secondary:  #888888   ← descriptions, metadata
---text-muted:      #484848   ← timestamps, disabled labels
+--text-secondary:  #a0a0a0   ← descriptions, metadata
+--text-muted:      #888888   ← timestamps, disabled labels
 --text-disabled:   #2A2A2A   ← visually inactive
 ```
 
@@ -85,39 +85,39 @@ Score 0.0–0.39 → border rgba(255,255,255,0.05), text #484848   ← archived,
 
 ### Font Stack — Three Families, Three Strict Lanes
 
-**rb-freigeist-neue** — display only. Any text 28px and above. Hero headlines, section openers, the logo mark, large stat numbers. Tight line-height 1.0, heavy negative letter-spacing. Creates geometric text blocks that feel carved — not typed. Fallback: `'Bricolage Grotesque', sans-serif`
+**Outfit** — display only. Any text 28px and above. Hero headlines, section openers, large stat numbers. Tight line-height 1.0, heavy negative letter-spacing. Creates geometric text blocks that feel carved — not typed. Fallback: `sans-serif`
 
 **Geist** — everything else. Navigation, body copy, labels, buttons, card content, form elements. Clean, neutral, precise. Fallback: `system-ui, sans-serif`
 
-**JetBrains Mono** — code only. API keys, MCP config snippets, scope strings, commit messages, any machine-readable text. Never use it for UI. Fallback: `'Fira Code', monospace`
+**Geist Mono** — code only. API keys, MCP config snippets, scope strings, commit messages, any machine-readable text. Never use it for UI. Fallback: `monospace`
 
 ### Type Scale
 
 | Token | Family | Size | Weight | Line Height | Letter Spacing | Use |
 |---|---|---|---|---|---|---|
-| display-xxl | rb-freigeist-neue | 96px | 700 | 1.0 | -3px | Landing hero headline |
-| display-xl | rb-freigeist-neue | 64px | 700 | 1.0 | -2px | Section openers |
-| display-lg | rb-freigeist-neue | 48px | 700 | 1.05 | -1.5px | Sub-section titles |
-| display-md | rb-freigeist-neue | 36px | 700 | 1.1 | -1px | Feature card titles |
-| display-sm | rb-freigeist-neue | 28px | 600 | 1.15 | -0.5px | Dashboard page title |
+| display-xxl | Outfit | 96px | 700 | 1.0 | -3px | Landing hero headline |
+| display-xl | Outfit | 64px | 700 | 1.0 | -2px | Section openers |
+| display-lg | Outfit | 48px | 700 | 1.05 | -1.5px | Sub-section titles |
+| display-md | Outfit | 36px | 700 | 1.1 | -1px | Feature card titles |
+| display-sm | Outfit | 28px | 600 | 1.15 | -0.5px | Dashboard page title |
 | heading-lg | Geist | 24px | 600 | 1.3 | -0.4px | Card headings |
 | heading-md | Geist | 20px | 600 | 1.3 | -0.3px | Panel headings |
 | heading-sm | Geist | 16px | 600 | 1.4 | -0.2px | Sidebar section headers |
 | body-lg | Geist | 18px | 400 | 1.6 | 0 | Landing body text |
 | body-md | Geist | 15px | 400 | 1.6 | 0 | Default body |
 | body-sm | Geist | 13px | 400 | 1.5 | 0 | Captions, metadata |
-| label | Geist | 11px | 600 | 1.4 | 0.08em | Uppercase section labels |
+| label | Geist | 13px | 600 | 1.4 | 0.08em | Uppercase section labels |
 | button-md | Geist | 14px | 500 | 1.0 | -0.1px | Buttons |
-| button-sm | Geist | 12px | 500 | 1.0 | 0 | Small buttons, tabs |
-| code-md | JetBrains Mono | 13px | 400 | 1.6 | 0 | Code blocks |
-| code-sm | JetBrains Mono | 11px | 400 | 1.5 | 0 | Inline code, tab labels |
+| button-sm | Geist | 13px | 500 | 1.0 | 0 | Small buttons, tabs |
+| code-md | Geist Mono | 13px | 400 | 1.6 | 0 | Code blocks |
+| code-sm | Geist Mono | 13px | 400 | 1.5 | 0 | Inline code, tab labels |
 
 ### Typography Rules
 - Uppercase labels always use `letter-spacing: 0.08em` — never tight uppercase
 - Display sizes hold `line-height: 1.0` — multi-line headlines stack as one geometric block
 - Body text never goes below 13px
-- rb-freigeist-neue is never used below 28px
-- JetBrains Mono is never used for non-code content
+- Outfit is never used below 28px
+- Geist Mono is never used for non-code content
 
 ---
 
@@ -187,8 +187,8 @@ Light source is always top-center. Shadows fall downward with soft diffusion. Mu
 --shadow-inset: inset 0 1px 0 rgba(255,255,255,0.05),
                 inset 0 -1px 0 rgba(0,0,0,0.2)
 
---shadow-accent: 0 0 0 1px rgba(179,236,19,0.3),
-                 0 0 20px rgba(179,236,19,0.08)
+--shadow-accent: 0 0 0 1px rgba(143,190,40,0.3),
+                 0 0 20px rgba(143,190,40,0.08)
 ```
 
 ### Light Mode Shadows
@@ -251,13 +251,13 @@ Dot spacing: 24px × 24px.
 
 ### Navigation Bar
 ```
-Height: 60px
+Height: 60px marketing / 64px dashboard
 Background: rgba(8,8,8,0.85) + backdrop-blur(20px) + saturate(180%)
 Border-bottom: 1px solid var(--border)
 Position: sticky, top-0
 Padding: 0 var(--space-6)
 
-Left: Logo — "ContextGraph" in rb-freigeist-neue 18px weight 700
+Left: shared Brand — "ContextGraph" in Geist 20px weight 600
 Right: [Docs] [Log in] [Get Started]
   Docs → ghost button
   Log in → secondary button
@@ -420,7 +420,7 @@ Mobile: bottom nav | main full screen | detail full-screen drawer
 ## Best Practices — Agent Must Follow
 
 ### Scroll & Motion
-- Use **Lenis** for all page-level smooth scrolling. Initialize Lenis once in the root layout and pass its `raf` to GSAP ticker for synchronized animation.
+- Use **Lenis** only on the marketing landing page. Setup, auth, settings and dashboard use native scrolling; scrollable panels contain their own scroll. Initialize/destroy with route changes and remove the GSAP ticker callback on cleanup.
 - Never use native `scroll-behavior: smooth` — use Lenis only.
 - GSAP ScrollTrigger must use Lenis's scroll position. Call `ScrollTrigger.scrollerProxy` with the Lenis instance after initialization.
 - Always call `ScrollTrigger.refresh()` after route changes and layout shifts.
@@ -440,8 +440,8 @@ Mobile: bottom nav | main full screen | detail full-screen drawer
 - All shadows use the named shadow tokens from this file. No custom shadow values.
 
 ### Typography
-- rb-freigeist-neue: only above 28px. Never use it for body, labels, or UI text.
-- JetBrains Mono: only for code, API keys, and machine-readable text.
+- Outfit: only above 28px. Never use it for body, labels, or UI text.
+- Geist Mono: only for code, API keys, and machine-readable text.
 - All uppercase labels: `letter-spacing: 0.08em` without exception.
 - Display text: always negative letter-spacing.
 
@@ -471,16 +471,16 @@ Mobile: bottom nav | main full screen | detail full-screen drawer
 ## Do's and Don'ts
 
 ### Do
-- Use rb-freigeist-neue for every text element 28px and above
+- Use Outfit for every text element 28px and above
 - Apply `--shadow-inset` to all cards to create the physical slab effect
-- Keep `--accent` (#b3ec13) to one visible element per viewport
+- Keep `--accent` (#8fbe28) to one visible element per viewport
 - Use Lenis for scroll, GSAP for animation — no exceptions
 - Apply noise texture on hero sections for tactile depth
 - Make the graph the hero of the dashboard
 - Always implement dark and light mode through `data-theme` + CSS custom properties
 
 ### Don't
-- Don't use Geist above 24px — that's rb-freigeist-neue territory
+- Don't use Geist above 24px — that's Outfit territory
 - Don't use pure #000000 or #FFFFFF as surfaces
 - Don't use `--accent` on body text, large surfaces, or multiple elements
 - Don't use `transition: all` anywhere
@@ -491,3 +491,13 @@ Mobile: bottom nav | main full screen | detail full-screen drawer
 - Don't use `scroll-behavior: smooth` — use Lenis
 - Don't introduce a second accent color
 - Don't round buttons to `--radius-full` — 10px is the button radius
+
+## UI refinement — 2026-10-30
+
+The settings/setup type treatment is the shared reference: Outfit display headings at 28px and above; Geist body at 15px, navigation/buttons at 14px, labels/metadata at 13px; Geist Mono only for code. The shared Brand component uses Geist 20px/600 with a crisp connected-node vector, without the old raster glow. All headers, footer and auth screens use it. Dark accent is #8fbe28; light accent is #527918 with white on-accent text. These are theme variants of the same single accent.
+
+Navigation links such as Settings and Back to dashboard use bordered 44px button styling while retaining link semantics. Dashboard chrome stays compact: one Manage connections action, exceptional queue status, refresh, view switching and graph controls. Capture toggles remain in Settings. The mobile sidebar is a closed-by-default drawer below the top bar and uses one open state, independent of desktop entrance transforms. Notes and detail panes scroll natively and wrap long content.
+
+Saved notes are rendered as graph leaves, grouped by existing note category under Me or attached to an existing project scope. Categories are structural labels; all leaf text comes from actual saved notes. The persisted graph is unchanged. Small graphs show leaf labels, fit after their initial simulation, and keep node positions across background refreshes.
+
+App page/auth headings follow the settings reference with display weight 400. Graph labels sit outside their projected node radius; graph controls use the same theme accent as every other control.

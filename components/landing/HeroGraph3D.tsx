@@ -1,7 +1,7 @@
 'use client'
 
 import dynamic from 'next/dynamic'
-import { useRef, useCallback, useEffect, useState } from 'react'
+import { useRef, useMemo, useCallback, useEffect, useState } from 'react'
 import * as THREE from 'three'
 import { Maximize2, ZoomIn, ZoomOut } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -253,25 +253,6 @@ const HERO_GRAPH_LINKS: HeroGraphLink[] = [
   { source: 'projects', target: 'saas_platform' },
 ]
 
-const THEME_COLORS = {
-  dark: {
-    root: '#b3ec13',
-    branch: '#f0f0f0',
-    leaf: '#888888',
-    link: 'rgba(255, 255, 255, 0.12)',
-    linkActive: 'rgba(179, 236, 19, 0.4)',
-    bg: '#080808',
-  },
-  light: {
-    root: '#b3ec13',
-    branch: '#0a0a0a',
-    leaf: '#666666',
-    link: 'rgba(0, 0, 0, 0.10)',
-    linkActive: 'rgba(179, 236, 19, 0.4)',
-    bg: '#ffffff',
-  },
-}
-
 export function HeroGraph3D() {
   /* eslint-disable @typescript-eslint/no-explicit-any */
   const containerRef = useRef<HTMLDivElement>(null)
@@ -446,7 +427,7 @@ export function HeroGraph3D() {
   const zoomIn = useCallback(() => { const fg = graphRef.current; if (fg) fg.zoom(fg.zoom() * 1.3, 300) }, [])
   const zoomOut = useCallback(() => { const fg = graphRef.current; if (fg) fg.zoom(fg.zoom() / 1.3, 300) }, [])
 
-  const colors = THEME_COLORS[theme]
+  const colors = useMemo(()=>{const element=document.querySelector('[data-theme="'+theme+'"]')||document.documentElement;const css=getComputedStyle(element);const v=(name:string)=>css.getPropertyValue(name).trim();return{root:v('--accent'),branch:v('--text-primary'),leaf:v('--text-secondary'),link:v('--graph-edge'),linkActive:v('--accent'),bg:v('--bg')}},[theme])
 
   const getNodeColor = useCallback((node: any) => {
     if (node.depth === 0) return colors.root

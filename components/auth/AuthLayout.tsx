@@ -1,4 +1,6 @@
 'use client'
+import { Brand } from '@/components/ui/Brand'
+
 
 import { useRef } from 'react'
 import Link from 'next/link'
@@ -92,7 +94,7 @@ export function AuthLayout({ children }: { children: React.ReactNode }) {
           className="pointer-events-none absolute inset-0 z-0"
           style={{
             background:
-              'radial-gradient(ellipse 60% 40% at 30% 40%, rgba(179, 236, 19, 0.03) 0%, transparent 60%)',
+              'radial-gradient(ellipse 60% 40% at 30% 40%, color-mix(in srgb, var(--accent) 3%, transparent) 0%, transparent 60%)',
           }}
         />
 
@@ -101,7 +103,7 @@ export function AuthLayout({ children }: { children: React.ReactNode }) {
           className="cg-back-link absolute left-[var(--space-8)] top-[var(--space-8)] z-10 flex items-center gap-[var(--space-2)] text-[14px] font-medium text-[var(--text-secondary)] transition-colors duration-150 hover:text-[var(--text-primary)]"
         >
           <ArrowLeft size={14} />
-          ContextGraph
+          <Brand />
         </Link>
 
         <div className="relative z-10 w-full max-w-[360px]">

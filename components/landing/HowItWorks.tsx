@@ -100,7 +100,7 @@ export function HowItWorks() {
                   <div className="text-[10px] text-[var(--text-secondary)]">Scope: @identity/root</div>
                 </div>
               </div>
-              <span className="px-2 py-0.5 rounded-full bg-[var(--accent-muted)] text-[var(--accent)] border border-[rgba(179,236,19,0.2)] text-[9px] font-mono font-bold uppercase">
+              <span className="px-2 py-0.5 rounded-full bg-[var(--accent-muted)] text-[var(--accent)] border border-[color-mix(in_srgb,_var(--accent)_20%,_transparent)] text-[9px] font-mono font-bold uppercase">
                 Graph Ready
               </span>
             </div>
@@ -224,7 +224,7 @@ export function HowItWorks() {
                   <div className="text-[10px] text-[var(--text-secondary)]">Prompt augmentation at runtime</div>
                 </div>
               </div>
-              <span className="px-2 py-0.5 rounded-full bg-[var(--accent-muted)] text-[var(--accent)] border border-[rgba(179,236,19,0.2)] text-[9px] font-mono font-bold uppercase">
+              <span className="px-2 py-0.5 rounded-full bg-[var(--accent-muted)] text-[var(--accent)] border border-[color-mix(in_srgb,_var(--accent)_20%,_transparent)] text-[9px] font-mono font-bold uppercase">
                 1 Turn Answer
               </span>
             </div>
@@ -306,7 +306,7 @@ export function HowItWorks() {
                     className={cn(
                       'mr-4 flex h-9 w-9 shrink-0 items-center justify-center rounded-[var(--radius-sm)] border text-[12px] font-bold transition-[border-color,background-color,color,box-shadow] duration-200 ease-out',
                       isActive
-                        ? 'border-[var(--accent)] bg-[var(--accent)] text-[var(--on-accent)] shadow-[0_0_12px_rgba(179,236,19,0.3)]'
+                        ? 'border-[var(--accent)] bg-[var(--accent)] text-[var(--on-accent)] shadow-[0_0_12px_color-mix(in_srgb,_var(--accent)_30%,_transparent)]'
                         : 'border-[var(--border)] bg-[var(--surface)] text-[var(--text-secondary)] group-hover:border-[var(--border-strong)] group-hover:text-[var(--text-primary)]'
                     )}
                   >

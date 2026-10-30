@@ -81,7 +81,7 @@ npx playwright install chromium
 npm run test:e2e
 ```
 
-`npm test` includes real PostgreSQL integration tests using a temporary embedded PostgreSQL cluster on loopback port 55440. `npm run test:e2e` starts a separate temporary cluster on 55439, a capture-only email/model fixture server on 3101, and Next.js on 3100. These fixtures override database/auth/provider configuration before importing the app; they never read production data or send real emails/model calls. They do not create a production auth bypass. Both clusters are disposable. Ports must be available. On Linux, run as a normal user rather than root.
+`npm test` includes real PostgreSQL integration tests using a temporary embedded PostgreSQL cluster on an available loopback port. `npm run test:e2e` starts a separate temporary cluster on an available loopback port, a capture-only email/model fixture server on 3101, and Next.js on 3100. These fixtures override database/auth/provider configuration before importing the app; they never read production data or send real emails/model calls. They do not create a production auth bypass. Both clusters are disposable. Ports must be available. On Linux, run as a normal user rather than root.
 
 For browser checks against an optimized build, run `npx tsx scripts/build-test.mts`, stop a development test server if one is using port 3100, set TEST_APP_MODE=production, then run `npm run test:e2e`. The fixture starts the optimized app from `.next-build`. The test build uses explicit isolated settings rather than .env.local credentials. Do not deploy that test-configured build.
 

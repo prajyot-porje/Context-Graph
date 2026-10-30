@@ -1,40 +1,40 @@
-'use client'
+"use client";
 
-import Lenis from 'lenis'
-import { gsap, ScrollTrigger } from '@/lib/gsap'
+import Lenis from "lenis";
+import { gsap, ScrollTrigger } from "@/lib/gsap";
 
-let lenisInstance: Lenis | null = null
+let lenisInstance: Lenis | null = null;
+const tick = (time: number) => lenisInstance?.raf(time * 1000);
 
 export function initLenis(): Lenis {
-  if (lenisInstance) return lenisInstance
+  if (lenisInstance) return lenisInstance;
 
   lenisInstance = new Lenis({
     duration: 1.2,
     easing: (t: number) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
-    orientation: 'vertical',
+    orientation: "vertical",
     smoothWheel: true,
-  })
+  });
 
   // Sync Lenis scroll position with GSAP ScrollTrigger
-  lenisInstance.on('scroll', ScrollTrigger.update)
+  lenisInstance.on("scroll", ScrollTrigger.update);
 
   // Tick Lenis inside GSAP's RAF loop
-  gsap.ticker.add((time: number) => {
-    lenisInstance?.raf(time * 1000)
-  })
+  gsap.ticker.add(tick);
 
-  gsap.ticker.lagSmoothing(0)
+  gsap.ticker.lagSmoothing(0);
 
-  return lenisInstance
+  return lenisInstance;
 }
 
 export function getLenis(): Lenis | null {
-  return lenisInstance
+  return lenisInstance;
 }
 
 export function destroyLenis(): void {
+  gsap.ticker.remove(tick);
   if (lenisInstance) {
-    lenisInstance.destroy()
-    lenisInstance = null
+    lenisInstance.destroy();
+    lenisInstance = null;
   }
 }

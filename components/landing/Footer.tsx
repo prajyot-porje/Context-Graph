@@ -1,4 +1,6 @@
 'use client'
+import { Brand } from '@/components/ui/Brand'
+
 
 import Link from 'next/link'
 
@@ -46,22 +48,7 @@ export function Footer() {
               href="/"
               className="inline-flex items-center gap-2.5 transition-opacity duration-150 hover:opacity-90"
             >
-              <div className="relative h-8 w-8 flex items-center justify-center shrink-0 rounded-md bg-[var(--surface)] border border-[var(--border-strong)] shadow-[var(--shadow-xs)] p-1 transition-[border-color,background-color] duration-150">
-                <div className="absolute inset-0 rounded-md bg-[var(--accent)] opacity-[var(--logo-glow-opacity)] blur-sm pointer-events-none" />
-                <img
-                  src="/icons/logo-dark.png"
-                  alt="ContextGraph Icon"
-                  className="theme-logo-light h-full w-full object-contain"
-                />
-                <img
-                  src="/icons/logo-light.png"
-                  alt="ContextGraph Icon"
-                  className="theme-logo-dark h-full w-full object-contain"
-                />
-              </div>
-              <span className="font-display text-[16px] font-bold tracking-tight text-[var(--text-primary)]">
-                Context<span className="text-[var(--accent)]">Graph</span>
-              </span>
+              <Brand />
             </Link>
 
             <p className="text-body-sm text-[var(--text-secondary)] leading-relaxed max-w-[280px]">

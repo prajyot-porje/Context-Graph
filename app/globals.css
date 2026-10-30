@@ -17,12 +17,12 @@
 [data-theme="dark"] {
   color-scheme: dark;
   /* ---- Accent ---- */
-  --accent: #b3ec13;
-  --accent-soft: #9fd411;
-  --accent-muted: rgba(179, 236, 19, 0.12);
+  --accent: #8fbe28;
+  --accent-soft: #7da720;
+  --accent-muted: rgba(143, 190, 40, 0.12);
   --on-accent: #0a0a0a;
   --footer-brand-text: #ffffff;
-  --footer-watermark-gradient: linear-gradient(to right bottom, #ffffff 15%, #def79c 50%, #b3ec13 90%);
+  --footer-watermark-gradient: linear-gradient(to right bottom, #ffffff 15%, #def79c 50%, #8fbe28 90%);
   --logo-glow-opacity: 0.04;
 
   /* ---- Surfaces ---- */
@@ -37,8 +37,8 @@
 
   /* ---- Text ---- */
   --text-primary: #f0f0f0;
-  --text-secondary: #888888;
-  --text-muted: #484848;
+  --text-secondary: #a0a0a0;
+  --text-muted: #888888;
   --text-disabled: #2a2a2a;
 
   /* ---- Semantic ---- */
@@ -92,8 +92,8 @@
   --shadow-inset: inset 0 1px 0 rgba(255, 255, 255, 0.05),
     inset 0 -1px 0 rgba(0, 0, 0, 0.2);
 
-  --shadow-accent: 0 0 0 1px rgba(179, 236, 19, 0.3),
-    0 0 20px rgba(179, 236, 19, 0.08);
+  --shadow-accent: 0 0 0 1px rgba(143, 190, 40, 0.3),
+    0 0 20px rgba(143, 190, 40, 0.08);
 
   /* ---- Component Surface Tokens ---- */
   --nav-backdrop: rgba(8, 8, 8, 0.85);
@@ -118,14 +118,14 @@
   --graph-edge: rgba(255, 255, 255, 0.12);
 
   /* ---- Atmosphere (section transitions) ---- */
-  --section-glow: rgba(179, 236, 19, 0.03);
+  --section-glow: rgba(143, 190, 40, 0.03);
   --ambient-light: rgba(255, 255, 255, 0.02);
   --ambient-vignette: rgba(0, 0, 0, 0.4);
 
   /* ---- 404 Page Atmosphere ---- */
   --not-found-ambient: radial-gradient(
     ellipse 80% 48% at 66% 18%,
-    rgba(179, 236, 19, 0.06) 0%,
+    rgba(143, 190, 40, 0.06) 0%,
     transparent 62%
   );
   --not-found-panel-light: linear-gradient(
@@ -140,6 +140,10 @@
    2. LIGHT MODE
    ---------------------------------------------------------------- */
 [data-theme="light"] {
+  --accent: #527918;
+  --accent-soft: #466815;
+  --accent-muted: rgba(82, 121, 24, 0.12);
+  --on-accent: #ffffff;
   color-scheme: light;
   --footer-brand-text: #000000;
   --footer-watermark-gradient: linear-gradient(to right bottom, #a3e607 0%, #689904 35%, #1c2605 70%, #000000 95%);
@@ -154,7 +158,7 @@
 
   --text-primary: #0a0a0a;
   --text-secondary: #666666;
-  --text-muted: #aaaaaa;
+  --text-muted: #707070;
   --text-disabled: #d4d4d4;
 
   /* Shadows (light) */
@@ -190,13 +194,13 @@
   --graph-dot: rgba(0, 0, 0, 0.06);
   --graph-edge: rgba(0, 0, 0, 0.10);
 
-  --section-glow: rgba(179, 236, 19, 0.02);
+  --section-glow: rgba(143, 190, 40, 0.02);
   --ambient-light: rgba(0, 0, 0, 0.01);
   --ambient-vignette: rgba(255, 255, 255, 0.3);
 
   --not-found-ambient: radial-gradient(
     ellipse 80% 48% at 66% 18%,
-    rgba(179, 236, 19, 0.08) 0%,
+    rgba(143, 190, 40, 0.08) 0%,
     transparent 64%
   );
   --not-found-panel-light: linear-gradient(
@@ -206,7 +210,7 @@
   );
   --not-found-accent-readable-shadow:
     0 1px 0 rgba(255, 255, 255, 0.9),
-    0 12px 32px rgba(179, 236, 19, 0.18),
+    0 12px 32px rgba(143, 190, 40, 0.18),
     0 24px 56px rgba(0, 0, 0, 0.08);
 }
 
@@ -237,7 +241,7 @@
 
   --font-sans: var(--font-geist-sans), system-ui, sans-serif;
   --font-mono: var(--font-geist-mono), "Fira Code", monospace;
-  --font-display: var(--font-display-fallback), "Bricolage Grotesque", sans-serif;
+  --font-display: var(--font-display-fallback), sans-serif;
 }
 
 /* ----------------------------------------------------------------
@@ -350,7 +354,7 @@
    ---------------------------------------------------------------- */
 @layer utilities {
   .text-display-xxl {
-    font-family: var(--font-display-fallback), "Bricolage Grotesque", sans-serif;
+    font-family: var(--font-display-fallback), sans-serif;
     font-size: 96px;
     font-weight: 700;
     line-height: 1.0;
@@ -358,7 +362,7 @@
   }
 
   .text-display-xl {
-    font-family: var(--font-display-fallback), "Bricolage Grotesque", sans-serif;
+    font-family: var(--font-display-fallback), sans-serif;
     font-size: 64px;
     font-weight: 700;
     line-height: 1.0;
@@ -366,7 +370,7 @@
   }
 
   .text-display-lg {
-    font-family: var(--font-display-fallback), "Bricolage Grotesque", sans-serif;
+    font-family: var(--font-display-fallback), sans-serif;
     font-size: 48px;
     font-weight: 700;
     line-height: 1.05;
@@ -374,7 +378,7 @@
   }
 
   .text-display-md {
-    font-family: var(--font-display-fallback), "Bricolage Grotesque", sans-serif;
+    font-family: var(--font-display-fallback), sans-serif;
     font-size: 36px;
     font-weight: 700;
     line-height: 1.1;
@@ -382,7 +386,7 @@
   }
 
   .text-display-sm {
-    font-family: var(--font-display-fallback), "Bricolage Grotesque", sans-serif;
+    font-family: var(--font-display-fallback), sans-serif;
     font-size: 28px;
     font-weight: 600;
     line-height: 1.15;
@@ -429,7 +433,7 @@
   }
 
   .text-label {
-    font-size: 11px;
+    font-size: 13px;
     font-weight: 600;
     line-height: 1.4;
     letter-spacing: 0.08em;
@@ -444,7 +448,7 @@
   }
 
   .text-button-sm {
-    font-size: 12px;
+    font-size: 13px;
     font-weight: 500;
     line-height: 1.0;
   }
@@ -458,7 +462,7 @@
 
   .text-code-sm {
     font-family: var(--font-geist-mono), "Fira Code", monospace;
-    font-size: 11px;
+    font-size: 13px;
     font-weight: 400;
     line-height: 1.5;
   }
@@ -597,10 +601,10 @@
 /* Pulse glow on accent elements */
 @keyframes cg-pulse-glow {
   0%, 100% {
-    box-shadow: 0 0 8px var(--accent), 0 0 0 rgba(179, 236, 19, 0);
+    box-shadow: 0 0 8px var(--accent), 0 0 0 rgba(143, 190, 40, 0);
   }
   50% {
-    box-shadow: 0 0 12px var(--accent), 0 0 24px rgba(179, 236, 19, 0.15);
+    box-shadow: 0 0 12px var(--accent), 0 0 24px rgba(143, 190, 40, 0.15);
   }
 }
 
@@ -863,8 +867,8 @@
 /* ---- Graph node labels (CSS overlay, not SpriteText) ---- */
 .cg-graph-label {
   position: absolute;
-  font-family: var(--font-geist, ui-sans-serif, sans-serif);
-  font-size: 11px;
+  font-family: var(--font-geist-sans), sans-serif;
+  font-size: 13px;
   line-height: 1;
   white-space: nowrap;
   pointer-events: none;
@@ -874,18 +878,18 @@
 
 /* Root tier — accent, slightly larger, always visible */
 .cg-graph-label[data-tier="root"] {
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 600;
   color: var(--accent);
   text-shadow:
-    0 0 12px rgba(179, 236, 19, 0.35),
+    0 0 12px rgba(143, 190, 40, 0.35),
     0 1px 3px rgba(0, 0, 0, 0.8);
   letter-spacing: 0.01em;
 }
 
 /* Agency tier — secondary text */
 .cg-graph-label[data-tier="agency"] {
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 500;
   color: var(--text-secondary);
   text-shadow: 0 1px 3px rgba(0, 0, 0, 0.7);
@@ -893,7 +897,7 @@
 
 /* Leaf tier — muted, small, appears only on hover proximity */
 .cg-graph-label[data-tier="leaf"] {
-  font-size: 10px;
+  font-size: 13px;
   font-weight: 400;
   color: var(--text-muted);
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
@@ -903,7 +907,7 @@
 .cg-graph-label[data-selected] {
   color: var(--accent);
   text-shadow:
-    0 0 10px rgba(179, 236, 19, 0.4),
+    0 0 10px rgba(143, 190, 40, 0.4),
     0 1px 3px rgba(0, 0, 0, 0.8);
 }
 
@@ -931,7 +935,7 @@
 }
 
 .cg-graph-tooltip__title {
-  font-family: var(--font-geist, ui-sans-serif, sans-serif);
+  font-family: var(--font-geist-sans), sans-serif;
   font-size: 13px;
   font-weight: 600;
   color: var(--text-primary);
@@ -941,7 +945,7 @@
 
 .cg-graph-tooltip__scope {
   font-family: var(--font-mono, ui-monospace, monospace);
-  font-size: 10px;
+  font-size: 13px;
   color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 0.06em;
@@ -956,7 +960,7 @@
 }
 
 .cg-graph-tooltip__label {
-  font-size: 11px;
+  font-size: 13px;
   color: var(--text-secondary);
 }
 
@@ -966,13 +970,13 @@
 }
 
 .cg-graph-tooltip__value {
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 600;
   color: var(--text-primary);
 }
 
 .cg-graph-tooltip__date {
-  font-size: 10px;
+  font-size: 13px;
   color: var(--text-muted);
   margin-top: 2px;
 }
@@ -984,7 +988,7 @@
 }
 
 .cg-graph-tooltip__hint {
-  font-size: 10px;
+  font-size: 13px;
   color: var(--text-muted);
   letter-spacing: 0.02em;
 }
@@ -1013,12 +1017,12 @@
   border-radius: var(--radius-full);
   background: var(--accent);
   cursor: pointer;
-  box-shadow: 0 0 0 2px rgba(179, 236, 19, 0.2);
+  box-shadow: 0 0 0 2px rgba(143, 190, 40, 0.2);
   transition: box-shadow 150ms ease, transform 150ms ease;
 }
 
 .cg-range-input::-webkit-slider-thumb:hover {
-  box-shadow: 0 0 0 4px rgba(179, 236, 19, 0.25);
+  box-shadow: 0 0 0 4px rgba(143, 190, 40, 0.25);
   transform: scale(1.1);
 }
 
@@ -1123,7 +1127,7 @@
   height: 50%;
   background: radial-gradient(
     ellipse at center,
-    rgba(179, 236, 19, 0.04) 0%,
+    rgba(143, 190, 40, 0.04) 0%,
     transparent 70%
   );
   pointer-events: none;
@@ -1151,7 +1155,7 @@
   width: 22px;
   height: 22px;
   border-radius: 50%;
-  font-size: 10px;
+  font-size: 13px;
   font-weight: 700;
   letter-spacing: 0;
   border: 1px solid var(--border-strong);
@@ -1177,7 +1181,7 @@
 }
 
 .cg-onboarding-step__label {
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 500;
   color: var(--text-muted);
   white-space: nowrap;
@@ -1219,7 +1223,7 @@
 }
 
 .cg-onboarding-heading h1 {
-  font-family: var(--font-display-fallback), "Bricolage Grotesque", sans-serif;
+  font-family: var(--font-display-fallback), sans-serif;
   font-size: 32px;
   font-weight: 700;
   line-height: 1.1;
@@ -1395,7 +1399,7 @@
 }
 
 .cg-path-card__desc {
-  font-size: 12px;
+  font-size: 13px;
   color: var(--text-secondary);
   line-height: 1.55;
 }
@@ -1427,7 +1431,7 @@
   gap: 6px;
   min-height: 40px;
   padding: 0 14px;
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 600;
   cursor: pointer;
   border-bottom: 2px solid transparent;
@@ -1723,3 +1727,26 @@
   flex-direction: column;
 }
 
+
+/* Shared app navigation and note inspection. */
+.cg-brand {display:inline-flex;align-items:center;gap:var(--space-3);font-family:var(--font-geist-sans),sans-serif;font-size:20px;font-weight:600;letter-spacing:-.03em;white-space:nowrap;color:var(--text-primary)}
+.cg-brand svg{width:28px;height:28px;flex-shrink:0}
+.cg-brand-link{display:inline-flex;align-items:center;min-height:44px;text-decoration:none}
+.cg-nav-button{display:inline-flex;align-items:center;justify-content:center;gap:var(--space-2);min-height:44px;padding:var(--space-2) var(--space-4);border:1px solid var(--border-strong);border-radius:var(--radius-md);background:var(--surface);color:var(--text-primary);font-family:var(--font-geist-sans),sans-serif;font-size:14px;font-weight:500;text-decoration:none;cursor:pointer}
+.cg-nav-button:hover{background:var(--card-raised)}
+.cg-nav-button:focus-visible,.cg-brand-link:focus-visible{outline:2px solid var(--accent);outline-offset:4px}
+.cg-note-inspector{position:absolute;inset:0 0 0 auto;z-index:60;width:min(380px,100%);overflow-y:auto;overscroll-behavior:contain;padding:var(--space-6);background:var(--surface);border-left:1px solid var(--border-strong);box-shadow:var(--shadow-lg)}
+.cg-dashboard-grid{min-height:0;min-width:0;position:relative}
+@media(max-width:640px){.cg-note-inspector{top:auto;max-height:70dvh;border-top:1px solid var(--border-strong);border-left:0}.cg-brand{font-size:18px;gap:var(--space-2)}}
+.cg-topbar button,.cg-sidebar button,.cg-sidebar a,.cg-detail-panel button{min-height:44px}
+.cg-topbar button,.cg-detail-panel button{min-width:44px}
+.cg-topbar{font-family:var(--font-geist-sans),sans-serif}
+.cg-sidebar{overscroll-behavior:contain}
+.cg-detail-panel{min-height:0}
+/* Keep the app drawer independent of GSAP's desktop transform. */
+@media(min-width:1024px){.cg-sidebar{transform:translateX(0)!important;visibility:visible}}
+@media(max-width:1023px){.cg-mobile-menu-btn{display:inline-flex!important;align-items:center;justify-content:center;min-width:44px}.cg-sidebar{top:64px!important;height:calc(100dvh - 64px);transform:translateX(-100%)!important;visibility:hidden}.cg-sidebar[data-open="true"]{transform:translateX(0)!important;visibility:visible}.cg-detail-panel{position:absolute;inset:0 0 0 auto;z-index:80;width:min(380px,100%)}}
+.cg-topbar{z-index:500}
+/* App headings follow the lighter setup/settings display treatment. */
+.cg-dashboard-grid .text-display-sm,.cg-heading{font-weight:400}
+.cg-dashboard-grid input[type="checkbox"]{accent-color:var(--accent)}

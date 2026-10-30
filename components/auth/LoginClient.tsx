@@ -391,7 +391,7 @@ export default function LoginClient({destination='/entry',googleEnabled=false}:{
               </div>
 
               {resendSuccess && (
-                <p className="rounded-[var(--radius-sm)] border border-[rgba(179,236,19,0.25)] bg-[rgba(179,236,19,0.08)] p-2.5 text-center text-[12px] font-medium text-[var(--accent)]">
+                <p className="rounded-[var(--radius-sm)] border border-[color-mix(in_srgb,_var(--accent)_25%,_transparent)] bg-[color-mix(in_srgb,_var(--accent)_8%,_transparent)] p-2.5 text-center text-[12px] font-medium text-[var(--accent)]">
                   A fresh verification code has been sent to your email.
                 </p>
               )}

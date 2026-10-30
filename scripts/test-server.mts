@@ -5,8 +5,19 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { spawn } from "node:child_process";
 import { createServer } from "node:http";
+import { createServer as reservePort } from "node:net";
 
-const port = Number(process.env.TEST_DATABASE_PORT || 55439);
+const reservation = reservePort();
+await new Promise<void>((resolve) =>
+  reservation.listen(0, "127.0.0.1", resolve),
+);
+const address = reservation.address();
+if (!address || typeof address === "string")
+  throw new Error("Could not allocate test database port");
+const port = Number(process.env.TEST_DATABASE_PORT || address.port);
+await new Promise<void>((resolve, reject) =>
+  reservation.close((error) => (error ? reject(error) : resolve())),
+);
 const dir = await mkdtemp(join(tmpdir(), "contextgraph-test-"));
 const pg = new EmbeddedPostgres({
   databaseDir: dir,

@@ -55,15 +55,15 @@ export const metadata: Metadata = {
   icons: {
     icon: [
       {
-        url: '/icons/logo-dark.png',
+        url: '/icons/logo.svg',
         media: '(prefers-color-scheme: dark)',
       },
       {
-        url: '/icons/logo-light.png',
+        url: '/icons/logo.svg',
         media: '(prefers-color-scheme: light)',
       },
     ],
-    shortcut: '/icons/logo-dark.png',
+    shortcut: '/icons/logo.svg',
   },
 }
 

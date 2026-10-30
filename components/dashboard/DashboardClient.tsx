@@ -1,362 +1,191 @@
 "use client";
-
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
+import { NodeDetailPanel } from "./NodeDetailPanel";
+import { NoteInspector } from "./NoteInspector";
+import { useGraph } from "@/components/providers/GraphProvider";
+import { buildGraphView, noteCategories } from "@/lib/graph-view";
+import { ErrorBoundary } from "@/components/ui/ErrorBoundary";
 const ContextGraph3D = dynamic(
   () => import("@/components/graph/ContextGraph3D"),
   { ssr: false },
 );
-import { NodeDetailPanel } from "@/components/dashboard/NodeDetailPanel";
-import { useGraph } from "@/components/providers/GraphProvider";
-import { cn } from "@/lib/utils";
-import { ErrorBoundary } from "@/components/ui/ErrorBoundary";
-
-// ── Inline thin-line SVGs (no Lucide) ─────────────────────────────────────────
-
-function IconMaximize({ size = 10 }: { size?: number }) {
-  return (
-    <svg
-      width={size}
-      height={size}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.75"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3" />
-    </svg>
-  );
-}
-
-function IconSliders({ size = 11 }: { size?: number }) {
-  return (
-    <svg
-      width={size}
-      height={size}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.5"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <line x1="4" y1="21" x2="4" y2="14" />
-      <line x1="4" y1="10" x2="4" y2="3" />
-      <line x1="12" y1="21" x2="12" y2="12" />
-      <line x1="12" y1="8" x2="12" y2="3" />
-      <line x1="20" y1="21" x2="20" y2="16" />
-      <line x1="20" y1="12" x2="20" y2="3" />
-      <line x1="1" y1="14" x2="7" y2="14" />
-      <line x1="9" y1="8" x2="15" y2="8" />
-      <line x1="17" y1="16" x2="23" y2="16" />
-    </svg>
-  );
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-
 export default function DashboardClient() {
   const {
     nodes,
     setNodes,
     edges,
+    entries,
     isLoading,
-    selectedNodeId,
-    setSelectedNodeId,
-    setAddNodeOpen,
     error,
     refreshNodes,
-    entries,
+    selectedNodeId,
+    setSelectedNodeId,
   } = useGraph();
-
-  const [relevanceThreshold, setRelevanceThreshold] = useState(0.0);
-  const [showLabels, setShowLabels] = useState(true);
-  const [zoomTrigger, setZoomTrigger] = useState(0);
-  const [listView, setListView] = useState(false);
-
-  const [displayedNodeId, setDisplayedNodeId] = useState<string | null>(null);
-  const [isClosing, setIsClosing] = useState(false);
-
+  const [listView, setListView] = useState(false),
+    [zoomTrigger, setZoomTrigger] = useState(0),
+    [showLabels, setShowLabels] = useState(true);
+  const [noteId, setNoteId] = useState<string | null>(null),
+    [displayedNodeId, setDisplayedNodeId] = useState<string | null>(null),
+    [isClosing, setIsClosing] = useState(false);
+  const view = useMemo(
+    () => buildGraphView(nodes, entries, edges),
+    [nodes, entries, edges],
+  );
+  const note = entries.find((e) => e.id === noteId);
+  const closeNote = useCallback(() => setNoteId(null), []);
   useEffect(() => {
     if (selectedNodeId) {
+      setNoteId(null);
       setDisplayedNodeId(selectedNodeId);
       setIsClosing(false);
-    } else if (displayedNodeId) {
-      setIsClosing(true);
-    }
+    } else if (displayedNodeId) setIsClosing(true);
   }, [selectedNodeId, displayedNodeId]);
-
-  const displayedNode = displayedNodeId
-    ? nodes.find((n) => n.id === displayedNodeId)
-    : null;
-
-  const handleNodeClick = (graphNode: { id: string }) => {
-    setSelectedNodeId(graphNode.id);
-  };
-
-  if (isLoading) {
-    return (
-      <div className="flex h-full w-full bg-[var(--bg)] overflow-hidden">
-        {/* Minimal skeleton — just graph area */}
-        <div className="flex-1 h-full relative flex items-center justify-center">
-          <div className="w-48 h-48 rounded-full border border-dashed border-[var(--border)] opacity-20 animate-[spin_60s_linear_infinite]" />
-          <div className="absolute w-20 h-20 rounded-full bg-[var(--border)] opacity-15" />
-        </div>
-      </div>
-    );
+  const displayedNode = nodes.find((n) => n.id === displayedNodeId);
+  function selectGraphItem(item: { id: string }) {
+    const entry = view.entryByNode.get(item.id);
+    if (entry) {
+      setSelectedNodeId(null);
+      setNoteId(entry.id);
+    } else {
+      setNoteId(null);
+      setSelectedNodeId(view.scopeByGroup.get(item.id) || item.id);
+    }
   }
-
   return (
-    <div className="flex h-full w-full cg-dashboard-grid">
-      <div
-        className="flex-1 overflow-hidden relative"
-        style={{ height: "100%", minHeight: 0 }}
+    <div className="cg-dashboard-grid flex h-full w-full">
+      <section
+        className="flex min-h-0 min-w-0 flex-1 flex-col"
+        aria-label="Context workspace"
       >
-        <div className="absolute right-4 top-4 z-30 flex items-center gap-3 bg-[var(--surface)] p-2 rounded-[var(--radius-md)]">
-          {error && (
-            <span role="alert" className="text-sm">
-              {error}
-            </span>
-          )}
-          <button
-            className="min-h-11 px-3 text-sm underline"
-            onClick={() => void refreshNodes()}
-          >
-            Refresh context
-          </button>
-          <button
-            className="min-h-11 px-3 text-sm underline"
-            onClick={() => setListView((v) => !v)}
-          >
-            {listView ? "Graph view" : "Notes view"}
-          </button>
-        </div>
-
-        {nodes.length === 0 ? (
-          /* ── Empty state ── */
-          <div className="flex h-full flex-col items-center justify-center gap-4 px-8">
-            {/* Graph-like SVG */}
-            <svg
-              width="64"
-              height="52"
-              viewBox="0 0 72 56"
-              fill="none"
-              aria-hidden="true"
+        <header className="flex shrink-0 flex-wrap items-center justify-between gap-4 border-b border-[var(--border)] px-6 py-4">
+          <div>
+            <h1 className="text-display-sm">Your context</h1>
+            <p
+              className="text-body-sm text-[var(--text-secondary)]"
+              aria-label="Graph summary"
             >
-              <line
-                x1="36"
-                y1="14"
-                x2="12"
-                y2="43"
-                stroke="var(--border-strong)"
-                strokeWidth="1.5"
-              />
-              <line
-                x1="36"
-                y1="14"
-                x2="60"
-                y2="43"
-                stroke="var(--border-strong)"
-                strokeWidth="1.5"
-              />
-              <circle
-                cx="36"
-                cy="14"
-                r="10"
-                stroke="rgba(179,236,19,0.45)"
-                strokeWidth="1.5"
-                fill="none"
-              />
-              <circle
-                cx="12"
-                cy="43"
-                r="8"
-                stroke="var(--border-strong)"
-                strokeWidth="1.5"
-                fill="none"
-              />
-              <circle
-                cx="60"
-                cy="43"
-                r="8"
-                stroke="var(--border-strong)"
-                strokeWidth="1.5"
-                fill="none"
-              />
-            </svg>
-            <div className="text-center">
-              <p
-                className="text-[15px] font-semibold text-[var(--text-secondary)]"
-                style={{
-                  fontFamily:
-                    'var(--font-display, "Bricolage Grotesque", sans-serif)',
-                }}
-              >
-                Your graph is empty
-              </p>
-              <p className="mt-1.5 text-[13px] leading-[1.65] text-[var(--text-muted)] max-w-[220px]">
-                Add your first context node to start building your knowledge
-                graph.
-              </p>
-            </div>
-            <button
-              onClick={() => setAddNodeOpen(true)}
-              className={cn(
-                "flex h-10 items-center gap-2 rounded-[var(--radius-md)] border border-[var(--border-strong)] bg-transparent px-5",
-                "text-[13px] font-medium text-[var(--text-secondary)]",
-                "transition-[background-color,border-color,color] duration-150",
-                "hover:border-[rgba(255,255,255,0.2)] hover:bg-[rgba(255,255,255,0.04)] hover:text-[var(--text-primary)]",
-                "cursor-pointer focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[var(--accent)]",
-              )}
-            >
-              + Add first node
-            </button>
-            <Link
-              href="/connect"
-              className="inline-flex min-h-11 items-center underline"
-            >
-              Create context graph or import memory
-            </Link>
+              {entries.filter((e) => e.kind !== "resolved").length} saved notes
+              · {view.nodes.length} connected items
+            </p>
           </div>
-        ) : (
-          <>
-            {listView ? (
-              <div className="h-full overflow-auto px-6 pt-24 pb-6">
-                <h1 className="font-display text-[28px] mb-6">Your context</h1>
-                {nodes.map((node) => (
-                  <button
-                    key={node.id}
-                    onClick={() => setSelectedNodeId(node.id)}
-                    className="block min-h-11 w-full border-b border-[var(--border)] py-4 text-left"
-                  >
-                    <strong>{node.title}</strong>
-                    <p className="text-sm text-[var(--text-secondary)] whitespace-pre-wrap">
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              className="cg-nav-button"
+              onClick={() => void refreshNodes()}
+            >
+              Refresh context
+            </button>
+            <button
+              className="cg-nav-button"
+              aria-pressed={listView}
+              onClick={() => setListView((v) => !v)}
+            >
+              {listView ? "Graph view" : "Notes view"}
+            </button>
+          </div>
+        </header>
+        {error && (
+          <p role="alert" className="px-6 py-3 text-body-sm">
+            {error}
+          </p>
+        )}
+        <div className="relative min-h-0 flex-1 overflow-hidden">
+          {isLoading ? (
+            <p role="status" className="p-6 text-body-md">
+              Loading your context…
+            </p>
+          ) : !nodes.length ? (
+            <div className="p-6">
+              <Link href="/connect" className="cg-nav-button">
+                Create context graph
+              </Link>
+            </div>
+          ) : listView ? (
+            <div
+              className="h-full overflow-y-auto overscroll-contain px-6 py-6"
+              data-lenis-prevent
+              data-testid="notes-scroll"
+            >
+              {nodes.map((node) => (
+                <section key={node.id} className="mb-8">
+                  <h2 className="mb-4 text-heading-md">{node.title}</h2>
+                  {node.content.trim() && (
+                    <button
+                      className="mb-4 w-full rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--card)] p-5 text-left text-body-md whitespace-pre-wrap [overflow-wrap:anywhere]"
+                      onClick={() => setSelectedNodeId(node.id)}
+                    >
                       {node.content}
-                    </p>
+                    </button>
+                  )}
+                  <div className="grid gap-3">
                     {entries
                       .filter((e) => e.node_id === node.id)
-                      .slice(0, 5)
-                      .map((e) => (
-                        <p
-                          key={e.id}
-                          className="mt-2 text-sm text-[var(--text-secondary)]"
+                      .map((entry) => (
+                        <button
+                          key={entry.id}
+                          className="w-full rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--card)] p-5 text-left hover:border-[var(--border-strong)] focus-visible:outline-2 focus-visible:outline-[var(--accent)]"
+                          onClick={() => {
+                            setSelectedNodeId(null);
+                            setNoteId(entry.id);
+                          }}
                         >
-                          {e.entry_text}
-                        </p>
+                          <span className="mb-2 block text-body-sm text-[var(--text-secondary)]">
+                            {noteCategories[entry.kind]}
+                            {entry.source ? ` · ${entry.source}` : ""}
+                          </span>
+                          <span className="block whitespace-pre-wrap text-body-md [overflow-wrap:anywhere]">
+                            {entry.entry_text}
+                          </span>
+                        </button>
                       ))}
-                  </button>
-                ))}
-              </div>
-            ) : (
-              <ErrorBoundary
-                fallback={
-                  <div className="flex h-full items-center justify-center">
-                    <p className="text-[13px] text-[var(--text-muted)]">
-                      Graph failed to load.{" "}
-                      <button
-                        onClick={() => window.location.reload()}
-                        className="text-[var(--text-secondary)] underline underline-offset-2 hover:text-[var(--text-primary)] transition-[color] duration-100 cursor-pointer"
-                      >
-                        Refresh
-                      </button>
-                    </p>
                   </div>
-                }
-              >
-                <ContextGraph3D
-                  nodes={nodes}
-                  edges={edges}
-                  onNodeClick={handleNodeClick}
-                  selectedNodeId={selectedNodeId}
-                  relevanceFilter={relevanceThreshold}
-                  showLabels={showLabels}
-                  zoomTrigger={zoomTrigger}
-                />
-              </ErrorBoundary>
-            )}
-
-            {/* ── HUD Controls — bottom-left ── */}
-            {!listView && (
-              <div className="absolute bottom-5 left-5 z-20 w-[200px] select-none rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--card)]/90 p-3 shadow-[var(--shadow-md)] backdrop-blur-[10px]">
-                {/* Header row */}
-                <div className="mb-2.5 flex items-center justify-between">
-                  <span className="flex items-center gap-1.5 text-[9px] font-semibold uppercase tracking-[0.1em] text-[var(--text-muted)]">
-                    <IconSliders size={10} />
-                    Controls
-                  </span>
+                </section>
+              ))}
+            </div>
+          ) : (
+            <ErrorBoundary
+              fallback={
+                <div className="p-6">
+                  <p>Graph could not load.</p>
                   <button
-                    onClick={() => setZoomTrigger((p) => p + 1)}
-                    title="Fit to view"
-                    className="flex h-5 items-center gap-1 rounded-[var(--radius-xs)] border border-[var(--border)] px-1.5 text-[9px] text-[var(--text-muted)] transition-[background-color,color,border-color] duration-100 hover:border-[var(--border-strong)] hover:text-[var(--text-secondary)] cursor-pointer focus-visible:outline-none"
+                    className="cg-nav-button mt-4"
+                    onClick={() => setListView(true)}
                   >
-                    <IconMaximize size={9} />
-                    Fit
+                    Open notes view
                   </button>
                 </div>
-
-                <div className="mb-2.5 h-px bg-[var(--border)]" />
-
-                {/* Min Relevance slider */}
-                <div className="mb-2.5 flex flex-col gap-1.5">
-                  <div className="flex items-center justify-between">
-                    <span className="text-[9px] uppercase tracking-[0.07em] text-[var(--text-muted)]">
-                      Min Relevance
-                    </span>
-                    <span className="font-mono text-[9px] font-semibold text-[var(--text-secondary)]">
-                      {Math.round(relevanceThreshold * 100)}%
-                    </span>
-                  </div>
+              }
+            >
+              <ContextGraph3D
+                nodes={view.nodes}
+                edges={view.edges}
+                onNodeClick={selectGraphItem}
+                selectedNodeId={note ? `note:${note.id}` : selectedNodeId}
+                showLabels={showLabels}
+                zoomTrigger={zoomTrigger}
+              />
+              <div className="absolute bottom-4 left-4 z-20 flex flex-wrap items-center gap-3 rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--surface)] p-2">
+                <button
+                  className="cg-nav-button"
+                  onClick={() => setZoomTrigger((v) => v + 1)}
+                >
+                  Fit graph
+                </button>
+                <label className="inline-flex min-h-11 cursor-pointer items-center gap-2 px-3 text-body-sm">
                   <input
-                    type="range"
-                    min="0.0"
-                    max="0.8"
-                    step="0.1"
-                    value={relevanceThreshold}
-                    onChange={(e) =>
-                      setRelevanceThreshold(parseFloat(e.target.value))
-                    }
-                    className="cg-range-input w-full"
+                    type="checkbox"
+                    checked={showLabels}
+                    onChange={(e) => setShowLabels(e.target.checked)}
                   />
-                </div>
-
-                <div className="mb-2.5 h-px bg-[var(--border)]" />
-
-                {/* Labels toggle */}
-                <div className="flex items-center justify-between">
-                  <span className="text-[9px] uppercase tracking-[0.07em] text-[var(--text-muted)]">
-                    Labels
-                  </span>
-                  <button
-                    onClick={() => setShowLabels((v) => !v)}
-                    role="switch"
-                    aria-checked={showLabels}
-                    className={cn(
-                      "relative flex h-[18px] w-[32px] cursor-pointer items-center rounded-full border outline-none transition-colors duration-150",
-                      showLabels
-                        ? "border-[var(--accent)] bg-[var(--accent)]"
-                        : "border-[var(--border-strong)] bg-transparent",
-                    )}
-                  >
-                    <span
-                      className={cn(
-                        "absolute h-[12px] w-[12px] rounded-full shadow-sm transition-transform duration-150",
-                        showLabels
-                          ? "translate-x-[16px] bg-[var(--on-accent)]"
-                          : "translate-x-[2px] bg-[var(--text-muted)]",
-                      )}
-                    />
-                  </button>
-                </div>
+                  Show labels
+                </label>
               </div>
-            )}
-          </>
-        )}
-      </div>
-
-      {/* Node detail panel */}
+            </ErrorBoundary>
+          )}
+        </div>
+      </section>
       {displayedNode && (
         <NodeDetailPanel
           node={displayedNode}
@@ -376,6 +205,17 @@ export default function DashboardClient() {
             setNodes((prev) => prev.filter((n) => n.id !== id));
             setSelectedNodeId(null);
             void refreshNodes();
+          }}
+        />
+      )}
+      {note && (
+        <NoteInspector
+          entry={note}
+          node={nodes.find((n) => n.id === note.node_id)}
+          onClose={closeNote}
+          onOpenContext={() => {
+            setNoteId(null);
+            setSelectedNodeId(note.node_id);
           }}
         />
       )}

@@ -194,3 +194,10 @@ Added checked-in schema snapshots, additive SQL and a dry-run-first provider mig
 ### 2026-10-30 — Production upgrade: legacy uniqueness invariants
 
 The first live reviewed-import smoke test exposed schema drift absent from fresh test databases: production lacked unique indexes on context_nodes(user_id, scope) and api_keys(user_id), which typed upserts require. Added a separate non-destructive dated migration, wired it into the upgrade runner/snapshot, and added a regression test that removes the fresh-install constraints before upgrading and exercising import/key replacement. Historic duplicates are never deleted automatically; index creation fails for review if any exist. Release verification must exercise actual upserts on the restored legacy schema, not only apply DDL and compare row counts.
+
+
+### 2026-10-30 — Saved-note graph projection and app scrolling
+
+The dashboard now projects active context_entries into connected graph leaves, with category branches beneath Me. This fixes reviewed imports appearing as one root while preserving storage, note IDs, scopes and the MCP context contract. Virtual IDs are display-only and never sent to node mutation APIs; selecting a leaf opens its actual note and links to its owning context. Resolved notes stay in Notes view but leave the active graph. No migration or model classification is required.
+
+Lenis is scoped to the landing page; app routes use native page/panel scrolling. Its GSAP ticker callback is removed on teardown. The dashboard has one mobile drawer state with responsive transforms independent of desktop entrance animation. Removed the preview-eye entry point and sidebar Add Node action; capture management stays in Settings. Shared branding, typography and darker lime theme tokens are documented in DESIGN.md. Integration and browser test databases allocate available loopback ports to avoid stale-cluster collisions.

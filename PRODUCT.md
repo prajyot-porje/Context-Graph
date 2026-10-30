@@ -25,7 +25,7 @@ Sign in → choose Claude or ChatGPT → configure its connector → approve sel
 
 ## Dashboard and ongoing use
 
-The dashboard presents the real graph, node content, saved notes, provenance, and context preview. A notes view provides an alternative to WebGL. Nodes support creation, editing, and deletion. Notes can be deleted, and open problems marked resolved.
+The dashboard presents the real graph, node content, saved notes, provenance, and context preview. A notes view provides an alternative to WebGL. Active saved notes appear as connected leaves grouped by their existing categories; selecting a leaf reveals the full note without creating duplicate stored facts. Existing context scopes support editing and deletion. The sidebar has no Add Node action; users add context through reviewed imports or manual setup. Notes can be deleted, and open problems marked resolved.
 
 get_context loads approved core content and active notes. Automatic capture can suggest decisions, preferences, constraints, and unresolved problems; Settings visibly enables/pauses it. Queued processing and failures are shown truthfully. Keyword recall is available; semantic recall is not yet implemented. Legacy save_context calls work for existing clients, but manual /save is not the required product path.
 

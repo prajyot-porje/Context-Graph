@@ -1,4 +1,6 @@
 "use client";
+import { Brand } from '@/components/ui/Brand'
+
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import s from "./SetupClient.module.css";
@@ -59,7 +61,7 @@ export default function OAuthAction({
       <div className={s.authLayout}>
         <section className={s.main}>
           <Link href="/connect" className={s.logo}>
-            ContextGraph
+            <Brand />
           </Link>
           <h1>
             {consent

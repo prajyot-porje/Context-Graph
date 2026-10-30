@@ -2,8 +2,22 @@ import EmbeddedPostgres from "embedded-postgres";
 import { mkdtemp, readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
+import { createServer } from "node:net";
 
-export async function testDatabase(port = 55440) {
+export async function testDatabase(port?: number) {
+  if (port === undefined) {
+    const listener = createServer();
+    await new Promise<void>((resolve) =>
+      listener.listen(0, "127.0.0.1", resolve),
+    );
+    const address = listener.address();
+    if (!address || typeof address === "string")
+      throw new Error("Could not allocate test database port");
+    port = address.port;
+    await new Promise<void>((resolve, reject) =>
+      listener.close((error) => (error ? reject(error) : resolve())),
+    );
+  }
   const dir = await mkdtemp(join(tmpdir(), "contextgraph-unit-"));
   const postgres = new EmbeddedPostgres({
     databaseDir: dir,

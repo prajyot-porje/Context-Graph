@@ -20,34 +20,28 @@ export function ContextStatus() {
       clearInterval(timer);
     };
   }, []);
+  const connected = state?.connections.filter((c) => !c.revoked_at).length ?? 0;
   return (
     <nav
       aria-label="Context actions"
-      className="flex flex-wrap items-center gap-4 border-b border-[var(--border)] bg-[var(--surface)] px-6 py-2 text-sm text-[var(--text-secondary)]"
+      className="flex shrink-0 flex-wrap items-center justify-between gap-3 border-b border-[var(--border)] px-6 py-3 text-body-sm"
     >
-      <Link
-        className="inline-flex min-h-11 items-center underline focus-visible:outline-2 focus-visible:outline-[var(--accent)]"
-        href="/connect"
-      >
-        Import memory / connect another AI
+      <p className="text-[var(--text-secondary)]" role="status">
+        {state?.failedCount ? (
+          <Link href="/settings" className="underline">
+            {state.failedCount} notes need retry
+          </Link>
+        ) : state?.pendingCount ? (
+          `${state.pendingCount} notes processing`
+        ) : state ? (
+          `${connected} AI connection${connected === 1 ? "" : "s"}`
+        ) : (
+          "Loading connections…"
+        )}
+      </p>
+      <Link className="cg-nav-button" href="/connect">
+        Manage connections
       </Link>
-      <Link
-        className="inline-flex min-h-11 items-center underline focus-visible:outline-2 focus-visible:outline-[var(--accent)]"
-        href="/settings"
-      >
-        Capture & connections
-      </Link>
-      <span role="status">
-        {state
-          ? state.failedCount
-            ? `${state.failedCount} notes need retry in Settings`
-            : state.pendingCount
-              ? `${state.pendingCount} notes processing`
-              : state.captureEnabled
-                ? "Automatic capture enabled"
-                : "Automatic capture paused"
-          : ""}
-      </span>
     </nav>
   );
 }

@@ -172,7 +172,7 @@ export function Features() {
                         className={cn(
                           'inline-flex items-center gap-2 px-3.5 py-1.5 rounded-[var(--radius-sm)] text-[12px] font-medium border transition-[color,background-color,border-color,box-shadow,transform] duration-150 active:scale-95 cursor-pointer',
                           isSelected
-                            ? 'bg-[var(--accent-muted)] border-[var(--accent)] text-[var(--text-primary)] font-semibold shadow-[0_0_12px_rgba(179,236,19,0.15)]'
+                            ? 'bg-[var(--accent-muted)] border-[var(--accent)] text-[var(--text-primary)] font-semibold shadow-[0_0_12px_color-mix(in_srgb,_var(--accent)_15%,_transparent)]'
                             : 'bg-[var(--surface)] border-[var(--border)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:border-[var(--border-strong)]'
                         )}
                       >

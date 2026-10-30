@@ -23,13 +23,13 @@ export default function HeroDemoCard() {
   const colors = {
     cardBg: theme === 'dark' ? '#111111' : '#f5f5f5',
     border: theme === 'dark' ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)',
-    node1Fill: '#b3ec13', // ME — same in both modes
+    node1Fill: 'var(--accent)', // ME — same in both modes
     node1Text: '#000000',
     node2Fill: theme === 'dark' ? 'rgba(255,255,255,0.14)' : 'rgba(0,0,0,0.09)',
     node2Text: theme === 'dark' ? '#EEEEEE' : '#111111',
     node3Fill: theme === 'dark' ? 'rgba(255,255,255,0.09)' : 'rgba(0,0,0,0.06)',
     node3Text: theme === 'dark' ? '#CCCCCC' : '#333333',
-    edgeStroke: theme === 'dark' ? 'rgba(179,236,19,0.3)' : 'rgba(100,150,0,0.25)',
+    edgeStroke: theme === 'dark' ? 'color-mix(in srgb, var(--accent) 30%, transparent)' : 'rgba(100,150,0,0.25)',
     mutedText: theme === 'dark' ? '#666666' : '#999999',
     statusBg: theme === 'dark' ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.04)',
   }
@@ -194,7 +194,7 @@ export default function HeroDemoCard() {
             y="140"
             textAnchor="middle"
             fontSize="10"
-            fill="#b3ec13"
+            fill="var(--accent)"
             fontFamily="var(--font-geist, sans-serif)"
             id="demo-relevance-me"
             opacity="0"
@@ -284,14 +284,14 @@ export default function HeroDemoCard() {
         {/* STATUS BAR */}
         <g id="demo-status" opacity="0">
           <rect x="14" y="288" width="210" height="20" rx="6" fill={colors.statusBg} />
-          <circle cx="26" cy="298" r="3.5" fill="#b3ec13">
+          <circle cx="26" cy="298" r="3.5" fill="var(--accent)">
             <animate attributeName="opacity" values="1;0.3;1" dur="2s" repeatCount="indefinite" />
           </circle>
           <text
             x="36"
             y="302"
             fontSize="9"
-            fill="#b3ec13"
+            fill="var(--accent)"
             letterSpacing="1"
             fontFamily="var(--font-geist, sans-serif)"
           >

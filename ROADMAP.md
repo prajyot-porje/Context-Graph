@@ -682,3 +682,14 @@ Backed up the public application tables to a private ignored local file. Rehears
 Final local suite: 42 passing tests, strict TypeScript, lint with zero errors (four existing marketing image warnings). GitHub CI passed the initial complete release. The live smoke test passed canonical discovery, real login, empty-account dashboard gating, OAuth authorization/consent/PKCE/JWKS, draft-only receipt, reviewed commit, readiness activation, saved-memory retrieval through both OAuth and a separate API-key client, observed connection status and token rejection after disconnect. The synthetic account and its data were removed after testing.
 
 The owner can now verify the deployed experience. Actual Google sign-in and the hosted ChatGPT/Claude conversation UIs remain account-specific manual checks; the live OAuth/MCP smoke verifies our deployed server, not those vendor interfaces. Deferred product scope remains unchanged.
+
+
+## 17. UI and experience refinement — 2026-10-30
+
+Implemented the owner's follow-up: shared typography and vector branding with a darker lime; button styling for setup/settings navigation; removed the dashboard preview-eye and sidebar Add Node entry points; compact truthful connection/queue status with capture controls in Settings; real saved-note graph branches/leaves and note inspection; complete Notes view without the old five-note truncation. No stored notes, scopes, permissions or MCP contracts are changed.
+
+App routes now scroll natively, with Lenis confined to the landing page and its ticker cleaned up on route changes. Fixed the mobile drawer inheriting a desktop GSAP transform and intercepting scrolling; the drawer is closed by default and closes with Escape. The graph fits promptly, uses readable planar positioning in the existing 3D renderer and preserves positions through authenticated background refresh.
+
+Verification: 45 unit/database tests pass; the five-scenario optimized browser suite covers existing auth/import/OAuth behavior plus grouped graph items, note selection, 22-note scrolling, mobile drawer behavior, setup/settings native scrolling, navigation button styling, shared brand/type across public pages, and dark/light accent values. Screenshots and logs are in ignored .test-output/ux-* files. The final visual pass adjusts graph labels to remain outside spheres and matches app heading weight to the settings reference. No database migration is required for this release.
+
+Final local evidence: ux-tests-final.log (45 passing tests), ux-e2e-ship.log (five complete browser scenarios), ux-e2e-complete.log (two focused final visual scenarios), ux-e2e-brand-final.log (light CTA contrast and 44px target), ux-build-release.log, ux-types-complete.log and ux-lint-complete.log. Existing accounts receive the graph projection on refresh; no re-import or database migration is needed.
