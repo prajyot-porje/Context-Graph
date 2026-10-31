@@ -63,6 +63,7 @@ async function request<T>(
       body === undefined ? undefined : { "Content-Type": "application/json" },
     body: body === undefined ? undefined : JSON.stringify(body),
     cache: "no-store",
+    signal: AbortSignal.timeout(30000),
   });
   const data = await response.json();
   if (!response.ok) throw new Error(data.error || "Could not save. Try again.");
@@ -96,16 +97,23 @@ export default function SettingsClient({
   const pending = useRef(false);
   const leaving = useRef(false);
   const upload = useRef<HTMLInputElement>(null);
+  const refreshVersion = useRef(0);
   async function refresh() {
-    const [next, key, active] = await Promise.all([
-      request<SetupStatus>("/api/setup/status"),
-      request<{ prefix: string | null }>("/api/apikey"),
-      request<WebSession[]>("/api/settings/sessions"),
-    ]);
-    setStatus(next);
-    setPrefix(key.prefix || "");
-    setSessions(active);
-    setLoaded(true);
+    const version = ++refreshVersion.current;
+    try {
+      const [next, key, active] = await Promise.all([
+        request<SetupStatus>("/api/setup/status"),
+        request<{ prefix: string | null }>("/api/apikey"),
+        request<WebSession[]>("/api/settings/sessions"),
+      ]);
+      if (version !== refreshVersion.current) return;
+      setStatus(next);
+      setPrefix(key.prefix || "");
+      setSessions(active);
+      setLoaded(true);
+    } catch (error) {
+      if (version === refreshVersion.current) throw error;
+    }
   }
   useEffect(() => {
     void refresh().catch(() =>
@@ -124,7 +132,10 @@ export default function SettingsClient({
     window.addEventListener("hashchange", hash);
     const stored = localStorage.getItem("cg-default-view");
     if (stored === "notes") setDefaultView(stored);
-    return () => window.removeEventListener("hashchange", hash);
+    return () => {
+      refreshVersion.current++;
+      window.removeEventListener("hashchange", hash);
+    };
   }, []);
   async function action(
     id: string,
@@ -305,9 +316,21 @@ export default function SettingsClient({
           aria-label={current.name}
           aria-busy={!!busy || !loaded}
         >
+          <div className={s.sectionHeading}>
+            <h2>{current.name}</h2>
+            <button
+              type="button"
+              className={s.iconButton}
+              aria-label="Refresh settings"
+              disabled={!!busy}
+              onClick={() => void action("refresh", refresh)}
+            >
+              <RefreshCw size={18} />
+            </button>
+          </div>
           <fieldset
             className={s.fields}
-            disabled={!!busy}
+            disabled={!!busy || !loaded}
             onClickCapture={(event) => {
               if (busy) {
                 event.preventDefault();
@@ -315,18 +338,6 @@ export default function SettingsClient({
               }
             }}
           >
-            <div className={s.sectionHeading}>
-              <h2>{current.name}</h2>
-              <button
-                type="button"
-                className={s.iconButton}
-                aria-label="Refresh settings"
-                disabled={!!busy}
-                onClick={() => void action("refresh", refresh)}
-              >
-                <RefreshCw size={18} />
-              </button>
-            </div>
             {error && (
               <p className={s.error} role="alert">
                 {error}
