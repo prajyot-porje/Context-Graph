@@ -268,14 +268,16 @@ export default function SetupClient({
         </div>
       </header>
       <div className={s.flowLayout}>
-        <div className={s.flowIntro}>
-          <h1>Your context. Ready for your next AI.</h1>
-          <p>
-            {review
-              ? "One final review before these notes join your context."
-              : "Connect the tools you use. Choose what you carry forward."}
-          </p>
-        </div>
+        {choosing && !review && (
+          <div className={s.flowIntro}>
+            <h1>Your context. Ready for your next AI.</h1>
+            <p>
+              {review
+                ? "One final review before these notes join your context."
+                : "Connect the tools you use. Choose what you carry forward."}
+            </p>
+          </div>
+        )}
         <section className={s.main} aria-busy={busy}>
           <fieldset
             className={s.flowFields}
@@ -294,7 +296,7 @@ export default function SetupClient({
             </div>
             {review ? (
               <>
-                <h2>Choose what to remember</h2>
+                <h1>Choose what to remember</h1>
                 <p>
                   Received from {names[run.provider]}. Correct anything
                   outdated, and leave out facts you do not want saved.
@@ -374,7 +376,7 @@ export default function SetupClient({
                   <ArrowLeft size={16} />
                   Choose another AI
                 </button>
-                <h2>Connect another AI</h2>
+                <h1>Connect another AI</h1>
                 <p>
                   Use any client that supports remote MCP with OAuth. Add a
                   server named ContextGraph with this URL.

@@ -909,3 +909,37 @@
     padding: var(--space-5);
   }
 }
+
+/* Preserve spacing against the shared input rule above. */
+.page .reviewTools .search input {
+  padding-left: var(--space-10);
+}
+.flowLayout .main h1 {
+  font-family: var(--font-display-fallback), sans-serif;
+  font-size: 28px;
+  font-weight: 400;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+  margin: 0 0 var(--space-4);
+}
+.flowLayout .main > fieldset > h1 {
+  text-align: center;
+}
+.guideHeading h1 {
+  margin-bottom: 0 !important;
+}
+.page .previewToggle {
+  display: none;
+}
+@media (max-width: 720px) {
+  .page .previewToggle {
+    display: inline-flex;
+    margin-left: auto;
+    padding: var(--space-2);
+    background: transparent;
+  }
+  .walkthrough[data-expanded="false"] .previewBody,
+  .walkthrough[data-expanded="false"] > p {
+    display: none;
+  }
+}

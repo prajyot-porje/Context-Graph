@@ -30,6 +30,7 @@ export function ConnectionGuide({
   back: () => void;
 }) {
   const [step, setStep] = useState(0);
+  const [showPreview, setShowPreview] = useState(false);
   const provider = run.provider === "chatgpt" ? "chatgpt" : "claude";
   const name = provider === "chatgpt" ? "ChatGPT" : "Claude";
   const url = `${appUrl}/api/mcp`;
@@ -50,7 +51,7 @@ export function ConnectionGuide({
       </button>
       <div className={s.guideHeading}>
         <ProviderLogo provider={provider} />
-        <h2>Connect {name}</h2>
+        <h1>Connect {name}</h1>
       </div>
       <ol className={s.stepTabs} aria-label="Connection steps">
         {titles.map((title, i) => (
@@ -186,12 +187,25 @@ export function ConnectionGuide({
             )}
           </div>
         </section>
-        <aside className={s.walkthrough} aria-label="Illustrated setup preview">
+        <aside
+          className={s.walkthrough}
+          aria-label="Illustrated setup preview"
+          data-expanded={showPreview}
+        >
           <div className={s.previewTop}>
             <ProviderLogo provider={provider} size={24} />
             <span>{name} · setup preview</span>
+            <button
+              type="button"
+              className={s.previewToggle}
+              aria-expanded={showPreview}
+              aria-controls="setup-preview-body"
+              onClick={() => setShowPreview(!showPreview)}
+            >
+              {showPreview ? "Hide" : "Show"}
+            </button>
           </div>
-          <div className={s.previewBody}>
+          <div className={s.previewBody} id="setup-preview-body">
             {step === 0 ? (
               <>
                 <h3>New custom connector</h3>

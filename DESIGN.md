@@ -512,3 +512,5 @@ Keep neutral surfaces and the existing muted-lime accent. Provider logos are mon
 Three centered provider choices (Claude, ChatGPT, another MCP client) run horizontally on desktop and stack on mobile. Reveal one task at a time: name/URL, authorization, then selected context sharing. A smaller illustrated preview follows the current step, clearly labeled as a guide. Connections are confirmed by authenticated client activity, never by opening a link. Multiple connections may coexist.
 
 Review uses searchable category-filtered rows, six per page, with expandable editors. Include/exclude choices persist across pages; save applies to all included notes. Keep the save action available at the bottom. Loading locks fields, competing actions and navigation. Successful authentication/save stays busy until departure; no cleared-field flash or reactivated submit during navigation.
+
+On narrow screens, the illustrative connection preview is collapsed behind a Show control. The introductory brand/value heading appears on provider selection only; detailed connection and review pages lead with their current task.
