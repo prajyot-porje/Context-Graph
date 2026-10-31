@@ -17,11 +17,13 @@ export default function OAuthAction({
   consent,
   clientName,
   scopes,
+  userEmail,
 }: {
   query: string;
   consent: boolean;
   clientName?: string;
   scopes?: string;
+  userEmail?: string;
 }) {
   const [error, setError] = useState(""),
     [busy, setBusy] = useState(false);
@@ -89,6 +91,11 @@ export default function OAuthAction({
           </h1>
           {consent && (
             <>
+              {userEmail && (
+                <p className={s.small}>
+                  Signed in as <strong>{userEmail}</strong>
+                </p>
+              )}
               <div className={s.requestingApp}>
                 <span className={s.clientAvatar} aria-hidden="true">
                   {(clientName || "?").slice(0, 1).toUpperCase()}

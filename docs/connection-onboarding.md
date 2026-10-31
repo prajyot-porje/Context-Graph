@@ -20,3 +20,10 @@ Six compact rows per page replace the full stack of editors. Search and category
 ## Visual assets
 
 Monochrome Claude and OpenAI identity SVGs come from [Lobe Icons](https://github.com/lobehub/lobe-icons), packages/static-svg/icons/claude.svg and openai.svg. Their marks identify the respective providers, without implying affiliation. The existing ContextGraph mark remains the app identity.
+
+
+## UX research applied
+
+[NN/g: Progressive disclosure](https://www.nngroup.com/articles/progressive-disclosure/) recommends showing the essential choices first and exposing secondary options only when needed. Here, provider cards lead to one task at a time; account caveats and prompt details remain available on demand. This is the rationale for a step-linked preview instead of an unrelated autoplay loop.
+
+[Microsoft: Consent experience](https://learn.microsoft.com/en-us/entra/identity-platform/application-consent-experience) identifies app identity, the account being accessed, permission descriptions and the ability to remove access as core consent information. Our consent layout uses those building blocks without a verified-publisher claim or an inferred third-party logo. It distinguishes import review from ongoing capture and notes that write scope can manage existing notes.

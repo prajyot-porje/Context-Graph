@@ -10,9 +10,21 @@ export default async function OAuthConsent({
 }) {
   const query = oauthQuery(await searchParams);
   if (!query) redirect("/connect");
-  if (!(await auth.api.getSession({ headers: await headers() })))
+  const session = await auth.api.getSession({ headers: await headers() });
+  if (!session)
     redirect(`/oauth/login?oauth_query=${encodeURIComponent(query)}`);
-  const parameters=new URLSearchParams(query);
-  const client=await auth.api.getOAuthClientPublic({headers:await headers(),query:{client_id:parameters.get('client_id')||''}});
-  return <OAuthAction query={query} consent clientName={client.client_name || client.client_id} scopes={parameters.get('scope')||''}/>;
+  const parameters = new URLSearchParams(query);
+  const client = await auth.api.getOAuthClientPublic({
+    headers: await headers(),
+    query: { client_id: parameters.get("client_id") || "" },
+  });
+  return (
+    <OAuthAction
+      query={query}
+      consent
+      clientName={client.client_name || client.client_id}
+      scopes={parameters.get("scope") || ""}
+      userEmail={session.user.email}
+    />
+  );
 }
