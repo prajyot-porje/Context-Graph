@@ -1,6 +1,6 @@
 // Isolated real PostgreSQL and real Next.js. Never reads .env.local or a live DB URL.
 import { mailFixture } from "../tests/mail-fixture";
-import { stopTestDatabase } from "../tests/database-cleanup";
+import { stopTestDatabase, closeTestPool } from "../tests/database-cleanup";
 import EmbeddedPostgres from "embedded-postgres";
 import { mkdtemp, readFile, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -122,8 +122,8 @@ await new Promise<void>((resolve) =>
   provider.listen(3101, "127.0.0.1", resolve),
 );
 if (process.argv.includes("--generate-schema")) {
-  await authLockDatabase.end();
-  await database.end();
+  await closeTestPool(authLockDatabase);
+  await closeTestPool(database);
   provider.close();
   await smtp.close();
   await stopTestDatabase(pg, dir);
@@ -148,10 +148,10 @@ async function stop() {
   if (stopping) return;
   stopping = true;
   app.kill();
-  await authLockDatabase.end();
+  await closeTestPool(authLockDatabase);
   provider.close();
   await smtp.close();
-  await database.end();
+  await closeTestPool(database);
   await stopTestDatabase(pg, dir);
   process.exit(0);
 }

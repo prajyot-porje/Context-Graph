@@ -1,3 +1,4 @@
+import type { Pool } from "pg";
 import type EmbeddedPostgres from "embedded-postgres";
 import { rm } from "node:fs/promises";
 import { basename, dirname, resolve } from "node:path";
@@ -27,5 +28,28 @@ export async function stopTestDatabase(
       maxRetries: 10,
       retryDelay: 100,
     });
+  }
+}
+
+/** pg removes clients from totalCount before their TCP end callbacks finish. */
+export async function closeTestPool(pool: Pool) {
+  const expected = pool.totalCount;
+  if (!expected) {
+    await pool.end();
+    return;
+  }
+  let count = 0;
+  let onRemove: () => void = () => {};
+  const closed = new Promise<void>((resolve) => {
+    onRemove = () => {
+      if (++count >= expected) resolve();
+    };
+    pool.on("remove", onRemove);
+  });
+  try {
+    await pool.end();
+    await closed;
+  } finally {
+    pool.off("remove", onRemove);
   }
 }

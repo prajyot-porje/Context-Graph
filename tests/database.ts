@@ -3,7 +3,7 @@ import { mkdtemp, readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { createServer } from "node:net";
-import { stopTestDatabase } from "./database-cleanup";
+import { stopTestDatabase, closeTestPool } from "./database-cleanup";
 
 export async function testDatabase(port?: number) {
   if (port === undefined) {
@@ -58,8 +58,8 @@ export async function testDatabase(port?: number) {
   return {
     database,
     async stop() {
-      await authLockDatabase.end();
-      await database.end();
+      await closeTestPool(authLockDatabase);
+      await closeTestPool(database);
       await stopTestDatabase(postgres, dir);
     },
   };
