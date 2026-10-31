@@ -534,9 +534,8 @@ export async function getImport(user: string, id: string) {
 export async function getSetupImport(user: string, id: string) {
   const original = await getImport(user, id);
   if (
-    original.status === "committed" ||
-    (["waiting", "review"].includes(original.status) &&
-      new Date(original.expires_at) > new Date())
+    ["waiting", "review"].includes(original.status) &&
+    new Date(original.expires_at) > new Date()
   )
     return original;
   const replacement = await query<ImportRun>(

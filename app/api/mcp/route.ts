@@ -232,15 +232,24 @@ export async function POST(request: Request) {
             user,
             z.uuid().parse(args.attempt_id),
           );
+          const active = new Date(run.expires_at) > new Date();
+          const reviewUrl = `${getBaseUrl()}/connect?attempt=${run.id}`;
+          const waiting = active && run.status === "waiting";
+          const review = active && run.status === "review";
           return text({
             attempt_id: run.id,
             status: run.status,
-            instructions:
-              ["waiting", "review"].includes(run.status) &&
-              new Date(run.expires_at) > new Date()
-                ? setupPrompt(run.id)
-                : `This import is closed. Open ${getBaseUrl()}/connect and select ${run.provider} to start a new attempt, then call contextgraph_setup again with the original ID to find it. Never use remember to bypass website review.`,
-            next: "After approval submit notes, then ask the user to review and save them on the website.",
+            review_url: reviewUrl,
+            instructions: waiting
+              ? setupPrompt(run.id)
+              : review
+                ? `A draft is already waiting for website review at ${reviewUrl}. Tell the user to review and save it there. Do not replace the draft or claim these notes are active saved context.`
+                : `This import is closed${run.status === "committed" ? " and was already saved" : ""}. Open ${getBaseUrl()}/connect and select ${run.provider} to start a new attempt, then call contextgraph_setup again with the original ID to find it. Never use remember to bypass website review.`,
+            next: waiting
+              ? "After approval submit notes using the returned attempt_id, then ask the user to review and save them on the website."
+              : review
+                ? "Review the received draft on the website."
+                : "Start a new attempt on the website, then retry setup to find it.",
           });
         }
         if (name === "submit_context_import") {

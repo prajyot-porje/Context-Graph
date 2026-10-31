@@ -264,6 +264,18 @@ describe("connection import recovery and settings boundaries", () => {
       ]),
     ).rejects.toThrow("closed");
     await expect(db.getSetupImport("bob", chat.id)).rejects.toThrow();
+    const received = await db.submitImport("alice", replacement.id, [
+      { text: "A second approved import." },
+    ]);
+    await db.commitImport("alice", replacement.id, received.revision);
+    expect((await db.getSetupImport("alice", replacement.id)).status).toBe(
+      "committed",
+    );
+    const next = await db.createImport("alice", "chatgpt");
+    expect((await db.getSetupImport("alice", replacement.id)).id).toBe(next.id);
+    expect((await db.getImport("alice", replacement.id)).status).toBe(
+      "committed",
+    );
   });
   it("exports only the owner's saved content and never credentials or unsaved drafts", async () => {
     await seed("An exported approved preference.");
