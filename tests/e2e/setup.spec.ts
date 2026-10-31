@@ -1116,9 +1116,15 @@ test("settings persist profile and appearance, revoke sessions and keys, and exp
   await page
     .getByRole("button", { name: "Sign out other sessions", exact: true })
     .click();
+  const revokeResponse = page.waitForResponse(
+    (response) =>
+      response.url().endsWith("/api/settings/sessions") &&
+      response.request().method() === "DELETE",
+  );
   await page
     .getByRole("button", { name: "Confirm change", exact: true })
     .click();
+  expect((await revokeResponse).ok()).toBe(true);
   expect(
     await (await second.request.get(origin + "/api/auth/get-session")).json(),
   ).toBeNull();
