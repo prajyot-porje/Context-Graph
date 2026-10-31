@@ -183,7 +183,19 @@ export async function POST(request: Request) {
       principal.issuedAt,
     );
     const server = new Server(
-      { name: "contextgraph", version: "2.0.0" },
+      {
+        name: "contextgraph",
+        title: "ContextGraph",
+        version: "2.0.0",
+        websiteUrl: getBaseUrl(),
+        icons: [
+          {
+            src: `${getBaseUrl()}/icons/logo.svg`,
+            mimeType: "image/svg+xml",
+            sizes: ["any"],
+          },
+        ],
+      },
       { capabilities: { tools: {} }, instructions: MEMORY_PROTOCOL },
     );
     server.setRequestHandler(ListToolsRequestSchema, async () => ({

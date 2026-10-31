@@ -1762,3 +1762,9 @@
 .auth-text-action:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; }
 .auth-text-action:active { background: var(--card); }
 .auth-text-action:disabled { opacity: .5; cursor: not-allowed; }
+
+/* Product typography follows auth/setup; marketing display weights stay editorial. */
+:where(main:not(.cg-landing)) .text-display-sm { font-weight: 400; }
+.cg-provider-logo { object-fit: contain; }
+[data-theme="dark"] .cg-provider-logo { filter: invert(1); }
+.auth-text-action[aria-disabled="true"] { opacity: .5; cursor: not-allowed; }

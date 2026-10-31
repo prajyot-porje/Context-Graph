@@ -30,8 +30,11 @@ async function signup(page: Page) {
     headers: { Origin: origin },
   });
   expect(verified.ok(), await verified.text()).toBeTruthy();
-  const login = await page.request.post('/api/auth/sign-in/email', { data: {email,password:'test-password-123'}, headers:{Origin:origin} });
-  expect(login.ok(),await login.text()).toBeTruthy();
+  const login = await page.request.post("/api/auth/sign-in/email", {
+    data: { email, password: "test-password-123" },
+    headers: { Origin: origin },
+  });
+  expect(login.ok(), await login.text()).toBeTruthy();
   return email;
 }
 async function oauth(page: Page, name: string) {
@@ -284,10 +287,9 @@ test("fresh login never exposes an empty graph; manual context is reviewed and r
   await page
     .getByRole("button", { name: /Claude Connect a remote connector/ })
     .click();
-  await page.mouse.wheel(0, 900);
-  await expect
-    .poll(() => page.evaluate(() => window.scrollY))
-    .toBeGreaterThan(100);
+  await expect(page.getByLabel("Connector name", { exact: true })).toHaveValue(
+    "ContextGraph",
+  );
   expect(
     await page.evaluate(
       () => document.documentElement.scrollWidth <= innerWidth,
@@ -351,6 +353,7 @@ test("real OAuth and MCP round trip: reviewed import, second client recall, dele
   ).toBeVisible();
   await page.goto("/dashboard");
   await expect(page).toHaveURL(/connect/);
+  await page.getByRole("button", { name: /Prefers verbose answers/ }).click();
   await page
     .getByLabel("Note 2", { exact: true })
     .fill("Prefers concise answers.");
@@ -501,7 +504,9 @@ test("email signup, OTP verification and returning login through actual forms", 
   await page.goto("/signup");
   await expect(page.getByLabel("Name", { exact: true })).toHaveCount(0);
   await page.getByLabel("Email", { exact: true }).fill(email);
-  await page.getByRole("button", {name:"Send verification code",exact:true}).click();
+  await page
+    .getByRole("button", { name: "Send verification code", exact: true })
+    .click();
   await expect(page.getByPlaceholder("000000")).toBeVisible();
   const code = (
     await (
@@ -509,12 +514,16 @@ test("email signup, OTP verification and returning login through actual forms", 
     ).json()
   ).otp;
   await page.getByPlaceholder("000000").fill(code);
+  await page.getByRole("button", { name: "Verify code", exact: true }).click();
   await page
-    .getByRole("button", { name: "Verify code", exact: true })
+    .getByLabel("New password", { exact: true })
+    .fill("test-password-123");
+  await page
+    .getByLabel("Confirm password", { exact: true })
+    .fill("test-password-123");
+  await page
+    .getByRole("button", { name: "Save password & sign in", exact: true })
     .click();
-  await page.getByLabel('New password', {exact:true}).fill('test-password-123');
-  await page.getByLabel('Confirm password', {exact:true}).fill('test-password-123');
-  await page.getByRole('button',{name:'Save password & sign in',exact:true}).click();
   await expect(page).toHaveURL(/connect/);
   const signedOut = await page.request.post("/api/auth/sign-out", {
     data: {},
@@ -573,8 +582,10 @@ test("shared branding, typography and darker lime stay consistent across public 
       .first()
       .evaluate((el) => getComputedStyle(el).fill),
   ).toBe("rgb(82, 121, 24)");
-  const start=page.getByRole('link',{name:'Get Started',exact:true});
-  expect(await start.evaluate(el=>getComputedStyle(el).color)).toBe('rgb(255, 255, 255)');
+  const start = page.getByRole("link", { name: "Get Started", exact: true });
+  expect(await start.evaluate((el) => getComputedStyle(el).color)).toBe(
+    "rgb(255, 255, 255)",
+  );
   expect((await start.boundingBox())!.height).toBeGreaterThanOrEqual(44);
   await page.setViewportSize({ width: 390, height: 844 });
   expect(
@@ -607,43 +618,216 @@ test("shared branding, typography and darker lime stay consistent across public 
   });
 });
 
-
-test('failed login preserves email and recovery screens reset the password', async ({page}) => {
+test("failed login preserves email and recovery screens reset the password", async ({
+  page,
+}) => {
   test.setTimeout(180000);
-  const email = `recovery-${randomBytes(6).toString('hex')}@example.test`;
-  await page.goto('/login');
-  await page.getByLabel('Email',{exact:true}).fill(email);
-  await page.getByLabel('Password',{exact:true}).fill('unknown-password-123');
-  await page.getByRole('button',{name:'Sign in',exact:true}).click();
-  await expect(page.getByRole('alert').filter({hasText:'Unable to sign in'})).toBeVisible();
-  await page.getByRole('link',{name:'Create an account',exact:true}).click();
-  await expect(page.getByLabel('Email',{exact:true})).toHaveValue(email);
-  await page.getByRole('button',{name:'Send verification code',exact:true}).click();
-  await expect(page.getByLabel('Verification code')).toBeVisible();
-  let code = (await (await page.request.get(`http://127.0.0.1:3101/otp?email=${email}`)).json()).otp;
-  await page.getByLabel('Verification code').fill(code);
-  await page.getByRole('button',{name:'Verify code',exact:true}).click();
-  await page.getByLabel('New password',{exact:true}).fill('first-owner-password-123');
-  await page.getByLabel('Confirm password',{exact:true}).fill('first-owner-password-123');
-  await page.getByRole('button',{name:'Save password & sign in',exact:true}).click();
+  const email = `recovery-${randomBytes(6).toString("hex")}@example.test`;
+  await page.goto("/login");
+  await page.getByLabel("Email", { exact: true }).fill(email);
+  await page
+    .getByLabel("Password", { exact: true })
+    .fill("unknown-password-123");
+  await page.getByRole("button", { name: "Sign in", exact: true }).click();
+  await expect(
+    page.getByRole("alert").filter({ hasText: "Unable to sign in" }),
+  ).toBeVisible();
+  await page
+    .getByRole("link", { name: "Create an account", exact: true })
+    .click();
+  await expect(page.getByLabel("Email", { exact: true })).toHaveValue(email);
+  await page
+    .getByRole("button", { name: "Send verification code", exact: true })
+    .click();
+  await expect(page.getByLabel("Verification code")).toBeVisible();
+  let code = (
+    await (
+      await page.request.get(`http://127.0.0.1:3101/otp?email=${email}`)
+    ).json()
+  ).otp;
+  await page.getByLabel("Verification code").fill(code);
+  await page.getByRole("button", { name: "Verify code", exact: true }).click();
+  await page
+    .getByLabel("New password", { exact: true })
+    .fill("first-owner-password-123");
+  await page
+    .getByLabel("Confirm password", { exact: true })
+    .fill("first-owner-password-123");
+  await page
+    .getByRole("button", { name: "Save password & sign in", exact: true })
+    .click();
   await expect(page).toHaveURL(/connect/);
-  await page.request.post('/api/auth/sign-out',{data:{},headers:{Origin:origin}});
+  await page.request.post("/api/auth/sign-out", {
+    data: {},
+    headers: { Origin: origin },
+  });
   // Recipient cooldown is a real server control. Do not disable it in tests.
   await page.waitForTimeout(61000);
   await page.goto(`/forgot-password?email=${encodeURIComponent(email)}`);
-  await page.setViewportSize({width:390,height:844});
-  await expect(page.getByLabel('Email',{exact:true})).toHaveValue(email);
-  await page.screenshot({path:'.test-output/auth-recovery-mobile.png',fullPage:true});
-  await page.getByRole('button',{name:'Send verification code',exact:true}).click();
-  await expect(page.getByLabel('Verification code')).toBeVisible();
-  code = (await (await page.request.get(`http://127.0.0.1:3101/otp?email=${email}`)).json()).otp;
-  await page.getByLabel('Verification code').fill(code);
-  await page.getByRole('button',{name:'Verify code',exact:true}).click();
-  await page.getByLabel('New password',{exact:true}).fill('second-owner-password-123');
-  await page.getByLabel('Confirm password',{exact:true}).fill('second-owner-password-123');
-  await page.screenshot({path:'.test-output/auth-password-mobile.png',fullPage:true});
-  await page.getByRole('button',{name:'Save password & sign in',exact:true}).click();
+  await page.setViewportSize({ width: 390, height: 844 });
+  await expect(page.getByLabel("Email", { exact: true })).toHaveValue(email);
+  await page.screenshot({
+    path: ".test-output/auth-recovery-mobile.png",
+    fullPage: true,
+  });
+  await page
+    .getByRole("button", { name: "Send verification code", exact: true })
+    .click();
+  await expect(page.getByLabel("Verification code")).toBeVisible();
+  code = (
+    await (
+      await page.request.get(`http://127.0.0.1:3101/otp?email=${email}`)
+    ).json()
+  ).otp;
+  await page.getByLabel("Verification code").fill(code);
+  await page.getByRole("button", { name: "Verify code", exact: true }).click();
+  await page
+    .getByLabel("New password", { exact: true })
+    .fill("second-owner-password-123");
+  await page
+    .getByLabel("Confirm password", { exact: true })
+    .fill("second-owner-password-123");
+  await page.screenshot({
+    path: ".test-output/auth-password-mobile.png",
+    fullPage: true,
+  });
+  await page
+    .getByRole("button", { name: "Save password & sign in", exact: true })
+    .click();
   await expect(page).toHaveURL(/connect/);
-  const old = await page.request.post('/api/auth/sign-in/email',{data:{email,password:'first-owner-password-123'},headers:{Origin:origin}});
+  const old = await page.request.post("/api/auth/sign-in/email", {
+    data: { email, password: "first-owner-password-123" },
+    headers: { Origin: origin },
+  });
   expect(old.status()).toBe(401);
+});
+
+test("auth controls stay locked until navigation finishes", async ({
+  page,
+}) => {
+  const email = `busy-${randomBytes(6).toString("hex")}@example.test`;
+  await page.goto("/signup");
+  await page.getByLabel("Email", { exact: true }).fill(email);
+  await page
+    .getByRole("button", { name: "Send verification code", exact: true })
+    .click();
+  await expect(page.getByLabel("Verification code")).toBeVisible();
+  const code = (
+    await (
+      await page.request.get(`http://127.0.0.1:3101/otp?email=${email}`)
+    ).json()
+  ).otp;
+  await page.getByLabel("Verification code").fill(code);
+  let releaseCheck!: () => void;
+  const checkGate = new Promise<void>((resolve) => {
+    releaseCheck = resolve;
+  });
+  await page.route("**/api/account/check", async (route) => {
+    await checkGate;
+    await route.continue();
+  });
+  await page.getByRole("button", { name: "Verify code", exact: true }).click();
+  await expect(
+    page.getByRole("button", { name: "Use a different email", exact: true }),
+  ).toBeDisabled();
+  await expect(
+    page.getByRole("link", { name: "Back to sign in", exact: true }),
+  ).toHaveAttribute("aria-disabled", "true");
+  await page
+    .getByRole("link", { name: "Back to sign in", exact: true })
+    .dispatchEvent("click");
+  await expect(page.getByLabel("Verification code")).toBeVisible();
+  releaseCheck();
+  await page
+    .getByLabel("New password", { exact: true })
+    .fill("busy-state-password-123");
+  await page
+    .getByLabel("Confirm password", { exact: true })
+    .fill("busy-state-password-123");
+  let releaseEntry!: () => void;
+  const entryGate = new Promise<void>((resolve) => {
+    releaseEntry = resolve;
+  });
+  await page.route("**/entry**", async (route) => {
+    await entryGate;
+    await route.continue();
+  });
+  const signedIn = page.waitForResponse(
+    (r) => r.url().endsWith("/api/auth/sign-in/email") && r.status() === 200,
+  );
+  await page
+    .getByRole("button", { name: "Save password & sign in", exact: true })
+    .click();
+  await signedIn;
+  await expect(
+    page.getByRole("button", { name: "Opening your account…", exact: true }),
+  ).toBeDisabled();
+  await expect(page.getByLabel("New password", { exact: true })).toHaveValue(
+    "busy-state-password-123",
+  );
+  await expect(
+    page.getByRole("button", { name: "Show password" }).first(),
+  ).toBeDisabled();
+  await page.screenshot({ path: ".test-output/auth-redirect-locked.png" });
+  releaseEntry();
+  await expect(page).toHaveURL(/connect/);
+});
+
+test("large import review preserves edits and selections across filters and pages", async ({
+  page,
+}) => {
+  await signup(page);
+  const notes = Array.from({ length: 16 }, (_, i) => ({
+    text: `Imported fact ${i + 1}`,
+    kind: i % 2 ? "preference" : "note",
+    scope: "me",
+  }));
+  await page.request.post("/api/imports", {
+    headers: { Origin: origin },
+    data: { provider: "export", notes },
+  });
+  await page.goto("/connect");
+  await expect(
+    page.getByRole("heading", { name: "Choose what to remember" }),
+  ).toBeVisible();
+  await expect(page.getByRole("checkbox")).toHaveCount(6);
+  await page
+    .getByRole("checkbox", { name: "Include note 1", exact: true })
+    .uncheck();
+  await page.getByRole("button", { name: "Next notes", exact: true }).click();
+  await page.getByRole("button", { name: /Imported fact 7 / }).click();
+  await page
+    .getByLabel("Note 7", { exact: true })
+    .fill("Edited fact on another page");
+  await page.getByLabel("Filter note category").selectOption("preference");
+  await expect(page.getByRole("checkbox")).toHaveCount(6);
+  await page.getByLabel("Search proposed notes").fill("fact 16");
+  await expect(page.getByRole("checkbox")).toHaveCount(1);
+  await page
+    .getByRole("checkbox", { name: "Include note 16", exact: true })
+    .uncheck();
+  await page.getByLabel("Search proposed notes").fill("");
+  await page.getByLabel("Filter note category").selectOption("all");
+  await page.setViewportSize({ width: 390, height: 844 });
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= innerWidth,
+    ),
+  ).toBe(true);
+  await page.screenshot({
+    path: ".test-output/import-review-mobile.png",
+    fullPage: true,
+  });
+  await page
+    .getByRole("button", {
+      name: "Save 14 notes & open dashboard",
+      exact: true,
+    })
+    .click();
+  await expect(page).toHaveURL(/dashboard/);
+  const preview = (
+    await (await page.request.get("/api/context/preview?scope=me")).json()
+  ).assembled;
+  expect(preview).toContain("Edited fact on another page");
+  expect(preview).not.toContain("Imported fact 16");
 });

@@ -501,3 +501,14 @@ Navigation links such as Settings and Back to dashboard use bordered 44px button
 Saved notes are rendered as graph leaves, grouped by existing note category under Me or attached to an existing project scope. Categories are structural labels; all leaf text comes from actual saved notes. The persisted graph is unchanged. Small graphs show leaf labels, fit after their initial simulation, and keep node positions across background refreshes.
 
 App page/auth headings follow the settings reference with display weight 400. Graph labels sit outside their projected node radius; graph controls use the same theme accent as every other control.
+
+
+## Product typography and guided onboarding — 2026-10-31
+
+Login and connect are the product typography reference. Preserve Outfit display and Geist body. Product page headings: Outfit 400, 28–36px, line-height 1.15–1.2, tracking -0.02 to -0.04em. Sections: Geist 20–24px/500–600. Body: Geist 15px/400. Supporting text: 13px/400. Buttons: 14px/500. Adjust sizes to context without substituting families. Landing display weights/scale stay unchanged. This rule supersedes older blanket heavy-display-weight requirements for product screens.
+
+Keep neutral surfaces and the existing muted-lime accent. Provider logos are monochrome identity assets. Headers and setup controls follow the shared 44px button variants.
+
+Three centered provider choices (Claude, ChatGPT, another MCP client) run horizontally on desktop and stack on mobile. Reveal one task at a time: name/URL, authorization, then selected context sharing. A smaller illustrated preview follows the current step, clearly labeled as a guide. Connections are confirmed by authenticated client activity, never by opening a link. Multiple connections may coexist.
+
+Review uses searchable category-filtered rows, six per page, with expandable editors. Include/exclude choices persist across pages; save applies to all included notes. Keep the save action available at the bottom. Loading locks fields, competing actions and navigation. Successful authentication/save stays busy until departure; no cleared-field flash or reactivated submit during navigation.

@@ -226,3 +226,10 @@ Added targeted operator preparation/readiness and non-destructive HTTP smoke scr
 ### 2026-10-31 — Gmail delivery verification and release operator checks
 
 The owner configured Gmail SMTP credentials locally and on Vercel. Verified actual SMTP acceptance and receipt of the scoped ContextGraph test message in the dedicated inbox. Added ImapFlow as an operator-only development dependency to automate read-only retrieval of the test OTPs. The live verification command uses a unique sender-owned plus-alias account, keeps codes/passwords/session cookies in memory, checks signup/recovery and revocation, and removes only its own temporary account. It never writes message bodies or credentials to reports. This adds no product mailbox access and changes no website authentication model. Publishing and production verification follow the existing GitHub–Vercel integration.
+
+
+### 2026-10-31 — Guided connections and compact draft review
+
+Setup separates provider selection, configuration, OAuth consent and context sharing. Cards derive status from existing authenticated connection records. Switching provider cancels the active waiting import, never the connection, reviewed drafts or saved context. Search/category/pagination are local projections of the same revisioned items; saving submits all selected notes through existing review/commit helpers. No new schema, external service, scope or save bypass. Consent describes requested scopes and retains the warning that registered client names are unverified. Authentication/save remain busy through navigation.
+
+MCP initialize metadata advertises the existing public ContextGraph SVG logo and website URL. Host clients decide whether to display that icon; this is not directory publication or verified vendor branding.

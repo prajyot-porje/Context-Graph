@@ -40,6 +40,26 @@ jobs:
       - run: npm run test:e2e
 
       - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: onboarding-visual-checks
+          path: |
+            .test-output/setup-*.png
+            .test-output/oauth-consent-*.png
+            .test-output/import-review-*.png
+            .test-output/auth-redirect-*.png
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: onboarding-visual-checks
+          path: |
+            .test-output/setup-*.png
+            .test-output/oauth-consent-*.png
+            .test-output/import-review-*.png
+            .test-output/auth-redirect-*.png
+
+      - uses: actions/upload-artifact@v4
         if: failure()
         with:
           name: browser-test-results

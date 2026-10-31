@@ -1,82 +1,93 @@
-'use client'
-import { Brand } from '@/components/ui/Brand'
+"use client";
+import { Brand } from "@/components/ui/Brand";
 
+import { useRef } from "react";
+import Link from "next/link";
+import { useGSAP } from "@gsap/react";
+import { gsap, DUR, prefersReducedMotion } from "@/lib/gsap";
+import { ArrowLeft } from "lucide-react";
 
-import { useRef } from 'react'
-import Link from 'next/link'
-import { useGSAP } from '@gsap/react'
-import { gsap, DUR, prefersReducedMotion } from '@/lib/gsap'
-import { ArrowLeft } from 'lucide-react'
-
-export function AuthLayout({ children }: { children: React.ReactNode }) {
-  const containerRef = useRef<HTMLDivElement>(null)
+export function AuthLayout({
+  children,
+  busy = false,
+}: {
+  children: React.ReactNode;
+  busy?: boolean;
+}) {
+  const containerRef = useRef<HTMLDivElement>(null);
 
   useGSAP(
     () => {
       if (prefersReducedMotion()) {
-        gsap.set('.cg-back-link, .cg-heading, .cg-subtext, .cg-field, .cg-submit, .cg-right-panel', {
-          opacity: 1,
-          y: 0,
-          x: 0,
-        })
-        return
+        gsap.set(
+          ".cg-back-link, .cg-heading, .cg-subtext, .cg-field, .cg-submit, .cg-right-panel",
+          {
+            opacity: 1,
+            y: 0,
+            x: 0,
+          },
+        );
+        return;
       }
 
-      const tl = gsap.timeline()
+      const tl = gsap.timeline();
 
-      tl.from('.cg-back-link', {
+      tl.from(".cg-back-link", {
         opacity: 0,
         x: -8,
         duration: 0.25,
-        ease: 'cg-out',
+        ease: "cg-out",
       })
         .from(
-          '.cg-heading',
+          ".cg-heading",
           {
             opacity: 0,
             y: 20,
             duration: DUR.moderate,
-            ease: 'cg-out',
+            ease: "cg-out",
           },
-          0
+          0,
         )
         .from(
-          '.cg-subtext',
+          ".cg-subtext",
           {
             opacity: 0,
             y: 12,
             duration: 0.25,
-            ease: 'cg-out',
+            ease: "cg-out",
           },
-          0.05
+          0.05,
         )
         .from(
-          '.cg-field',
+          ".cg-field",
           {
             opacity: 0,
             y: 16,
             stagger: 0.06,
             duration: 0.25,
-            ease: 'cg-out',
+            ease: "cg-out",
           },
-          0.1
+          0.1,
         )
         .from(
-          '.cg-right-panel',
+          ".cg-right-panel",
           {
             opacity: 0,
             x: 24,
             duration: DUR.slow,
-            ease: 'cg-out',
+            ease: "cg-out",
           },
-          0.1
-        )
+          0.1,
+        );
     },
-    { scope: containerRef }
-  )
+    { scope: containerRef },
+  );
 
   return (
-    <div ref={containerRef} className="flex min-h-screen w-full flex-row bg-[var(--bg)]">
+    <div
+      ref={containerRef}
+      className="flex min-h-screen w-full flex-row bg-[var(--bg)]"
+    >
       {/* Left panel */}
       <div className="relative flex flex-1 flex-col items-center justify-center px-[var(--space-10)] py-[var(--space-12)]">
         {/* Background gradient */}
@@ -84,21 +95,24 @@ export function AuthLayout({ children }: { children: React.ReactNode }) {
           className="pointer-events-none absolute inset-0 z-0"
           style={{
             background:
-              'radial-gradient(ellipse 60% 40% at 30% 40%, color-mix(in srgb, var(--accent) 3%, transparent) 0%, transparent 60%)',
+              "radial-gradient(ellipse 60% 40% at 30% 40%, color-mix(in srgb, var(--accent) 3%, transparent) 0%, transparent 60%)",
           }}
         />
 
         <Link
           href="/"
+          aria-disabled={busy}
+          tabIndex={busy ? -1 : undefined}
+          onClick={(event) => {
+            if (busy) event.preventDefault();
+          }}
           className="cg-back-link absolute left-[var(--space-8)] top-[var(--space-8)] z-10 flex min-h-11 items-center gap-[var(--space-2)] rounded-[var(--radius-sm)] text-[14px] font-medium text-[var(--text-secondary)] transition-colors duration-150 hover:text-[var(--text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]"
         >
           <ArrowLeft size={14} />
           <Brand />
         </Link>
 
-        <div className="relative z-10 w-full max-w-[360px]">
-          {children}
-        </div>
+        <div className="relative z-10 w-full max-w-[360px]">{children}</div>
       </div>
 
       {/* Right panel */}
@@ -107,8 +121,9 @@ export function AuthLayout({ children }: { children: React.ReactNode }) {
         <div
           className="pointer-events-none absolute inset-0"
           style={{
-            backgroundImage: 'radial-gradient(var(--graph-dot) 1px, transparent 1px)',
-            backgroundSize: '32px 32px',
+            backgroundImage:
+              "radial-gradient(var(--graph-dot) 1px, transparent 1px)",
+            backgroundSize: "32px 32px",
             opacity: 0.3,
           }}
         />
@@ -119,7 +134,7 @@ export function AuthLayout({ children }: { children: React.ReactNode }) {
             className="absolute inset-0 z-0 rounded-[var(--radius-xl)]"
             style={{
               backgroundImage: `radial-gradient(var(--graph-dot) 1px, transparent 1px)`,
-              backgroundSize: '24px 24px',
+              backgroundSize: "24px 24px",
             }}
           />
 
@@ -127,7 +142,8 @@ export function AuthLayout({ children }: { children: React.ReactNode }) {
           <div
             className="pointer-events-none absolute inset-0 z-0 rounded-[var(--radius-xl)]"
             style={{
-              background: 'linear-gradient(180deg, color-mix(in srgb, var(--text-primary) 3%, transparent) 0%, transparent 40%)',
+              background:
+                "linear-gradient(180deg, color-mix(in srgb, var(--text-primary) 3%, transparent) 0%, transparent 40%)",
             }}
           />
 
@@ -240,5 +256,5 @@ export function AuthLayout({ children }: { children: React.ReactNode }) {
         </p>
       </div>
     </div>
-  )
+  );
 }

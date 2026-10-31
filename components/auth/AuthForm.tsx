@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { authClient } from "@/lib/auth-client";
@@ -32,6 +32,8 @@ export function AuthForm({
   const [password, setPassword] = useState("");
   const [confirmation, setConfirmation] = useState("");
   const [busy, setBusy] = useState(false);
+  const pending = useRef(false);
+  const [redirecting, setRedirecting] = useState(false);
   const [error, setError] = useState(
     oauthError
       ? "Google sign-in could not finish. Try again, or use password recovery to verify your email first."
@@ -79,6 +81,9 @@ export function AuthForm({
   }
   async function submit(event: React.FormEvent) {
     event.preventDefault();
+    if (pending.current) return;
+    pending.current = true;
+    let navigating = false;
     setBusy(true);
     setError("");
     setNotice("");
@@ -92,7 +97,8 @@ export function AuthForm({
           throw new Error(
             "Unable to sign in. Check your email and password, or use password recovery to verify your email and set a password.",
           );
-        setPassword("");
+        navigating = true;
+        setRedirecting(true);
         router.push(destination);
         router.refresh();
         return;
@@ -115,9 +121,8 @@ export function AuthForm({
         email: cleanEmail,
         password,
       });
-      setPassword("");
-      setConfirmation("");
-      setOtp("");
+      navigating = true;
+      setRedirecting(true);
       if (result.error) {
         router.push(link("/login"));
         router.refresh();
@@ -132,10 +137,15 @@ export function AuthForm({
           : "Could not connect. Please try again.",
       );
     } finally {
-      setBusy(false);
+      if (!navigating) {
+        pending.current = false;
+        setBusy(false);
+      }
     }
   }
   async function google() {
+    if (pending.current) return;
+    pending.current = true;
     setBusy(true);
     setError("");
     try {
@@ -153,6 +163,7 @@ export function AuthForm({
           : "Google sign-in could not start.",
       );
       setBusy(false);
+      pending.current = false;
     }
   }
   const title =
@@ -166,7 +177,7 @@ export function AuthForm({
             ? "Create your account"
             : "Set or reset your password";
   return (
-    <AuthLayout>
+    <AuthLayout busy={busy}>
       <div className="flex w-full flex-col">
         <h1 className="cg-heading mb-4 font-display text-[32px] font-normal leading-tight tracking-[-0.04em] text-[var(--text-primary)]">
           {title}
@@ -303,7 +314,7 @@ export function AuthForm({
             {busy ? (
               <>
                 <Loader2 className="animate-spin" size={16} />
-                Please wait
+                {redirecting ? "Opening your account…" : "Please wait"}
               </>
             ) : mode === "login" ? (
               "Sign in"
@@ -323,6 +334,8 @@ export function AuthForm({
               className="auth-text-action"
               disabled={busy || cooldown > 0}
               onClick={async () => {
+                if (pending.current) return;
+                pending.current = true;
                 setBusy(true);
                 setError("");
                 try {
@@ -333,6 +346,7 @@ export function AuthForm({
                   );
                 } finally {
                   setBusy(false);
+                  pending.current = false;
                 }
               }}
             >
@@ -358,21 +372,36 @@ export function AuthForm({
         <nav
           aria-label="Authentication options"
           className="mt-6 flex flex-col items-stretch gap-2 text-center"
+          onClickCapture={(event) => {
+            if (busy) event.preventDefault();
+          }}
         >
           {mode === "login" ? (
             <>
               <Link
                 className="auth-text-action"
                 href={link("/forgot-password")}
+                aria-disabled={busy}
+                tabIndex={busy ? -1 : undefined}
               >
                 Forgot password or need to set one?
               </Link>
-              <Link className="auth-text-action" href={link("/signup")}>
+              <Link
+                className="auth-text-action"
+                href={link("/signup")}
+                aria-disabled={busy}
+                tabIndex={busy ? -1 : undefined}
+              >
                 Create an account
               </Link>
             </>
           ) : (
-            <Link className="auth-text-action" href={link("/login")}>
+            <Link
+              className="auth-text-action"
+              href={link("/login")}
+              aria-disabled={busy}
+              tabIndex={busy ? -1 : undefined}
+            >
               Back to sign in
             </Link>
           )}
