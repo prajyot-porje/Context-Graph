@@ -975,7 +975,33 @@ test("settings persist profile and appearance, revoke sessions and keys, and exp
     headers: { Origin: origin },
     data: { action: "commit", revision: draft.revision },
   });
-  await page.goto("/settings");
+  let releaseInitial!: () => void;
+  const initialGate = new Promise<void>((resolve) => {
+    releaseInitial = resolve;
+  });
+  let held = false;
+  await page.route("**/api/setup/status", async (route) => {
+    if (!held && route.request().method() === "GET") {
+      held = true;
+      await initialGate;
+    }
+    await route.continue();
+  });
+  await page.goto("/settings#capture");
+  try {
+    await expect(
+      page.getByRole("switch", {
+        name: "Automatic context capture",
+        exact: true,
+      }),
+    ).toBeDisabled();
+  } finally {
+    releaseInitial();
+  }
+  await expect(
+    page.getByRole("region", { name: "Context capture", exact: true }),
+  ).toHaveAttribute("aria-busy", "false");
+  await page.getByRole("link", { name: "Account", exact: true }).click();
   await expect(
     page.getByRole("region", { name: "Account", exact: true }),
   ).toHaveAttribute("aria-busy", "false");
