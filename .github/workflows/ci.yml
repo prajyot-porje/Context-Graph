@@ -43,6 +43,7 @@ jobs:
         if: always()
         with:
           name: onboarding-visual-checks
+          include-hidden-files: true
           path: |
             .test-output/setup-*.png
             .test-output/oauth-consent-*.png

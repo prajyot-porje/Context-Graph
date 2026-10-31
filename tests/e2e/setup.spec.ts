@@ -30,10 +30,23 @@ async function signup(page: Page) {
     headers: { Origin: origin },
   });
   expect(verified.ok(), await verified.text()).toBeTruthy();
-  const login = await page.request.post("/api/auth/sign-in/email", {
+  let login = await page.request.post("/api/auth/sign-in/email", {
     data: { email, password: "test-password-123" },
     headers: { Origin: origin },
   });
+  // The serial suite can hit the real per-IP login budget after recovery.
+  // Respect its cooldown rather than relaxing production rate limits.
+  if (login.status() === 429) {
+    const retry = Math.min(
+      60,
+      Math.max(11, Number(login.headers()["retry-after"]) || 11),
+    );
+    await page.waitForTimeout((retry + 1) * 1000);
+    login = await page.request.post("/api/auth/sign-in/email", {
+      data: { email, password: "test-password-123" },
+      headers: { Origin: origin },
+    });
+  }
   expect(login.ok(), await login.text()).toBeTruthy();
   return email;
 }
