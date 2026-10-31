@@ -1,28 +1,45 @@
+import nodemailer from "nodemailer";
+import { randomUUID } from "node:crypto";
+import { emailDelivery, EmailDeliveryError } from "./email-delivery";
+
 interface SendOTPOptions {
-  email: string
-  otp: string
-  type: 'sign-in' | 'email-verification' | 'forget-password' | 'change-email' | string
+  email: string;
+  otp: string;
+  type:
+    | "sign-in"
+    | "email-verification"
+    | "forget-password"
+    | "change-email"
+    | string;
 }
 
 /**
- * Send a verification OTP email via Resend HTTP API.
+ * Send authentication email through the dedicated Gmail SMTP account.
  */
-export async function sendVerificationOTPEmail({ email, otp, type }: SendOTPOptions): Promise<void> {
-  const apiKey = process.env.RESEND_API_KEY
-  const from = process.env.EMAIL_FROM || 'ContextGraph <onboarding@resend.dev>'
+export async function sendVerificationOTPEmail({
+  email,
+  otp,
+  type,
+}: SendOTPOptions): Promise<void> {
+  const user = process.env.GMAIL_SMTP_USER?.trim();
+  const password = process.env.GMAIL_SMTP_APP_PASSWORD?.replace(/\s/g, "");
+  const from = { name: "ContextGraph", address: user || "" };
 
-  let subject = `Your ContextGraph verification code: ${otp}`
-  let headline = 'Verify your email address'
-  let subtext = 'Enter the 6-digit verification code below to confirm your email and secure your context graph.'
+  let subject = `Your ContextGraph verification code`;
+  let headline = "Verify your email address";
+  let subtext =
+    "Enter the 6-digit verification code below to confirm your email and secure your context graph.";
 
-  if (type === 'sign-in') {
-    subject = `Your ContextGraph sign-in code: ${otp}`
-    headline = 'Sign in to ContextGraph'
-    subtext = 'Enter the 6-digit code below to securely sign in to your context graph.'
-  } else if (type === 'forget-password') {
-    subject = `Reset your ContextGraph password: ${otp}`
-    headline = 'Reset your password'
-    subtext = 'Enter the 6-digit code below to reset your ContextGraph account password.'
+  if (type === "sign-in") {
+    subject = `Your ContextGraph sign-in code`;
+    headline = "Sign in to ContextGraph";
+    subtext =
+      "Enter the 6-digit code below to securely sign in to your context graph.";
+  } else if (type === "forget-password") {
+    subject = `Set your ContextGraph password`;
+    headline = "Verify your email";
+    subtext =
+      "Enter this code to verify your email and choose your ContextGraph password.";
   }
 
   const html = `
@@ -83,39 +100,65 @@ export async function sendVerificationOTPEmail({ email, otp, type }: SendOTPOpti
   </table>
 </body>
 </html>
-  `.trim()
+  `.trim();
 
-  const text = `${headline}\n\n${subtext}\n\nYour verification code: ${otp}\n\nThis code expires in 5 minutes.\nIf you did not request this, please ignore this email.\n\nContextGraph`
+  const text = `${headline}\n\n${subtext}\n\nYour verification code: ${otp}\n\nThis code expires in 5 minutes.\nIf you did not request this, please ignore this email.\n\nContextGraph`;
 
-  if (!apiKey) {
-    throw new Error('Email delivery is not configured. Contact the project owner.')
-  }
-
+  const reference = randomUUID();
   try {
-    const response = await fetch(process.env.EMAIL_API_URL || 'https://api.resend.com/emails', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${apiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        from,
-        to: [email],
-        subject,
-        html,
-        text,
-      }),
-    })
-
-    if (!response.ok) {
-      const errorText = await response.text()
-      void errorText
-      throw new Error(`Email delivery failed (${response.status}). Please try again.`)
-    } else {
-      console.log(`[lib/email] Verification OTP email dispatched successfully to ${email}`)
-    }
+    const testPort = process.env.GMAIL_SMTP_TEST_PORT;
+    const testMode =
+      !!testPort &&
+      !process.env.VERCEL &&
+      /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(
+        process.env.BETTER_AUTH_URL || "",
+      );
+    if (!user || !password || !/^[^\s@]+@gmail\.com$/i.test(user))
+      throw new EmailDeliveryError();
+    if (testPort && !testMode) throw new EmailDeliveryError();
+    const transport = nodemailer.createTransport({
+      host: testMode ? "127.0.0.1" : "smtp.gmail.com",
+      port: testMode ? Number(testPort) : 465,
+      secure: !testMode,
+      ...(testMode ? { ignoreTLS: true } : { auth: { user, pass: password } }),
+      connectionTimeout: 10_000,
+      greetingTimeout: 10_000,
+      socketTimeout: 15_000,
+      disableFileAccess: true,
+      disableUrlAccess: true,
+      logger: false,
+      debug: false,
+    });
+    const sent = await transport.sendMail({
+      from,
+      to: email,
+      subject,
+      html,
+      text,
+    });
+    if (sent.rejected?.length) throw new EmailDeliveryError();
+    console.info("[email]", { event: "smtp_accepted", reference, type });
   } catch (error) {
-    console.error('[lib/email] Email delivery failed.')
-    throw error
+    const state = emailDelivery.getStore();
+    if (state) state.failed = true;
+    const code =
+      typeof error === "object" && error && "code" in error
+        ? String(error.code)
+        : "CONFIG_OR_DELIVERY";
+    const safeCode = [
+      "EAUTH",
+      "ECONNECTION",
+      "ETIMEDOUT",
+      "ESOCKET",
+      "EENVELOPE",
+    ].includes(code)
+      ? code
+      : "DELIVERY_FAILED";
+    console.error("[email]", {
+      event: "smtp_failed",
+      reference,
+      code: safeCode,
+    });
+    throw new EmailDeliveryError();
   }
 }

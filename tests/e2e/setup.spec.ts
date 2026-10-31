@@ -9,8 +9,8 @@ const origin = "http://127.0.0.1:3100";
 
 async function signup(page: Page) {
   const email = `demo-${randomBytes(6).toString("hex")}@example.test`;
-  const result = await page.request.post("/api/auth/sign-up/email", {
-    data: { name: "Demo Developer", email, password: "test-password-123" },
+  const result = await page.request.post("/api/account/send", {
+    data: { email, mode: "signup" },
     headers: { Origin: origin },
   });
   expect(result.ok(), await result.text()).toBeTruthy();
@@ -25,11 +25,13 @@ async function signup(page: Page) {
       return otp;
     })
     .toMatch(/^\d{6}$/);
-  const verified = await page.request.post("/api/auth/email-otp/verify-email", {
-    data: { email, otp },
+  const verified = await page.request.post("/api/account/complete", {
+    data: { email, otp, password: "test-password-123" },
     headers: { Origin: origin },
   });
   expect(verified.ok(), await verified.text()).toBeTruthy();
+  const login = await page.request.post('/api/auth/sign-in/email', { data: {email,password:'test-password-123'}, headers:{Origin:origin} });
+  expect(login.ok(),await login.text()).toBeTruthy();
   return email;
 }
 async function oauth(page: Page, name: string) {
@@ -495,21 +497,11 @@ test("cancel, invalid input, keyboard/mobile layout, and ownership checks", asyn
 test("email signup, OTP verification and returning login through actual forms", async ({
   page,
 }) => {
-  // Production Better Auth permits three OTP verifications per IP/minute.
-  // Earlier cases share this loopback IP. Respect the real throttle rather than
-  // disabling auth protections or forging proxy headers in the test app.
-  await page.waitForTimeout(61000);
   const email = `ui-${randomBytes(6).toString("hex")}@example.test`;
   await page.goto("/signup");
-  await page.getByLabel("Name", { exact: true }).fill("UI Developer");
+  await expect(page.getByLabel("Name", { exact: true })).toHaveCount(0);
   await page.getByLabel("Email", { exact: true }).fill(email);
-  await page.getByLabel("Password", { exact: true }).fill("test-password-123");
-  await page
-    .getByLabel("Confirm password", { exact: true })
-    .fill("test-password-123");
-  await page
-    .getByRole("button", { name: "Create account", exact: true })
-    .click();
+  await page.getByRole("button", {name:"Send verification code",exact:true}).click();
   await expect(page.getByPlaceholder("000000")).toBeVisible();
   const code = (
     await (
@@ -518,8 +510,11 @@ test("email signup, OTP verification and returning login through actual forms", 
   ).otp;
   await page.getByPlaceholder("000000").fill(code);
   await page
-    .getByRole("button", { name: "Verify code & proceed", exact: true })
+    .getByRole("button", { name: "Verify code", exact: true })
     .click();
+  await page.getByLabel('New password', {exact:true}).fill('test-password-123');
+  await page.getByLabel('Confirm password', {exact:true}).fill('test-password-123');
+  await page.getByRole('button',{name:'Save password & sign in',exact:true}).click();
   await expect(page).toHaveURL(/connect/);
   const signedOut = await page.request.post("/api/auth/sign-out", {
     data: {},
@@ -610,4 +605,45 @@ test("shared branding, typography and darker lime stay consistent across public 
     path: ".test-output/ux-login-mobile.png",
     fullPage: true,
   });
+});
+
+
+test('failed login preserves email and recovery screens reset the password', async ({page}) => {
+  test.setTimeout(180000);
+  const email = `recovery-${randomBytes(6).toString('hex')}@example.test`;
+  await page.goto('/login');
+  await page.getByLabel('Email',{exact:true}).fill(email);
+  await page.getByLabel('Password',{exact:true}).fill('unknown-password-123');
+  await page.getByRole('button',{name:'Sign in',exact:true}).click();
+  await expect(page.getByRole('alert').filter({hasText:'Unable to sign in'})).toBeVisible();
+  await page.getByRole('link',{name:'Create an account',exact:true}).click();
+  await expect(page.getByLabel('Email',{exact:true})).toHaveValue(email);
+  await page.getByRole('button',{name:'Send verification code',exact:true}).click();
+  await expect(page.getByLabel('Verification code')).toBeVisible();
+  let code = (await (await page.request.get(`http://127.0.0.1:3101/otp?email=${email}`)).json()).otp;
+  await page.getByLabel('Verification code').fill(code);
+  await page.getByRole('button',{name:'Verify code',exact:true}).click();
+  await page.getByLabel('New password',{exact:true}).fill('first-owner-password-123');
+  await page.getByLabel('Confirm password',{exact:true}).fill('first-owner-password-123');
+  await page.getByRole('button',{name:'Save password & sign in',exact:true}).click();
+  await expect(page).toHaveURL(/connect/);
+  await page.request.post('/api/auth/sign-out',{data:{},headers:{Origin:origin}});
+  // Recipient cooldown is a real server control. Do not disable it in tests.
+  await page.waitForTimeout(61000);
+  await page.goto(`/forgot-password?email=${encodeURIComponent(email)}`);
+  await page.setViewportSize({width:390,height:844});
+  await expect(page.getByLabel('Email',{exact:true})).toHaveValue(email);
+  await page.screenshot({path:'.test-output/auth-recovery-mobile.png',fullPage:true});
+  await page.getByRole('button',{name:'Send verification code',exact:true}).click();
+  await expect(page.getByLabel('Verification code')).toBeVisible();
+  code = (await (await page.request.get(`http://127.0.0.1:3101/otp?email=${email}`)).json()).otp;
+  await page.getByLabel('Verification code').fill(code);
+  await page.getByRole('button',{name:'Verify code',exact:true}).click();
+  await page.getByLabel('New password',{exact:true}).fill('second-owner-password-123');
+  await page.getByLabel('Confirm password',{exact:true}).fill('second-owner-password-123');
+  await page.screenshot({path:'.test-output/auth-password-mobile.png',fullPage:true});
+  await page.getByRole('button',{name:'Save password & sign in',exact:true}).click();
+  await expect(page).toHaveURL(/connect/);
+  const old = await page.request.post('/api/auth/sign-in/email',{data:{email,password:'first-owner-password-123'},headers:{Origin:origin}});
+  expect(old.status()).toBe(401);
 });

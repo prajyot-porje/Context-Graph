@@ -223,3 +223,15 @@ BEGIN;
 CREATE UNIQUE INDEX IF NOT EXISTS context_nodes_user_id_scope_key ON context_nodes(user_id, scope);
 CREATE UNIQUE INDEX IF NOT EXISTS api_keys_user_id_key ON api_keys(user_id);
 COMMIT;
+
+-- Durable authentication budgets.
+BEGIN;
+CREATE TABLE IF NOT EXISTS auth_request_limits (
+  identity text PRIMARY KEY,
+  window_start timestamptz NOT NULL DEFAULT now(),
+  count integer NOT NULL DEFAULT 1 CHECK (count > 0),
+  expires_at timestamptz NOT NULL
+);
+CREATE INDEX IF NOT EXISTS auth_request_limits_expiry ON auth_request_limits(expires_at);
+ALTER TABLE auth_request_limits ENABLE ROW LEVEL SECURITY;
+COMMIT;

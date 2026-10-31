@@ -62,16 +62,6 @@ export function AuthLayout({ children }: { children: React.ReactNode }) {
           0.1
         )
         .from(
-          '.cg-submit',
-          {
-            opacity: 0,
-            y: 8,
-            duration: 0.2,
-            ease: 'cg-spring',
-          },
-          0.2
-        )
-        .from(
           '.cg-right-panel',
           {
             opacity: 0,
@@ -100,7 +90,7 @@ export function AuthLayout({ children }: { children: React.ReactNode }) {
 
         <Link
           href="/"
-          className="cg-back-link absolute left-[var(--space-8)] top-[var(--space-8)] z-10 flex items-center gap-[var(--space-2)] text-[14px] font-medium text-[var(--text-secondary)] transition-colors duration-150 hover:text-[var(--text-primary)]"
+          className="cg-back-link absolute left-[var(--space-8)] top-[var(--space-8)] z-10 flex min-h-11 items-center gap-[var(--space-2)] rounded-[var(--radius-sm)] text-[14px] font-medium text-[var(--text-secondary)] transition-colors duration-150 hover:text-[var(--text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]"
         >
           <ArrowLeft size={14} />
           <Brand />
@@ -137,7 +127,7 @@ export function AuthLayout({ children }: { children: React.ReactNode }) {
           <div
             className="pointer-events-none absolute inset-0 z-0 rounded-[var(--radius-xl)]"
             style={{
-              background: 'linear-gradient(180deg, rgba(255,255,255,0.03) 0%, transparent 40%)',
+              background: 'linear-gradient(180deg, color-mix(in srgb, var(--text-primary) 3%, transparent) 0%, transparent 40%)',
             }}
           />
 
@@ -238,9 +228,9 @@ export function AuthLayout({ children }: { children: React.ReactNode }) {
 
           {/* Status bar */}
           <div className="absolute bottom-[var(--space-4)] z-20 flex items-center gap-[var(--space-2)] rounded-[var(--radius-full)] border border-[var(--border)] bg-[var(--surface)] px-[var(--space-3)] py-1.5 [box-shadow:var(--shadow-sm)]">
-            <div className="h-2 w-2 rounded-[var(--radius-full)] bg-[var(--accent)] cg-pulse-glow" />
+            <div className="h-2 w-2 rounded-[var(--radius-full)] bg-[var(--text-secondary)]" />
             <span className="text-code-sm uppercase tracking-wider text-[var(--text-secondary)]">
-              MCP Server Active
+              Connected context
             </span>
           </div>
         </div>

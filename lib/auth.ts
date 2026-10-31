@@ -1,55 +1,108 @@
-import { betterAuth } from 'better-auth'
-import { emailOTP, jwt } from 'better-auth/plugins'
-import { oauthProvider } from '@better-auth/oauth-provider'
-import { database } from './database'
-import { sendVerificationOTPEmail } from '@/lib/email'
-import {getBaseUrl} from './auth-url'
-export {getBaseUrl} from './auth-url'
+import { betterAuth } from "better-auth";
+import { emailOTP, jwt } from "better-auth/plugins";
+import { oauthProvider } from "@better-auth/oauth-provider";
+import { database } from "./database";
+import { sendVerificationOTPEmail } from "@/lib/email";
+import { getBaseUrl } from "./auth-url";
+import {
+  limitAuth,
+  PASSWORD_MAX_LENGTH,
+  PASSWORD_MIN_LENGTH,
+  trustedAuthOrigins,
+} from "./auth-policy";
+import { finishPasswordRecovery } from "./db";
+export { getBaseUrl } from "./auth-url";
 
 export const auth = betterAuth({
-  basePath: '/api/auth',
+  logger: {
+    level: "warn",
+    log(level, message) {
+      // Provider messages/arguments may contain emails, tokens or raw upstream
+      // errors. Publish only bounded categories; SMTP has separate references.
+      const event = message.toLowerCase().includes("schema")
+        ? "schema_check"
+        : message.toLowerCase().includes("background")
+          ? "background_task"
+          : "provider_event";
+      console.warn("[auth]", { level, event });
+    },
+  },
+  basePath: "/api/auth",
   baseURL: getBaseUrl(),
-  trustedOrigins: [
-    'http://localhost:3000',
-    'http://127.0.0.1:3000',
-    'https://*.vercel.app',
-    ...(process.env.BETTER_AUTH_URL ? [process.env.BETTER_AUTH_URL] : []),
-    ...(process.env.NEXT_PUBLIC_APP_URL ? [process.env.NEXT_PUBLIC_APP_URL] : []),
-  ],
+  trustedOrigins: trustedAuthOrigins(),
   database,
+  disabledPaths: [
+    "/sign-up/email",
+    "/verify-email",
+    "/send-verification-email",
+    "/email-otp/verify-email",
+    "/email-otp/send-verification-otp",
+    "/email-otp/check-verification-otp",
+    "/sign-in/email-otp",
+    "/email-otp/request-password-reset",
+    "/forget-password/email-otp",
+    "/email-otp/reset-password",
+    "/request-password-reset",
+    "/reset-password",
+  ],
+  rateLimit: {
+    enabled: true,
+    customStorage: {
+      consume: (key, rule) =>
+        limitAuth(`provider:${key}`, rule.window, rule.max),
+    },
+  },
   emailAndPassword: {
     enabled: true,
     requireEmailVerification: true,
+    minPasswordLength: PASSWORD_MIN_LENGTH,
+    maxPasswordLength: PASSWORD_MAX_LENGTH,
+    revokeSessionsOnPasswordReset: true,
+    onPasswordReset: async ({ user }) => finishPasswordRecovery(user.id),
   },
   emailVerification: {
-    autoSignInAfterVerification: true,
+    autoSignInAfterVerification: false,
   },
   account: {
     accountLinking: {
       enabled: true,
-      trustedProviders: ['google'],
-      requireLocalEmailVerified: false,
+      trustedProviders: ["google"],
+      requireLocalEmailVerified: true,
     },
   },
   plugins: [
     jwt(),
     oauthProvider({
-      loginPage: '/oauth/login',
-      consentPage: '/oauth/consent',
-      scopes: ['openid', 'profile', 'offline_access', 'context:read', 'context:write'],
-      resources: [{ identifier: `${getBaseUrl()}/api/mcp`, allowedScopes: ['context:read', 'context:write', 'offline_access'] }],
+      loginPage: "/oauth/login",
+      consentPage: "/oauth/consent",
+      scopes: [
+        "openid",
+        "profile",
+        "offline_access",
+        "context:read",
+        "context:write",
+      ],
+      resources: [
+        {
+          identifier: `${getBaseUrl()}/api/mcp`,
+          allowedScopes: ["context:read", "context:write", "offline_access"],
+        },
+      ],
       allowDynamicClientRegistration: true,
       allowUnauthenticatedClientRegistration: true,
       clientRegistrationDefaultResources: [`${getBaseUrl()}/api/mcp`],
-      grantTypes: ['authorization_code', 'refresh_token'],
+      grantTypes: ["authorization_code", "refresh_token"],
     }),
     emailOTP({
       async sendVerificationOTP({ email, otp, type }) {
-        await sendVerificationOTPEmail({ email, otp, type })
+        await sendVerificationOTPEmail({ email, otp, type });
       },
       otpLength: 6,
       expiresIn: 300,
-      sendVerificationOnSignUp: true,
+      sendVerificationOnSignUp: false,
+      storeOTP: "hashed",
+      allowedAttempts: 3,
+      disableSignUp: true,
     }),
   ],
   ...(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET
@@ -63,19 +116,18 @@ export const auth = betterAuth({
       }
     : {}),
   session: {
-    expiresIn: 60 * 60 * 24 * 7,       // 7 days
-    updateAge: 60 * 60 * 24,            // refresh if >1 day old
+    expiresIn: 60 * 60 * 24 * 7, // 7 days
+    updateAge: 60 * 60 * 24, // refresh if >1 day old
     cookieCache: {
-      enabled: true,
-      maxAge: 5 * 60,
+      enabled: false,
     },
   },
   user: {
     additionalFields: {
       onboarding_done: {
-        type: 'boolean',
+        type: "boolean",
         defaultValue: false,
       },
     },
   },
-})
+});

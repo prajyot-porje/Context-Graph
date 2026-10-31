@@ -1,4 +1,6 @@
 // Isolated real PostgreSQL and real Next.js. Never reads .env.local or a live DB URL.
+import { mailFixture } from "../tests/mail-fixture";
+import { stopTestDatabase } from "../tests/database-cleanup";
 import EmbeddedPostgres from "embedded-postgres";
 import { mkdtemp, readFile, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -44,14 +46,16 @@ Object.assign(process.env, {
   GEMINI_API_KEY: "",
   OPENROUTER_API_KEY: "test-only",
   OPENROUTER_BASE_URL: "http://127.0.0.1:3101/v1",
-  RESEND_API_KEY: "",
+  GMAIL_SMTP_USER: "fixture@gmail.com",
+  GMAIL_SMTP_APP_PASSWORD: "fixture-only",
+  GMAIL_SMTP_TEST_PORT: "3102",
   NEXT_PUBLIC_MAINTENANCE_MODE: "false",
   CRON_SECRET: "isolated-test-cron",
   NEXT_PUBLIC_AGENTATION_ENABLED: "false",
 });
 const { auth } = await import("../lib/auth");
 const { getMigrations } = await import("better-auth/db/migration");
-const { database } = await import("../lib/database");
+const { database, authLockDatabase } = await import("../lib/database");
 const migrations = await getMigrations(auth.options);
 const sql = await migrations.compileMigrations();
 if (process.argv.includes("--generate-schema"))
@@ -70,22 +74,16 @@ await database.query(
   await readFile("supabase/2026-10-30-demo-recovery.sql", "utf8"),
 );
 await database.query(await readFile("supabase/2026-10-30-oauth.sql", "utf8"));
+await database.query(
+  await readFile("supabase/2026-10-31-auth-hardening.sql", "utf8"),
+);
 // Real email signup/verification is exercised with a local capture-only sender below.
 // Browser tests can retrieve OTPs from this isolated fixture server, never the app.
-const emails = new Map<string, string>();
-process.env.EMAIL_API_URL = "http://127.0.0.1:3101/emails";
-process.env.RESEND_API_KEY = "fixture-only";
+const smtp = await mailFixture(3102);
+const emails = smtp.emails;
 const provider = createServer(async (req, res) => {
   let raw = "";
   for await (const chunk of req) raw += chunk;
-  if (req.url === "/emails") {
-    const body = JSON.parse(raw);
-    const code = String(body.text).match(/code: (\d{6})/)?.[1];
-    if (code) emails.set(body.to[0], code);
-    res.setHeader("Content-Type", "application/json");
-    res.end('{"id":"fixture-email"}');
-    return;
-  }
   if (req.url?.startsWith("/otp?")) {
     res.setHeader("Content-Type", "application/json");
     res.end(
@@ -124,9 +122,11 @@ await new Promise<void>((resolve) =>
   provider.listen(3101, "127.0.0.1", resolve),
 );
 if (process.argv.includes("--generate-schema")) {
+  await authLockDatabase.end();
   await database.end();
   provider.close();
-  await pg.stop();
+  await smtp.close();
+  await stopTestDatabase(pg, dir);
   process.exit(0);
 }
 const production = process.argv.includes("--production");
@@ -148,9 +148,11 @@ async function stop() {
   if (stopping) return;
   stopping = true;
   app.kill();
+  await authLockDatabase.end();
   provider.close();
+  await smtp.close();
   await database.end();
-  await pg.stop();
+  await stopTestDatabase(pg, dir);
   process.exit(0);
 }
 process.on("SIGINT", stop);

@@ -1,22 +1,33 @@
 import { Pool, types, type PoolClient, type QueryResultRow } from "pg";
+import { databaseConnectionConfig } from "./database-config";
 types.setTypeParser(1700, Number);
 
-const globalDb = globalThis as unknown as { contextPool?: Pool };
+const globalDb = globalThis as unknown as {
+  contextPool?: Pool;
+  contextAuthLockPool?: Pool;
+};
 export const database =
   globalDb.contextPool ??
   new Pool({
-    connectionString: process.env.SUPABASE_DATABASE_URL,
+    ...databaseConnectionConfig(),
     max: Number(process.env.DATABASE_POOL_MAX || 3),
     idleTimeoutMillis: 10_000,
     connectionTimeoutMillis: 10_000,
-    ssl:
-      process.env.DATABASE_SSL === "false"
-        ? false
-        : process.env.SUPABASE_DATABASE_URL?.includes("supabase")
-          ? { rejectUnauthorized: false }
-          : undefined,
   });
 if (process.env.NODE_ENV !== "production") globalDb.contextPool = database;
+
+// Locks use a separate small pool. Holding every application-pool connection
+// while waiting for Better Auth's queries would otherwise cause starvation.
+export const authLockDatabase =
+  globalDb.contextAuthLockPool ??
+  new Pool({
+    ...databaseConnectionConfig(),
+    max: 2,
+    idleTimeoutMillis: 10_000,
+    connectionTimeoutMillis: 10_000,
+  });
+if (process.env.NODE_ENV !== "production")
+  globalDb.contextAuthLockPool = authLockDatabase;
 
 export async function query<T extends QueryResultRow>(
   sql: string,

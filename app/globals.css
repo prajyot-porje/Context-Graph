@@ -1750,3 +1750,15 @@
 /* App headings follow the lighter setup/settings display treatment. */
 .cg-dashboard-grid .text-display-sm,.cg-heading{font-weight:400}
 .cg-dashboard-grid input[type="checkbox"]{accent-color:var(--accent)}
+
+/* Auth navigation keeps link semantics with comfortable keyboard/touch targets. */
+.auth-text-action {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-height: 44px; padding: var(--space-2) var(--space-3);
+  color: var(--text-secondary); border-radius: var(--radius-sm);
+  font-size: 13px; transition: color 150ms ease, background-color 150ms ease;
+}
+.auth-text-action:hover { color: var(--text-primary); background: var(--surface); }
+.auth-text-action:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; }
+.auth-text-action:active { background: var(--card); }
+.auth-text-action:disabled { opacity: .5; cursor: not-allowed; }

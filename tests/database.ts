@@ -3,6 +3,7 @@ import { mkdtemp, readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { createServer } from "node:net";
+import { stopTestDatabase } from "./database-cleanup";
 
 export async function testDatabase(port?: number) {
   if (port === undefined) {
@@ -40,7 +41,7 @@ export async function testDatabase(port?: number) {
   });
   const { auth } = await import("../lib/auth");
   const { getMigrations } = await import("better-auth/db/migration");
-  const { database } = await import("../lib/database");
+  const { database, authLockDatabase } = await import("../lib/database");
   await (await getMigrations(auth.options)).runMigrations();
   const base = (await readFile("supabase/schema.sql", "utf8")).replace(
     /-- ── Realtime[\s\S]*?-- ── Row Level Security/,
@@ -51,11 +52,15 @@ export async function testDatabase(port?: number) {
     await readFile("supabase/2026-10-30-demo-recovery.sql", "utf8"),
   );
   await database.query(await readFile("supabase/2026-10-30-oauth.sql", "utf8"));
+  await database.query(
+    await readFile("supabase/2026-10-31-auth-hardening.sql", "utf8"),
+  );
   return {
     database,
     async stop() {
+      await authLockDatabase.end();
       await database.end();
-      await postgres.stop();
+      await stopTestDatabase(postgres, dir);
     },
   };
 }

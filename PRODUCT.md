@@ -12,6 +12,10 @@ The core demonstration is simple: approve context from one AI, then retrieve it 
 
 Primary users are developers and AI power users working across tools and ongoing projects. Secondary users include freelancers managing client context; shared team permissions are not implemented. Voice is direct, precise, technical, and understated. The existing dark-dominant design system stays in place.
 
+## Account access
+
+Google and email/password sign-in remain available. Signup verifies the email before asking for a password; returning password users do not need a new code. Recovery can reset a forgotten password or add one to a Google-only account. Recovery signs out old sessions. Signup has no required name field; an email-derived display label supplies profile initials. Public assistance avoids explicit membership/provider disclosure; users can choose signup with their email prefilled.
+
 ## Setup and return flow
 
 Sign in → choose Claude or ChatGPT → configure its connector → approve selected facts in that conversation → review/edit the received draft in ContextGraph → save → dashboard.

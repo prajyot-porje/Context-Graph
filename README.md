@@ -17,7 +17,7 @@ Use Node.js 22.13+ (or current Node.js 24 LTS), npm, and a Supabase PostgreSQL d
 3. Prepare the database as described below.
 4. Run `npm run dev`.
 
-Email verification requires Resend and a verified EMAIL_FROM sender. Delivery failures are errors; OTPs are never logged as a substitute for delivery. Google login appears only when both Google credentials exist. Its redirect URL is `{BETTER_AUTH_URL}/api/auth/callback/google`.
+Email verification uses a dedicated personal Gmail sender through TLS SMTP. Configure GMAIL_SMTP_USER and GMAIL_SMTP_APP_PASSWORD; no purchased domain is required. Follow [the authentication setup guide](docs/authentication-setup.md) for local/Vercel settings, migration, App Password creation and smoke tests. OTPs are never logged as a substitute for delivery. Google login appears only when both Google credentials exist. Its redirect URL is `{BETTER_AUTH_URL}/api/auth/callback/google`.
 
 Automatic capture uses Gemini when configured, then OpenRouter. Their quotas and charges are independent of ContextGraph. Failed processing retains queued notes and exposes retry in Settings. Reviewed structured/manual imports do not require a model call.
 
@@ -81,7 +81,7 @@ npx playwright install chromium
 npm run test:e2e
 ```
 
-`npm test` includes real PostgreSQL integration tests using a temporary embedded PostgreSQL cluster on an available loopback port. `npm run test:e2e` starts a separate temporary cluster on an available loopback port, a capture-only email/model fixture server on 3101, and Next.js on 3100. These fixtures override database/auth/provider configuration before importing the app; they never read production data or send real emails/model calls. They do not create a production auth bypass. Both clusters are disposable. Ports must be available. On Linux, run as a normal user rather than root.
+`npm test` includes real PostgreSQL integration tests using a temporary embedded PostgreSQL cluster on an available loopback port. `npm run test:e2e` starts a separate temporary cluster on an available loopback port, a capture-only model/OTP retrieval fixture on 3101 and SMTP fixture on 3102, and Next.js on 3100. These fixtures override database/auth/provider configuration before importing the app; they never read production data or send real emails/model calls. They do not create a production auth bypass. Both clusters are disposable. Ports must be available. On Linux, run as a normal user rather than root.
 
 For browser checks against an optimized build, run `npx tsx scripts/build-test.mts`, stop a development test server if one is using port 3100, set TEST_APP_MODE=production, then run `npm run test:e2e`. The fixture starts the optimized app from `.next-build`. The test build uses explicit isolated settings rather than .env.local credentials. Do not deploy that test-configured build.
 
@@ -90,7 +90,7 @@ Screenshots/logs/traces are written under `.test-output`, `test-results`, and `p
 ## Release checklist
 
 - Apply and verify the additive migrations against an isolated copy first.
-- Configure stable auth/public URLs, secrets, verified email sender, Google callback if enabled, model credentials, and CRON_SECRET.
+- Configure stable auth/public URLs, secrets, Gmail SMTP sender/App Password, Google callback if enabled, model credentials, and CRON_SECRET.
 - Deploy to preview; verify a new account, reviewed import, and cross-client retrieval with the real Claude/ChatGPT accounts available to you.
 - Check that pending/error states and revocation behave truthfully; only then promote production.
 - Roll back application code to a compatible build if needed. Keep additive schema and newly saved user data; do not “roll back” by deleting imported memories.

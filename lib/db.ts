@@ -1,6 +1,6 @@
 import { createHash, randomUUID } from "crypto";
 import type { PoolClient } from "pg";
-import { query, transaction } from "./database";
+import { authLockDatabase, query, transaction } from "./database";
 import {
   hasUsefulContext,
   normalizedNote,
@@ -408,37 +408,6 @@ export async function updateLastClientName(id: string, name: string) {
 export async function markOnboardingDone(user: string) {
   await query('UPDATE "user" SET onboarding_done=true WHERE id=$1', [user]);
 }
-export interface AccountStatus {
-  exists: boolean;
-  emailVerified: boolean;
-  hasPassword: boolean;
-  hasGoogle: boolean;
-}
-export async function getAccountStatus(email: string): Promise<AccountStatus> {
-  const u = (
-    await query<{ id: string; emailVerified: boolean }>(
-      'SELECT id,"emailVerified" FROM "user" WHERE lower(email)=$1',
-      [email.trim().toLowerCase()],
-    )
-  )[0];
-  if (!u)
-    return {
-      exists: false,
-      emailVerified: false,
-      hasPassword: false,
-      hasGoogle: false,
-    };
-  const a = await query<{ providerId: string; password: string | null }>(
-    'SELECT "providerId",password FROM account WHERE "userId"=$1',
-    [u.id],
-  );
-  return {
-    exists: true,
-    emailVerified: u.emailVerified,
-    hasPassword: a.some((a) => !!a.password),
-    hasGoogle: a.some((a) => a.providerId === "google"),
-  };
-}
 export async function decayRelevanceScores() {
   await query(
     "UPDATE context_nodes SET relevance=greatest(0.1,relevance*0.92) WHERE last_updated<now()-interval '30 days'",
@@ -817,6 +786,7 @@ export async function retryStagedEntries(user: string) {
   );
 }
 export async function cleanupExpiredData() {
+  await query("DELETE FROM auth_request_limits WHERE expires_at < now()");
   await query(
     "UPDATE context_imports SET items='[]',status='canceled' WHERE expires_at<now() AND status IN ('waiting','review','failed')",
   );
@@ -826,4 +796,81 @@ export async function cleanupExpiredData() {
   await query(
     "DELETE FROM rate_limits WHERE window_start<now()-interval '2 days'",
   );
+}
+
+/** Atomic rolling-window limiter shared by all app instances. Keys are HMACs. */
+export async function consumeAuthLimit(
+  identity: string,
+  seconds: number,
+  max: number,
+) {
+  const [row] = await query<{ count: number; retry: number }>(
+    `INSERT INTO auth_request_limits(identity,window_start,count,expires_at)
+     VALUES($1,now(),1,now()+$2*interval '1 second')
+     ON CONFLICT(identity) DO UPDATE SET
+       count=CASE WHEN auth_request_limits.expires_at<=now() THEN 1 ELSE auth_request_limits.count+1 END,
+       window_start=CASE WHEN auth_request_limits.expires_at<=now() THEN now() ELSE auth_request_limits.window_start END,
+       expires_at=CASE WHEN auth_request_limits.expires_at<=now() THEN now()+$2*interval '1 second' ELSE auth_request_limits.expires_at END
+     RETURNING count, greatest(1,ceil(extract(epoch FROM expires_at-now())))::int AS retry`,
+    [identity, seconds],
+  );
+  return {
+    allowed: row.count <= max,
+    retryAfter: row.count <= max ? null : row.retry,
+  };
+}
+
+/** Called only after Better Auth has validated and consumed password-reset proof. */
+export async function finishPasswordRecovery(userId: string) {
+  await transaction(async (client) => {
+    const {
+      rows: [user],
+    } = await client.query<{ emailVerified: boolean }>(
+      'SELECT "emailVerified" FROM "user" WHERE id=$1 FOR UPDATE',
+      [userId],
+    );
+    if (!user || user.emailVerified) return;
+    // Preserve the fresh credential written by the reset transaction, but remove
+    // any legacy provider link established before mailbox ownership was proven.
+    await client.query(
+      'DELETE FROM account WHERE "userId"=$1 AND "providerId"<>$2',
+      [userId, "credential"],
+    );
+    await client.query('DELETE FROM session WHERE "userId"=$1', [userId]);
+    await client.query(
+      'UPDATE "user" SET "emailVerified"=true,"updatedAt"=now() WHERE id=$1',
+      [userId],
+    );
+  });
+}
+
+/** Serialize credential verification/session issuance with recovery. Nonblocking
+ * acquisition avoids tying up the bounded pool behind a slow password hash. */
+export async function withAuthIdentityLock<T>(
+  identity: string,
+  work: () => Promise<T>,
+): Promise<T> {
+  const client = await authLockDatabase.connect();
+  try {
+    await client.query("BEGIN");
+    const {
+      rows: [lock],
+    } = await client.query<{ locked: boolean }>(
+      "SELECT pg_try_advisory_xact_lock(hashtextextended($1,0)) AS locked",
+      [identity],
+    );
+    if (!lock.locked)
+      throw new DataError(
+        "Another sign-in or recovery is in progress. Please try again.",
+        409,
+      );
+    const result = await work();
+    await client.query("COMMIT");
+    return result;
+  } catch (error) {
+    await client.query("ROLLBACK");
+    throw error;
+  } finally {
+    client.release();
+  }
 }

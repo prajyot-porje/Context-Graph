@@ -1,7 +1,7 @@
 import { spawnSync } from "node:child_process";
 const result = spawnSync(
   process.execPath,
-  ["node_modules/next/dist/bin/next", "build"],
+  ["node_modules/next/dist/bin/next", "build", ...process.argv.slice(2)],
   {
     stdio: "inherit",
     windowsHide: true,
@@ -21,7 +21,8 @@ const result = spawnSync(
       GOOGLE_CLIENT_SECRET: "",
       GEMINI_API_KEY: "",
       OPENROUTER_API_KEY: "fixture-only",
-      RESEND_API_KEY: "fixture-only",
+      GMAIL_SMTP_USER: "fixture@gmail.com",
+      GMAIL_SMTP_APP_PASSWORD: "fixture-only",
       NEXT_PUBLIC_MAINTENANCE_MODE: "false",
       NEXT_PUBLIC_AGENTATION_ENABLED: "false",
       CRON_SECRET: "isolated-test-cron",
