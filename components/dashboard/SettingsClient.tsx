@@ -849,7 +849,7 @@ export default function SettingsClient({
                   </div>
                   <button
                     className={s.danger}
-                    disabled={!!busy}
+                    disabled={!!busy || !status.run}
                     onClick={() => setConfirmation({ kind: "drafts" })}
                   >
                     <Trash2 size={16} />

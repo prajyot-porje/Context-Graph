@@ -941,7 +941,7 @@ export async function exportUserContext(user: string) {
       "SET TRANSACTION ISOLATION LEVEL REPEATABLE READ READ ONLY",
     );
     const nodes = await client.query(
-      "SELECT id,scope,title,content,tags,parent_scope,created_at,last_updated FROM context_nodes WHERE user_id=$1 ORDER BY created_at,id",
+      "SELECT id,scope,title,content,tags,relevance,parent_scope,created_at,last_updated FROM context_nodes WHERE user_id=$1 ORDER BY created_at,id",
       [user],
     );
     const notes = await client.query(
