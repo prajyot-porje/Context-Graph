@@ -277,11 +277,11 @@ test("fresh login never exposes an empty graph; manual context is reviewed and r
     ),
   ).toBe(false);
   await expect(
-    page.getByRole("navigation", { name: "Settings sections" }),
+    page.getByLabel("Settings section", { exact: true }),
   ).toBeVisible();
   await page
-    .getByRole("link", { name: "Connected tools", exact: true })
-    .click();
+    .getByLabel("Settings section", { exact: true })
+    .selectOption("connections");
   await expect(
     page.getByRole("heading", { name: "Connected tools", exact: true }),
   ).toBeVisible();
