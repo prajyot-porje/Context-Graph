@@ -99,7 +99,7 @@ export default function SetupClient({
       delay = 2000;
     const tick = async () => {
       if (closed) return;
-      if (!document.hidden) {
+      if (!document.hidden && !actionPending.current) {
         try {
           await refresh();
           delay = Math.min(delay * 1.3, 10000);
@@ -113,7 +113,8 @@ export default function SetupClient({
       if (!closed) timer = setTimeout(tick, delay);
     };
     const focus = () => {
-      if (!document.hidden) void refresh().catch(() => {});
+      if (!document.hidden && !actionPending.current)
+        void refresh().catch(() => {});
     };
     if (run?.status === "waiting") timer = setTimeout(tick, delay);
     window.addEventListener("focus", focus);
@@ -276,7 +277,13 @@ export default function SetupClient({
           </p>
         </div>
         <section className={s.main} aria-busy={busy}>
-          <fieldset className={s.flowFields} disabled={busy} onClickCapture={event => { if (busy) event.preventDefault(); }}>
+          <fieldset
+            className={s.flowFields}
+            disabled={busy}
+            onClickCapture={(event) => {
+              if (busy) event.preventDefault();
+            }}
+          >
             {error && (
               <div className={s.error} role="alert">
                 {error}
@@ -490,7 +497,12 @@ export default function SetupClient({
               </>
             )}
           </fieldset>
-          <footer className={s.flowFooter}>
+          <footer
+            className={s.flowFooter}
+            onClickCapture={(event) => {
+              if (busy) event.preventDefault();
+            }}
+          >
             <span>Only notes you approve become saved context.</span>
             <Link href="/privacy">How your context is processed</Link>
           </footer>

@@ -174,7 +174,16 @@ export default function OAuthAction({
           {error && !consent && (
             <button onClick={() => send()}>Retry authorization</button>
           )}
-          <Link href="/privacy">How your context is processed</Link>
+          <Link
+            href="/privacy"
+            aria-disabled={busy}
+            tabIndex={busy ? -1 : undefined}
+            onClick={(event) => {
+              if (busy) event.preventDefault();
+            }}
+          >
+            How your context is processed
+          </Link>
         </section>
       </div>
     </main>
