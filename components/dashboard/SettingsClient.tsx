@@ -113,7 +113,12 @@ export default function SettingsClient({
     );
     const hash = () => {
       const value = location.hash.slice(1);
-      if (sections.some((s) => s.id === value)) setSection(value as Section);
+      if (sections.some((s) => s.id === value)) {
+        setSection(value as Section);
+        setNotice("");
+        setError("");
+        setConfirmation(null);
+      }
     };
     hash();
     window.addEventListener("hashchange", hash);

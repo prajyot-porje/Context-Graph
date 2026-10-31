@@ -1112,6 +1112,9 @@ test("settings persist profile and appearance, revoke sessions and keys, and exp
   expect(JSON.stringify(exported)).not.toContain(key);
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("/settings#account");
+  await expect(
+    page.getByText("Context export downloaded.", { exact: true }),
+  ).toHaveCount(0);
   expect(
     await page.evaluate(
       () => document.documentElement.scrollWidth <= innerWidth,
