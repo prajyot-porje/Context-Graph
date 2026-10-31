@@ -84,7 +84,7 @@ export default function RootLayout({
             __html: `
               try {
                 var t = localStorage.getItem('cg-theme');
-                if (!t) {
+                if (t !== 'dark' && t !== 'light') {
                   t = window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
                 }
                 document.documentElement.setAttribute('data-theme', t);

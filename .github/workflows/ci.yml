@@ -49,6 +49,9 @@ jobs:
             .test-output/oauth-consent-*.png
             .test-output/import-review-*.png
             .test-output/auth-redirect-*.png
+            .test-output/settings-*.png
+            .test-output/connect-*.png
+            .test-output/ux-settings-*.png
 
       - uses: actions/upload-artifact@v4
         if: failure()

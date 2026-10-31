@@ -514,3 +514,12 @@ Three centered provider choices (Claude, ChatGPT, another MCP client) run horizo
 Review uses searchable category-filtered rows, six per page, with expandable editors. Include/exclude choices persist across pages; save applies to all included notes. Keep the save action available at the bottom. Loading locks fields, competing actions and navigation. Successful authentication/save stays busy until departure; no cleared-field flash or reactivated submit during navigation.
 
 On narrow screens, the illustrative connection preview is collapsed behind a Show control. The introductory brand/value heading appears on provider selection only; detailed connection and review pages lead with their current task.
+
+
+## Connection and Settings refinement — 2026-11-01
+
+Remove the illustrated preview entirely, including mobile toggles. Connection pages use one focused instruction column. Provider cards remain the only provider-selection actions; no duplicate Continue-with-provider button. No Settings link appears in Connect. The theme control there is a 44px icon-only button with a 22px glyph, without border or background.
+
+Connected checks and labels use the existing theme accent green. Neutral indicates pending/not yet observed, red indicates a status-check error. These semantic indicators may repeat across cards and the heading; the one-accent decorative limit does not suppress connection feedback. Put connection status near the heading and beside Refresh above step navigation. Step three explicitly names where the incoming draft will appear and offers Refresh. Copy confirmation changes only the initiating button to Copied with a check; no page-top copy notices.
+
+Settings is an Operate surface: compact neutral sidebar navigation, one focused section, familiar setting rows with dividers, labels and controls. Use six sections: Account, Appearance, Connected tools, Context capture, Security, Data & privacy. Mobile uses a horizontally scrollable navigation strip and wraps row controls without horizontal page overflow. Account/profile and settings sections retain Outfit 400 page headings and Geist body/control typography. Dangerous changes use an explicit inline confirmation with consequences; no no-op controls or invented service capabilities.

@@ -1,7 +1,9 @@
 export class AuthBodyTooLarge extends Error {}
 
-export async function readAuthBody(request: Request): Promise<unknown> {
-  const limit = 4096;
+export async function readAuthBody(
+  request: Request,
+  limit = 4096,
+): Promise<unknown> {
   if (Number(request.headers.get("content-length") || 0) > limit)
     throw new AuthBodyTooLarge();
   const reader = request.body?.getReader();

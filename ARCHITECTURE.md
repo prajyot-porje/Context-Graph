@@ -63,7 +63,7 @@ Gemini/OpenRouter fallback judgment validates a bounded batch response. Malforme
 
 - Hosted ChatGPT/Claude UI and actual Google OAuth still require target-account smoke tests on a reachable HTTPS preview. Local protocol fixtures are not vendor UI verification.
 - Existing production schema requires a reviewed dry-run and backup before additive upgrade. No production migration/deployment was performed during recovery implementation.
-- Account editing/deletion and downloadable export are deferred and shown as unavailable; privacy disclosure states the actual storage/model boundaries.
+- Full account deletion is deferred. Profile name/avatar editing and tenant-scoped saved-context export are implemented; privacy disclosure states the actual storage/model boundaries.
 - No semantic search, fuzzy superseding, teams, multiple graph workspaces, public sharing or digital twin in this iteration.
 - Authenticated polling (10 seconds on dashboard, bounded backoff during setup, hidden-tab pause/focus refresh) replaces broken anon realtime. A future push transport needs its own authorization design.
 - Historical unused Supabase helper/type artifacts may remain; runtime private-data paths use pg. Do not reintroduce browser queries by copying them.
@@ -233,3 +233,12 @@ The owner configured Gmail SMTP credentials locally and on Vercel. Verified actu
 Setup separates provider selection, configuration, OAuth consent and context sharing. Cards derive status from existing authenticated connection records. Switching provider cancels the active waiting import, never the connection, reviewed drafts or saved context. Search/category/pagination are local projections of the same revisioned items; saving submits all selected notes through existing review/commit helpers. No new schema, external service, scope or save bypass. Consent describes requested scopes and retains the warning that registered client names are unverified. Authentication/save remain busy through navigation.
 
 MCP initialize metadata advertises the existing public ContextGraph SVG logo and website URL. Host clients decide whether to display that icon; this is not directory publication or verified vendor branding.
+
+
+### 2026-11-01 — Preserve import attempts and implement Settings controls
+
+Reverses the October 31 decision to cancel a waiting import on provider changes. Each provider retains its active waiting/review attempt. The selected attempt is retained in the URL and passed to the tenant-scoped status helper, so another provider cannot silently invalidate a copied prompt. Default status prioritizes received review drafts. contextgraph_setup remains read-only: a stale canceled/expired ID can resolve only to an existing newer same-owner, same-provider website-created attempt. It never reopens a discard or creates an import from an MCP read. Closed submissions remain rejected with recovery instructions. Successful submissions return a direct website review URL. No approval/save boundary or OAuth scope changes.
+
+Settings now has dedicated sections and real APIs for profile editing, export, draft discard and website-session management, in addition to existing capture, connection and API-key helpers. Profile name and controlled avatar paths/small JPEG data URLs use Better Auth's existing user columns; no new schema or external storage service is introduced. Uploaded photos are resized/cropped to 96px in the browser, and the server bounds request bytes and checks JPEG format/dimensions (maximum 256px, 24,000 encoded characters). Profile email is immutable here. Public session summaries never include session tokens; revocation resolves an owner-filtered ID to a token only on the server and delegates to Better Auth.
+
+Export reads only the authenticated owner's saved nodes/notes within a repeatable-read transaction, excluding credentials and unsaved drafts. Discarding all unsaved imports is an explicit confirmed action and preserves committed notes. Theme/system appearance and the default graph/notes view are clearly device-local preferences. Profile, capture, revocation and keys are server-backed. Removed the connection preview and Connect's Settings navigation; Settings remains accessible from the dashboard. Supabase remains Postgres storage only; no Supabase Auth/RLS bridge was introduced.

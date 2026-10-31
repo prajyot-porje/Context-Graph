@@ -16,6 +16,7 @@ import s from "./SetupClient.module.css";
 import { ImportReview } from "./ImportReview";
 import { ConnectionGuide } from "./ConnectionGuide";
 import { ProviderLogo } from "./ProviderLogo";
+import { CopyButton } from "@/components/ui/CopyButton";
 
 async function api<T>(
   url: string,
@@ -67,6 +68,7 @@ export default function SetupClient({
     [busy, setBusy] = useState(false),
     [error, setError] = useState(""),
     [notice, setNotice] = useState("");
+  const selectedAttempt = useRef(initial.run?.id);
   const actionPending = useRef(false);
   const navigating = useRef(false);
   const revision = useRef(`${initial.run?.id}:${initial.run?.revision}`);
@@ -79,7 +81,7 @@ export default function SetupClient({
     refreshController.current?.abort();
     refreshController.current = new AbortController();
     const state = await api<SetupStatus>(
-      "/api/setup/status",
+      `/api/setup/status${selectedAttempt.current ? `?attempt=${selectedAttempt.current}` : ""}`,
       undefined,
       "GET",
       refreshController.current.signal,
@@ -148,9 +150,12 @@ export default function SetupClient({
   }
   async function choose(provider: Provider) {
     await act(async () => {
-      if (run?.status === "waiting" && run.provider !== provider)
-        await api(`/api/imports/${run.id}`, { action: "cancel" });
-      await api<ImportRun>("/api/imports", { provider });
+      const next = await api<ImportRun>("/api/imports", { provider });
+      selectedAttempt.current = next.id;
+      revision.current = `${next.id}:${next.revision}`;
+      setItems(next.items);
+      setStatus((previous) => ({ ...previous, run: next }));
+      window.history.replaceState(null, "", `/connect?attempt=${next.id}`);
       setMode(
         provider === "manual"
           ? "manual"
@@ -161,20 +166,12 @@ export default function SetupClient({
       await refresh();
     });
   }
-  async function copy(value: string, label = "Text") {
-    try {
-      await navigator.clipboard.writeText(value);
-      setNotice(`${label} copied.`);
-    } catch {
-      setError(
-        "Clipboard access is unavailable. Select and copy the text below.",
-      );
-    }
-  }
   async function cancel() {
     if (!run) return;
     await act(async () => {
       await api(`/api/imports/${run.id}`, { action: "cancel" });
+      selectedAttempt.current = undefined;
+      window.history.replaceState(null, "", "/connect");
       setMode("choose");
       await refresh();
     });
@@ -201,6 +198,8 @@ export default function SetupClient({
           mode === "manual" || run?.provider === "manual" ? "manual" : "export",
         notes,
       });
+      selectedAttempt.current = result.id;
+      window.history.replaceState(null, "", `/connect?attempt=${result.id}`);
       setItems(result.items);
       revision.current = `${result.id}:${result.revision}`;
       await refresh();
@@ -263,8 +262,7 @@ export default function SetupClient({
         </Link>
         <div className={s.headerActions}>
           {status.ready && <Link href="/dashboard">Back to dashboard</Link>}
-          <Link href="/settings">Settings</Link>
-          <ThemeToggle />
+          <ThemeToggle minimal />
         </div>
       </header>
       <div className={s.flowLayout}>
@@ -384,11 +382,11 @@ export default function SetupClient({
                 <label htmlFor="other-url">Server URL</label>
                 <div className={s.copyRow}>
                   <input id="other-url" readOnly value={`${appUrl}/api/mcp`} />
-                  <button
-                    onClick={() => copy(`${appUrl}/api/mcp`, "Server URL")}
-                  >
-                    Copy URL
-                  </button>
+                  <CopyButton
+                    value={`${appUrl}/api/mcp`}
+                    ariaLabel="Copy server URL"
+                    disabled={busy}
+                  />
                 </div>
                 <p>
                   Follow your client&apos;s OAuth sign-in flow. Once connected,
@@ -412,7 +410,7 @@ export default function SetupClient({
                 appUrl={appUrl}
                 connected={observed}
                 busy={busy}
-                copy={copy}
+                refreshError={!!error}
                 refresh={() => void act(refresh)}
                 back={() => {
                   setMode("choose");
@@ -436,21 +434,25 @@ export default function SetupClient({
                       onClick={() =>
                         provider === "other"
                           ? setMode("other")
-                          : run?.provider === provider
-                            ? setMode("client")
-                            : void choose(provider)
+                          : void choose(provider)
                       }
                     >
                       <ProviderLogo provider={provider} size={40} />
                       <strong>
                         {provider === "other" ? "Another AI" : names[provider]}
                       </strong>
-                      <span>
+                      <span
+                        className={
+                          provider !== "other" && isConnected(provider)
+                            ? s.connectionReady
+                            : undefined
+                        }
+                      >
                         {provider === "other" ? (
                           "Use a compatible MCP client"
                         ) : isConnected(provider) ? (
                           <>
-                            <Check size={14} />
+                            <Check size={16} className={s.connectionReady} />
                             Connected
                           </>
                         ) : provider === "claude" ? (
@@ -463,22 +465,6 @@ export default function SetupClient({
                     </button>
                   ))}
                 </div>
-                {!!activeConnections.length && (
-                  <p className={s.small} role="status">
-                    {activeConnections.map((c) => c.client_name).join(", ")}{" "}
-                    connected. Connections remain active when you add another
-                    AI.
-                  </p>
-                )}
-                {run?.status === "waiting" && (
-                  <button
-                    className={s.primary}
-                    onClick={() => setMode("client")}
-                  >
-                    Continue with {names[run.provider]}
-                    <ArrowRight size={16} />
-                  </button>
-                )}
                 {status.ready && (
                   <Link className={s.link} href="/dashboard">
                     Continue to dashboard

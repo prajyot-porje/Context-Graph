@@ -455,7 +455,10 @@ export async function observeConnection(
     );
   });
 }
-export async function getSetupStatus(user: string): Promise<SetupStatus> {
+export async function getSetupStatus(
+  user: string,
+  attempt?: string,
+): Promise<SetupStatus> {
   await query(
     "UPDATE context_imports SET status='canceled',items='[]',error='Import expired. Start again.' WHERE user_id=$1 AND expires_at<now() AND status IN ('waiting','review','failed')",
     [user],
@@ -468,8 +471,8 @@ export async function getSetupStatus(user: string): Promise<SetupStatus> {
       [user],
     ),
     query<ImportRun>(
-      "SELECT * FROM context_imports WHERE user_id=$1 AND status IN ('waiting','review','failed') AND expires_at>now() ORDER BY created_at DESC LIMIT 1",
-      [user],
+      "SELECT * FROM context_imports WHERE user_id=$1 AND status IN ('waiting','review','failed') AND expires_at>now() ORDER BY CASE WHEN id=$2::uuid THEN 0 WHEN status='review' THEN 1 ELSE 2 END,created_at DESC LIMIT 1",
+      [user, attempt ?? null],
     ),
     query<{ capture_enabled: boolean }>(
       'SELECT capture_enabled FROM "user" WHERE id=$1',
@@ -527,6 +530,22 @@ export async function getImport(user: string, id: string) {
     ),
   );
 }
+/** Resolve a stale setup link only to another website-created attempt for the same provider. */
+export async function getSetupImport(user: string, id: string) {
+  const original = await getImport(user, id);
+  if (
+    original.status === "committed" ||
+    (["waiting", "review"].includes(original.status) &&
+      new Date(original.expires_at) > new Date())
+  )
+    return original;
+  const replacement = await query<ImportRun>(
+    "SELECT * FROM context_imports WHERE user_id=$1 AND provider=$2 AND status IN ('waiting','review') AND expires_at>now() AND created_at>=$3 ORDER BY created_at DESC LIMIT 1",
+    [user, original.provider, original.created_at],
+  );
+  return json(replacement[0] ?? original);
+}
+
 export async function submitImport(
   user: string,
   id: string,
@@ -557,7 +576,10 @@ export async function submitImport(
     )
       return json(run);
     if (run.status !== "waiting" || new Date(run.expires_at) < new Date())
-      throw new DataError("Import is closed. Start a new import.", 409);
+      throw new DataError(
+        "Import is closed. Call contextgraph_setup with this attempt_id to find a newer website-created attempt. If none exists, open ContextGraph and select this AI again. Do not use remember to bypass review.",
+        409,
+      );
     if (connection)
       one(
         (
@@ -641,7 +663,7 @@ export async function commitImport(user: string, id: string, revision: number) {
 export async function cancelImport(user: string, id: string) {
   one(
     await query(
-      "UPDATE context_imports SET status='canceled',items='[]' WHERE id=$1 AND user_id=$2 AND status!='committed' RETURNING id",
+      "UPDATE context_imports SET status='canceled',items='[]',error='Discarded on the website.' WHERE id=$1 AND user_id=$2 AND status!='committed' RETURNING id",
       [id, user],
     ),
   );
@@ -873,4 +895,73 @@ export async function withAuthIdentityLock<T>(
   } finally {
     client.release();
   }
+}
+
+export interface UserProfile {
+  id: string;
+  name: string;
+  email: string;
+  image: string | null;
+  emailVerified: boolean;
+}
+export async function getUserProfile(user: string): Promise<UserProfile> {
+  return json(
+    one(
+      await query<UserProfile>(
+        'SELECT id,name,email,image,"emailVerified" FROM "user" WHERE id=$1',
+        [user],
+      ),
+    ),
+  );
+}
+export async function updateUserProfile(
+  user: string,
+  name: string,
+  image: string | null,
+) {
+  return json(
+    one(
+      await query<UserProfile>(
+        'UPDATE "user" SET name=$2,image=$3,"updatedAt"=now() WHERE id=$1 RETURNING id,name,email,image,"emailVerified"',
+        [user, name, image],
+      ),
+    ),
+  );
+}
+export async function discardUserDrafts(user: string) {
+  const rows = await query<{ id: string }>(
+    "UPDATE context_imports SET status='canceled',items='[]',error='Discarded on the website.' WHERE user_id=$1 AND status IN ('waiting','review','failed') RETURNING id",
+    [user],
+  );
+  return rows.length;
+}
+export async function exportUserContext(user: string) {
+  return transaction(async (client) => {
+    await client.query(
+      "SET TRANSACTION ISOLATION LEVEL REPEATABLE READ READ ONLY",
+    );
+    const nodes = await client.query(
+      "SELECT id,scope,title,content,tags,parent_scope,created_at,last_updated FROM context_nodes WHERE user_id=$1 ORDER BY created_at,id",
+      [user],
+    );
+    const notes = await client.query(
+      "SELECT id,node_id,entry_text,kind,score,source,created_at FROM context_entries WHERE user_id=$1 ORDER BY created_at,id",
+      [user],
+    );
+    return {
+      format: "contextgraph-export",
+      version: 1,
+      exportedAt: new Date().toISOString(),
+      nodes: nodes.rows,
+      notes: notes.rows,
+    };
+  });
+}
+export async function getOwnedSessionToken(user: string, id: string) {
+  return one(
+    await query<{ token: string }>(
+      'SELECT token FROM session WHERE "userId"=$1 AND id=$2 AND "expiresAt">now()',
+      [user, id],
+    ),
+  ).token;
 }

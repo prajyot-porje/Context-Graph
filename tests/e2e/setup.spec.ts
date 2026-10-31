@@ -273,10 +273,15 @@ test("fresh login never exposes an empty graph; manual context is reviewed and r
       document.documentElement.classList.contains("lenis"),
     ),
   ).toBe(false);
-  await page.mouse.wheel(0, 900);
-  await expect
-    .poll(() => page.evaluate(() => window.scrollY))
-    .toBeGreaterThan(100);
+  await expect(
+    page.getByRole("navigation", { name: "Settings sections" }),
+  ).toBeVisible();
+  await page
+    .getByRole("link", { name: "Connected tools", exact: true })
+    .click();
+  await expect(
+    page.getByRole("heading", { name: "Connected tools", exact: true }),
+  ).toBeVisible();
   await page.screenshot({
     path: ".test-output/ux-settings-mobile.png",
     fullPage: true,
@@ -843,4 +848,271 @@ test("large import review preserves edits and selections across filters and page
   ).assembled;
   expect(preview).toContain("Edited fact on another page");
   expect(preview).not.toContain("Imported fact 16");
+});
+
+test("switching AI cards preserves copied attempts and received drafts appear on step three", async ({
+  page,
+  context,
+}) => {
+  await context.grantPermissions(["clipboard-read", "clipboard-write"]);
+  await signup(page);
+  await page.goto("/connect");
+  await expect(
+    page.getByRole("link", { name: "Settings", exact: true }),
+  ).toHaveCount(0);
+  await page.getByRole("button", { name: /ChatGPT Connect a custom/ }).click();
+  const original = (await (await page.request.get("/api/setup/status")).json())
+    .run.id;
+  await page
+    .getByRole("button", { name: "Copy connector name", exact: true })
+    .click();
+  await expect(
+    page.getByRole("button", {
+      name: "Copy connector name: copied",
+      exact: true,
+    }),
+  ).toBeVisible();
+  await expect(
+    page.getByText("Connector name copied.", { exact: true }),
+  ).toHaveCount(0);
+  await expect(page.getByLabel("Illustrated setup preview")).toHaveCount(0);
+  await page
+    .getByRole("button", { name: "Choose another AI", exact: true })
+    .click();
+  await expect(
+    page.getByRole("button", { name: "Continue with ChatGPT", exact: true }),
+  ).toHaveCount(0);
+  await page.getByRole("button", { name: /Claude Connect a remote/ }).click();
+  await page
+    .getByRole("button", { name: "Choose another AI", exact: true })
+    .click();
+  await page.getByRole("button", { name: /ChatGPT Connect a custom/ }).click();
+  expect(
+    (
+      await (
+        await page.request.get("/api/setup/status?attempt=" + original)
+      ).json()
+    ).run.id,
+  ).toBe(original);
+  const client = await oauth(page, "openai-mcp");
+  const setup = await client.call("tools/call", {
+    name: "contextgraph_setup",
+    arguments: { attempt_id: original },
+  });
+  expect(JSON.stringify(setup)).toContain("waiting");
+  await page.request.post("/api/imports/" + original, {
+    headers: { Origin: origin },
+    data: { action: "cancel" },
+  });
+  const next = await (
+    await page.request.post("/api/imports", {
+      headers: { Origin: origin },
+      data: { provider: "chatgpt" },
+    })
+  ).json();
+  const recovered = await client.call("tools/call", {
+    name: "contextgraph_setup",
+    arguments: { attempt_id: original },
+  });
+  expect(JSON.parse(recovered.result.content[0].text).attempt_id).toBe(next.id);
+  expect(
+    (await (await page.request.get("/api/imports/" + original)).json()).status,
+  ).toBe("canceled");
+  await page.goto("/connect?attempt=" + next.id);
+  await page
+    .getByRole("button", { name: "3 Choose what to share", exact: true })
+    .click();
+  await expect(
+    page.getByText("Waiting for your approved context", { exact: true }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Refresh", exact: true }),
+  ).toBeVisible();
+  await page.screenshot({
+    path: ".test-output/connect-share-status.png",
+    fullPage: true,
+  });
+  await client.call("tools/call", {
+    name: "submit_context_import",
+    arguments: {
+      attempt_id: next.id,
+      notes: [{ text: "Approved context survives switching providers." }],
+    },
+  });
+  await expect(
+    page.getByRole("heading", { name: "Choose what to remember", exact: true }),
+  ).toBeVisible();
+  await expect(page.getByLabel("Note 1", { exact: true })).toHaveValue(
+    "Approved context survives switching providers.",
+  );
+  await page
+    .getByRole("button", { name: "Save 1 note & open dashboard", exact: true })
+    .click();
+  await expect(page).toHaveURL(/dashboard/);
+});
+
+test("settings persist profile and appearance, revoke sessions and keys, and export private context", async ({
+  page,
+  browser,
+}) => {
+  const email = await signup(page);
+  await page.request.post("/api/imports", {
+    headers: { Origin: origin },
+    data: {
+      provider: "manual",
+      notes: [{ text: "A real saved setting-test fact." }],
+    },
+  });
+  const draft = (await (await page.request.get("/api/setup/status")).json())
+    .run;
+  await page.request.post("/api/imports/" + draft.id, {
+    headers: { Origin: origin },
+    data: { action: "commit", revision: draft.revision },
+  });
+  await page.goto("/settings");
+  await page.getByLabel("Display name", { exact: true }).fill("Profile Owner");
+  await page
+    .getByRole("button", { name: "Use orbit icon", exact: true })
+    .click();
+  await page.getByRole("button", { name: "Save profile", exact: true }).click();
+  await expect(page.getByRole("status")).toContainText("Profile saved.");
+  await page.reload();
+  await expect(page.getByLabel("Display name", { exact: true })).toHaveValue(
+    "Profile Owner",
+  );
+  await expect(
+    page.getByRole("button", { name: "Use orbit icon", exact: true }),
+  ).toHaveAttribute("aria-pressed", "true");
+  const photo = await page.evaluate(() => {
+    const canvas = document.createElement("canvas");
+    canvas.width = 96;
+    canvas.height = 96;
+    return canvas.toDataURL("image/jpeg");
+  });
+  await page.getByLabel("Upload profile photo", { exact: true }).setInputFiles({
+    name: "profile.jpg",
+    mimeType: "image/jpeg",
+    buffer: Buffer.from(photo.split(",")[1], "base64"),
+  });
+  await expect(
+    page.getByRole("button", { name: "Save profile", exact: true }),
+  ).toBeEnabled();
+  await page.getByRole("button", { name: "Save profile", exact: true }).click();
+  await expect(page.getByRole("status")).toContainText("Profile saved.");
+  const savedPhoto = await (await page.request.get("/api/profile")).json();
+  expect(savedPhoto.image).toMatch(/^data:image\/jpeg;base64,/);
+  const rejected = await page.request.patch("/api/profile", {
+    headers: { Origin: origin },
+    data: { name: "Bad avatar", image: "https://untrusted.example/photo.svg" },
+  });
+  expect(rejected.status()).toBe(400);
+  await page.getByRole("link", { name: "Appearance", exact: true }).click();
+  await page.getByRole("button", { name: "Dark", exact: true }).click();
+  await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
+  await page.getByLabel("Default dashboard view").selectOption("notes");
+  await page.screenshot({
+    path: ".test-output/settings-appearance-desktop.png",
+    fullPage: true,
+  });
+  await page.goto("/dashboard");
+  await expect(
+    page.getByRole("heading", { name: "Your context", exact: true }),
+  ).toBeVisible();
+  await page.goto("/settings#capture");
+  await page
+    .getByRole("switch", { name: "Automatic context capture", exact: true })
+    .click();
+  await expect(
+    page.getByRole("switch", {
+      name: "Automatic context capture",
+      exact: true,
+    }),
+  ).toHaveAttribute("aria-checked", "false");
+  await page.reload();
+  await expect(
+    page.getByRole("switch", {
+      name: "Automatic context capture",
+      exact: true,
+    }),
+  ).toHaveAttribute("aria-checked", "false");
+  await page.goto("/settings#security");
+  await page
+    .getByRole("button", { name: "Generate API key", exact: true })
+    .click();
+  await expect(page.getByLabel("New API key")).toBeVisible();
+  const key = await page.getByLabel("New API key").inputValue();
+  expect(key).toMatch(/^ctx_/);
+  await page.getByRole("button", { name: "Hide key", exact: true }).click();
+  await page
+    .getByRole("button", { name: "Revoke API key", exact: true })
+    .click();
+  await page
+    .getByRole("button", { name: "Confirm change", exact: true })
+    .click();
+  await expect(
+    page.getByRole("button", { name: "Generate API key", exact: true }),
+  ).toBeVisible();
+  const active = await (
+    await page.request.get("/api/settings/sessions")
+  ).json();
+  expect(active.length).toBeGreaterThan(0);
+  expect(active[0].token).toBeUndefined();
+  const second = await browser.newContext();
+  let login = await second.request.post(origin + "/api/auth/sign-in/email", {
+    headers: { Origin: origin },
+    data: { email, password: "test-password-123" },
+  });
+  if (login.status() === 429) {
+    await page.waitForTimeout(12000);
+    login = await second.request.post(origin + "/api/auth/sign-in/email", {
+      headers: { Origin: origin },
+      data: { email, password: "test-password-123" },
+    });
+  }
+  expect(login.ok(), await login.text()).toBe(true);
+  await page
+    .getByRole("button", { name: "Refresh settings", exact: true })
+    .click();
+  await page
+    .getByRole("button", { name: "Sign out other sessions", exact: true })
+    .click();
+  await page
+    .getByRole("button", { name: "Confirm change", exact: true })
+    .click();
+  expect(
+    await (await second.request.get(origin + "/api/auth/get-session")).json(),
+  ).toBeNull();
+  await second.close();
+  await page.goto("/settings#data");
+  const downloadPromise = page.waitForEvent("download");
+  await page
+    .getByRole("button", { name: "Export context", exact: true })
+    .click();
+  expect((await downloadPromise).suggestedFilename()).toBe(
+    "contextgraph-export.json",
+  );
+  const exported = await (
+    await page.request.get("/api/settings/export")
+  ).json();
+  expect(JSON.stringify(exported)).toContain("A real saved setting-test fact.");
+  expect(JSON.stringify(exported)).not.toContain(key);
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/settings#account");
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= innerWidth,
+    ),
+  ).toBe(true);
+  await page.screenshot({
+    path: ".test-output/settings-account-mobile.png",
+    fullPage: true,
+  });
+  const other = await browser.newContext();
+  await signup(await other.newPage());
+  const stolen = await other.request.delete(origin + "/api/settings/sessions", {
+    headers: { Origin: origin },
+    data: { id: active[0].id },
+  });
+  expect(stolen.status()).toBe(404);
+  await other.close();
 });

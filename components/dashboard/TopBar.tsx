@@ -5,6 +5,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { signOut, useSession } from "@/lib/auth-client";
 import { cn } from "@/lib/utils";
+import { UserAvatar } from "@/components/ui/UserAvatar";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import Link from "next/link";
 import { useGraph } from "@/components/providers/GraphProvider";
@@ -85,15 +86,6 @@ export function TopBar({
 
   const { nodes, selectedNodeId, setSelectedNodeId } = useGraph();
   const selectedNode = nodes.find((n) => n.id === selectedNodeId) || null;
-
-  const userInitials = session?.user?.name
-    ? session.user.name
-        .split(" ")
-        .map((n) => n[0])
-        .join("")
-        .toUpperCase()
-        .substring(0, 2)
-    : "?";
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -204,7 +196,11 @@ export function TopBar({
             )}
             aria-label="User menu"
           >
-            {userInitials}
+            <UserAvatar
+              name={session?.user?.name}
+              image={session?.user?.image}
+              size={40}
+            />
           </button>
 
           {isDropdownOpen && (

@@ -21,7 +21,7 @@ Google and email/password sign-in remain available. Signup verifies the email be
 Sign in → choose Claude or ChatGPT → configure its connector → approve selected facts in that conversation → review/edit the received draft in ContextGraph → save → dashboard.
 
 - New or empty accounts see guided setup, never a blank graph. Dashboard access depends on actual meaningful saved context, not a handshake or a stale onboarding flag.
-- Existing populated accounts open the dashboard directly. Interrupted setup resumes from stored state.
+- Existing populated accounts open the dashboard directly. Interrupted setup resumes from stored state. Switching providers preserves waiting attempts; only an explicit discard or expiry closes an import. A selected attempt is kept in the connection URL, and received drafts have a direct review link.
 - Connecting gives the AI tools it can call; it does not give ContextGraph access to the AI account. The website provides current instructions and a copyable natural-language setup prompt. It cannot command an idle external conversation to export memory.
 - The model must propose facts, allow corrections, and ask permission before transmitting. Drafts remain separate from the active graph; website review is the authoritative save boundary.
 - No useful memories or unavailable connectors: use a compact Create context graph editor or paste a memory export, then review. No invented example profile is saved.
@@ -39,7 +39,7 @@ Claude and ChatGPT are the primary guided clients. Web setup uses OAuth. Existin
 
 Connection success means observed authenticated client activity, not a website preview request. Client names are self-reported. Disconnecting preserves saved notes and revokes the client's access. API keys are shown only when created and are replaced only through an explicit user action.
 
-Account name/email are displayed read-only. Profile editing, full account deletion, and downloadable export remain unavailable in this demo. Do not show no-op success messages or dead destructive controls. The privacy page explains storage, provider processing, draft retention, and available deletion controls without claiming end-to-end encryption.
+Account email stays read-only. Users can edit their display name, choose a built-in profile icon or upload a small photo, and export saved nodes/notes as JSON. Full account deletion remains unavailable. Settings groups Account, Appearance, Connected tools, Context capture, Security, and Data & privacy. Theme and default dashboard view are device preferences; profile, capture, connections, sessions and keys persist on the server. Do not show no-op success messages or dead destructive controls. The privacy page explains storage, provider processing, draft retention, and available deletion controls without claiming end-to-end encryption.
 
 ## Required quality
 

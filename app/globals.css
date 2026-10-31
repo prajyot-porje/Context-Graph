@@ -1768,3 +1768,13 @@
 .cg-provider-logo { object-fit: contain; }
 [data-theme="dark"] .cg-provider-logo { filter: invert(1); }
 .auth-text-action[aria-disabled="true"] { opacity: .5; cursor: not-allowed; }
+
+.cg-theme-toggle { display: inline-flex; align-items: center; justify-content: center; min-width: 44px; min-height: 44px; background: transparent; border: 0; border-radius: var(--radius-md); color: var(--text-secondary); cursor: pointer; }
+.cg-theme-toggle:hover { color: var(--text-primary); }
+.cg-theme-toggle:active { opacity: .75; }
+.cg-theme-toggle:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; }
+.cg-theme-toggle:disabled { opacity: .5; cursor: not-allowed; }
+button.cg-theme-toggle[data-minimal-theme] { background: transparent; border: 0; padding: var(--space-2); }
+
+.cg-user-avatar { border-radius:var(--radius-full); object-fit:cover; flex-shrink:0; }
+.cg-user-initials { display:inline-flex; align-items:center; justify-content:center; min-width:32px; min-height:32px; border-radius:var(--radius-full); background:var(--card); color:var(--text-primary); font-weight:500; }

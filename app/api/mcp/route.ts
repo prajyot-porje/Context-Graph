@@ -12,7 +12,7 @@ import {
   checkRateLimit,
   DataError,
   forgetEntry,
-  getImport,
+  getSetupImport,
   getUserEntries,
   getUserNodes,
   observeConnection,
@@ -228,11 +228,18 @@ export async function POST(request: Request) {
             403,
           );
         if (name === "contextgraph_setup") {
-          const run = await getImport(user, z.uuid().parse(args.attempt_id));
+          const run = await getSetupImport(
+            user,
+            z.uuid().parse(args.attempt_id),
+          );
           return text({
             attempt_id: run.id,
             status: run.status,
-            instructions: setupPrompt(run.id),
+            instructions:
+              ["waiting", "review"].includes(run.status) &&
+              new Date(run.expires_at) > new Date()
+                ? setupPrompt(run.id)
+                : `This import is closed. Open ${getBaseUrl()}/connect and select ${run.provider} to start a new attempt, then call contextgraph_setup again with the original ID to find it. Never use remember to bypass website review.`,
             next: "After approval submit notes, then ask the user to review and save them on the website.",
           });
         }
@@ -247,6 +254,7 @@ export async function POST(request: Request) {
             receipt: run.id,
             status: run.status,
             proposed: run.items.length,
+            review_url: `${getBaseUrl()}/connect?attempt=${run.id}`,
             next: "Return to ContextGraph to review and save. These notes are not active context yet.",
           });
         }

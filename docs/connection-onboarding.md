@@ -2,7 +2,7 @@
 
 Checked October 31, 2026.
 
-The flow reduces simultaneous decisions: choose a provider, copy its name and URL, authorize, then ask the AI to propose context. A small illustrated preview follows the current instruction. It is not a live recording of the provider UI. Provider settings open in another tab so users keep their place here. Existing authenticated connections stay active when another provider is added. A connection is not a context import; approved notes still pass through website review before saving.
+The flow reduces simultaneous decisions: choose a provider, copy its name and URL, authorize, then ask the AI to propose context. The instructions use a single focused column; the illustrated preview was removed on November 1. Provider settings open in another tab so users keep their place here. Existing authenticated connections stay active when another provider is added. A connection is not a context import; approved notes still pass through website review before saving.
 
 ## Provider instructions and limits
 
@@ -24,6 +24,6 @@ Monochrome Claude and OpenAI identity SVGs come from [Lobe Icons](https://github
 
 ## UX research applied
 
-[NN/g: Progressive disclosure](https://www.nngroup.com/articles/progressive-disclosure/) recommends showing the essential choices first and exposing secondary options only when needed. Here, provider cards lead to one task at a time; account caveats and prompt details remain available on demand. This is the rationale for a step-linked preview instead of an unrelated autoplay loop.
+[NN/g: Progressive disclosure](https://www.nngroup.com/articles/progressive-disclosure/) recommends showing the essential choices first and exposing secondary options only when needed. Here, provider cards lead to one task at a time; account caveats and prompt details remain available on demand. The guide now contains the task controls directly, without a separate preview.
 
 [Microsoft: Consent experience](https://learn.microsoft.com/en-us/entra/identity-platform/application-consent-experience) identifies app identity, the account being accessed, permission descriptions and the ability to remove access as core consent information. Our consent layout uses those building blocks without a verified-publisher claim or an inferred third-party logo. It distinguishes import review from ongoing capture and notes that write scope can manage existing notes.

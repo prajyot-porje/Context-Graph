@@ -33,6 +33,12 @@ export default function DashboardClient() {
     () => buildGraphView(nodes, entries, edges),
     [nodes, entries, edges],
   );
+  useEffect(() => {
+    const frame = requestAnimationFrame(() =>
+      setListView(localStorage.getItem("cg-default-view") === "notes"),
+    );
+    return () => cancelAnimationFrame(frame);
+  }, []);
   const note = entries.find((e) => e.id === noteId);
   const closeNote = useCallback(() => setNoteId(null), []);
   useEffect(() => {

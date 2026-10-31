@@ -295,86 +295,11 @@
   border-color: var(--accent);
   color: var(--text-primary);
 }
-.guideSplit {
-  display: grid;
-  grid-template-columns: minmax(0, 7fr) minmax(0, 3fr);
-  gap: var(--space-12);
-}
-.guideContent {
-  min-width: 0;
-}
-.guideContent > label {
-  display: block;
-  font-size: 13px;
-  margin: var(--space-5) 0 var(--space-2);
-}
-.guideContent > .link {
-  margin-top: var(--space-6);
-}
 .guideNavigation {
   display: flex;
   justify-content: space-between;
   gap: var(--space-3);
   margin-top: var(--space-8);
-}
-.walkthrough {
-  align-self: start;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  background: var(--surface);
-  overflow: hidden;
-}
-.previewTop {
-  display: flex;
-  gap: var(--space-3);
-  align-items: center;
-  padding: var(--space-4);
-  border-bottom: 1px solid var(--border);
-  font-size: 13px;
-  color: var(--text-secondary);
-}
-.previewBody {
-  padding: var(--space-6);
-  display: grid;
-  gap: var(--space-4);
-}
-.previewBody > span:not(.previewAction) {
-  font-size: 13px;
-  color: var(--text-secondary);
-}
-.previewBody > div {
-  border: 1px solid var(--border-strong);
-  padding: var(--space-3);
-  border-radius: var(--radius-sm);
-  font-size: 13px;
-  overflow-wrap: anywhere;
-}
-.previewBody h3 {
-  font-size: 16px;
-  font-weight: 500;
-  margin: 0;
-}
-.previewBody p {
-  font-size: 13px;
-  margin: 0;
-}
-.previewUrl {
-  font-family: var(--font-mono), monospace;
-}
-.previewAction {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-2);
-  background: var(--text-primary);
-  color: var(--bg);
-  border-radius: var(--radius-sm);
-  padding: var(--space-3);
-  font-size: 13px;
-}
-.walkthrough > p {
-  padding: 0 var(--space-4);
-  margin: 0 0 var(--space-4);
 }
 .reviewTools {
   display: flex;
@@ -517,13 +442,6 @@
     grid-row: 1 / 3;
     align-self: center;
     margin: 0;
-  }
-  .guideSplit {
-    grid-template-columns: 1fr;
-    gap: var(--space-6);
-  }
-  .walkthrough {
-    max-width: 100%;
   }
   .stepTabs {
     gap: var(--space-1);
@@ -928,18 +846,91 @@
 .guideHeading h1 {
   margin-bottom: 0 !important;
 }
-.page .previewToggle {
-  display: none;
+
+/* Connected and error indicators are semantic; the same green is used in both themes. */
+.page .connectionReady {
+  color: var(--accent);
 }
-@media (max-width: 720px) {
-  .page .previewToggle {
-    display: inline-flex;
-    margin-left: auto;
-    padding: var(--space-2);
-    background: transparent;
+.page .connectionFailed {
+  color: var(--error);
+}
+.connectionState {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  color: var(--text-secondary);
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.5;
+}
+.guideHeading {
+  flex-wrap: wrap;
+}
+.guideHeading .connectionState {
+  margin-left: auto;
+}
+.focusedGuide {
+  max-width: 720px;
+  margin: var(--space-8) auto;
+}
+.focusedGuide > label {
+  display: block;
+  margin: var(--space-5) 0 var(--space-2);
+  font-size: 13px;
+}
+.focusedGuide > .link {
+  margin-top: var(--space-6);
+}
+.focusedGuide h2 {
+  font-family: var(--font-geist-sans), sans-serif;
+  font-size: 20px;
+  font-weight: 500;
+}
+.page .statusRefresh {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-5) 0;
+  margin: var(--space-4) 0;
+}
+.page .refreshCompact {
+  padding: var(--space-2) var(--space-3);
+  background: transparent;
+  font-size: 13px;
+}
+.draftWaiting {
+  margin-top: var(--space-8);
+  border-top: 1px solid var(--border);
+  padding-top: var(--space-6);
+}
+.draftWaiting strong {
+  font-size: 16px;
+  font-weight: 500;
+}
+.guideHelp {
+  max-width: 720px;
+  margin: auto;
+}
+.copyRow > button {
+  min-width: 96px;
+  flex-shrink: 0;
+}
+@media (max-width: 640px) {
+  .guideHeading .connectionState {
+    width: 100%;
+    margin: 0;
+    justify-content: flex-start;
   }
-  .walkthrough[data-expanded="false"] .previewBody,
-  .walkthrough[data-expanded="false"] > p {
-    display: none;
+  .page .statusRefresh {
+    flex-wrap: wrap;
   }
+}
+
+.page button[data-minimal-theme],
+.page button[data-minimal-theme]:hover {
+  background: transparent;
+  border: 0;
+  padding: var(--space-2);
 }

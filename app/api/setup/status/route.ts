@@ -9,10 +9,12 @@ import { handleRouteError } from "@/lib/api/errors";
 import { z } from "zod";
 import { after } from "next/server";
 import { triggerBackgroundDrain } from "@/lib/process-staged";
-export async function GET() {
+export async function GET(request: Request) {
   try {
     const user = await requireSessionUser();
-    return Response.json(await getSetupStatus(user.id), {
+    const value = new URL(request.url).searchParams.get("attempt");
+    const attempt = value ? z.uuid().parse(value) : undefined;
+    return Response.json(await getSetupStatus(user.id, attempt), {
       headers: { "Cache-Control": "no-store" },
     });
   } catch (e) {

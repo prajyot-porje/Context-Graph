@@ -1,0 +1,488 @@
+.page {
+  min-height: 100dvh;
+  background: var(--bg);
+  color: var(--text-primary);
+  font-family: var(--font-geist-sans), sans-serif;
+}
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding: var(--space-5) var(--space-8);
+  border-bottom: 1px solid var(--border);
+}
+.page a {
+  color: inherit;
+  text-decoration: none;
+}
+.header > a {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+}
+.back {
+  gap: var(--space-2);
+  font-size: 14px;
+}
+.shell {
+  display: grid;
+  grid-template-columns: 240px minmax(0, 1fr);
+  gap: var(--space-12);
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: var(--space-8) var(--space-6) var(--space-16);
+}
+.sidebar {
+  position: sticky;
+  top: var(--space-8);
+  align-self: start;
+}
+.sidebar h1 {
+  font-size: 24px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  margin: 0 0 var(--space-6);
+}
+.sidebar nav {
+  display: grid;
+  gap: var(--space-1);
+}
+.sidebar nav a {
+  display: flex;
+  min-height: 48px;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  color: var(--text-secondary);
+  font-size: 14px;
+  font-weight: 500;
+}
+.sidebar nav a:hover {
+  background: var(--surface);
+  color: var(--text-primary);
+}
+.sidebar nav a[aria-current] {
+  background: var(--card);
+  color: var(--text-primary);
+}
+.sidebarProfile {
+  display: flex;
+  gap: var(--space-3);
+  align-items: center;
+  border-top: 1px solid var(--border);
+  margin-top: var(--space-8);
+  padding-top: var(--space-5);
+}
+.sidebarProfile > span {
+  min-width: 0;
+  font-size: 14px;
+  overflow-wrap: anywhere;
+}
+.sidebarProfile small {
+  display: block;
+  margin-top: var(--space-1);
+  color: var(--text-secondary);
+  font-size: 13px;
+}
+.content {
+  min-width: 0;
+  padding: var(--space-2) 0;
+}
+.sectionHeading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  margin-bottom: var(--space-6);
+}
+.content h2 {
+  font-family: var(--font-display-fallback), sans-serif;
+  font-size: 28px;
+  font-weight: 400;
+  letter-spacing: -0.02em;
+  margin: 0;
+  line-height: 1.2;
+}
+.page h3 {
+  font-family: var(--font-geist-sans), sans-serif;
+  font-size: 15px;
+  font-weight: 500;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+.page p {
+  color: var(--text-secondary);
+  font-size: 14px;
+  line-height: 1.6;
+  margin: var(--space-2) 0 0;
+  overflow-wrap: anywhere;
+}
+.page button,
+.buttonLink {
+  min-height: 44px;
+  min-width: 44px;
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--text-primary);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition:
+    background-color 100ms,
+    border-color 100ms;
+}
+.page button:hover,
+.buttonLink:hover {
+  background: var(--card);
+  border-color: var(--text-secondary);
+}
+.page button:active,
+.buttonLink:active {
+  background: var(--surface);
+}
+.page button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+.page a[aria-disabled="true"] {
+  opacity: 0.5;
+}
+.page :is(button, a, input, select):focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 4px;
+}
+.page .primary {
+  background: var(--text-primary);
+  color: var(--bg);
+  border-color: transparent;
+}
+.page .primary:hover {
+  background: var(--text-secondary);
+}
+.page .iconButton {
+  border: 0;
+  padding: var(--space-2);
+  color: var(--text-secondary);
+}
+.settingRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-6);
+  padding: var(--space-6) 0;
+  border-bottom: 1px solid var(--border);
+}
+.settingRow > div:first-child {
+  min-width: 0;
+  max-width: 65ch;
+}
+.settingRow > :is(button, a, select) {
+  flex-shrink: 0;
+}
+.settingRow p {
+  max-width: 52ch;
+}
+.profileEditor {
+  display: flex;
+  align-items: center;
+  gap: var(--space-6);
+  padding: var(--space-4) 0;
+}
+.largeAvatar {
+  display: grid;
+  place-items: center;
+  width: 80px;
+  height: 80px;
+  flex-shrink: 0;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-full);
+  background: var(--card);
+  overflow: hidden;
+  font-size: 24px;
+}
+.inlineActions {
+  display: flex;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+  margin-top: var(--space-4);
+}
+.avatarChoices {
+  display: flex;
+  gap: var(--space-3);
+  margin: var(--space-5) 0 var(--space-8);
+}
+.page .avatarChoices button {
+  padding: var(--space-1);
+  border-radius: var(--radius-full);
+}
+.avatarChoices [aria-pressed="true"] {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.field {
+  display: grid;
+  gap: var(--space-2);
+  margin: var(--space-5) 0;
+  font-size: 14px;
+}
+.page input,
+.page select {
+  min-height: 44px;
+  border: 1px solid var(--border-strong);
+  background: var(--surface);
+  color: var(--text-primary);
+  border-radius: var(--radius-md);
+  padding: var(--space-3);
+  font: inherit;
+  font-size: 14px;
+  min-width: 0;
+  max-width: 100%;
+}
+.field input {
+  width: 100%;
+}
+.page form > .primary {
+  margin-top: var(--space-6);
+}
+.hidden {
+  display: none;
+}
+.connected {
+  color: var(--accent);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: 13px;
+  font-weight: 500;
+}
+.muted {
+  color: var(--text-secondary);
+  font-size: 13px;
+}
+.themeChoices {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-4);
+  margin: var(--space-5) 0;
+}
+.themeChoices button {
+  justify-content: flex-start;
+  gap: var(--space-3);
+  min-height: 80px;
+}
+.themeChoices button[aria-pressed="true"] {
+  border-color: var(--accent);
+}
+.themeChoices button > svg:last-child:not(:first-child) {
+  margin-left: auto;
+  color: var(--accent);
+}
+.connectionIdentity {
+  display: flex;
+  gap: var(--space-4);
+  align-items: center;
+}
+.connectionIdentity > svg,
+.connectionIdentity > img {
+  flex-shrink: 0;
+}
+.connectionIdentity .connected,
+.connectionIdentity .muted {
+  margin-top: var(--space-2);
+}
+.empty {
+  text-align: center;
+  padding: var(--space-12) var(--space-6);
+}
+.empty > svg {
+  margin: auto auto var(--space-4);
+  color: var(--text-secondary);
+}
+.empty h3 {
+  justify-content: center;
+}
+.empty a {
+  margin-top: var(--space-5);
+}
+.page .caption {
+  font-size: 13px;
+  margin-top: var(--space-5);
+}
+.page .switch {
+  min-width: 48px;
+  width: 48px;
+  height: 28px;
+  min-height: 28px;
+  padding: 0;
+  border-radius: var(--radius-full);
+  background: var(--border-strong);
+  position: relative;
+  margin: var(--space-2) 0;
+}
+.switch::before {
+  content: "";
+  position: absolute;
+  inset: -8px 0;
+}
+.switch span {
+  width: 20px;
+  height: 20px;
+  border-radius: var(--radius-full);
+  background: var(--text-secondary);
+  position: absolute;
+  left: 4px;
+  top: 3px;
+  transition: transform 100ms;
+}
+.page .switch[aria-checked="true"] {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+.switch[aria-checked="true"] span {
+  transform: translateX(20px);
+  background: var(--on-accent);
+}
+.info {
+  border-top: 1px solid var(--border);
+  margin-top: var(--space-8);
+  padding-top: var(--space-6);
+}
+.info p {
+  max-width: 65ch;
+}
+.keyReveal {
+  margin: var(--space-5) 0;
+  padding: var(--space-5);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+}
+.keyReveal label {
+  font-size: 13px;
+  display: block;
+  margin-bottom: var(--space-2);
+}
+.copyRow {
+  display: flex;
+  gap: var(--space-2);
+  margin-bottom: var(--space-3);
+}
+.copyRow input {
+  flex: 1;
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 13px;
+}
+.page .danger {
+  color: var(--error);
+}
+.confirmation {
+  padding: var(--space-5);
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-md);
+  margin-top: var(--space-6);
+}
+.page .error {
+  color: var(--error);
+  padding: var(--space-4);
+  border: 1px solid var(--error);
+  border-radius: var(--radius-md);
+  margin-bottom: var(--space-5);
+}
+.page .notice {
+  color: var(--accent);
+  padding: var(--space-3) 0;
+  margin-bottom: var(--space-4);
+}
+@media (max-width: 760px) {
+  .header {
+    padding: var(--space-4);
+    flex-wrap: wrap;
+  }
+  .shell {
+    display: block;
+    padding: var(--space-6) var(--space-4) var(--space-12);
+  }
+  .sidebar {
+    position: static;
+    margin-bottom: var(--space-8);
+  }
+  .sidebar nav {
+    display: flex;
+    overflow-x: auto;
+    gap: var(--space-2);
+    padding: var(--space-1);
+  }
+  .sidebar nav a {
+    flex-shrink: 0;
+    padding: var(--space-3);
+  }
+  .sidebarProfile {
+    display: none;
+  }
+  .settingRow {
+    flex-wrap: wrap;
+    gap: var(--space-4);
+  }
+  .profileEditor {
+    align-items: flex-start;
+    gap: var(--space-4);
+  }
+  .themeChoices {
+    gap: var(--space-2);
+  }
+  .themeChoices button {
+    flex-direction: column;
+    min-height: 104px;
+    padding: var(--space-3);
+  }
+  .themeChoices button > svg:last-child:not(:first-child) {
+    margin: 0;
+  }
+  .copyRow {
+    flex-wrap: wrap;
+  }
+  .copyRow input {
+    flex-basis: 100%;
+  }
+}
+
+/* Keep the visible switch compact while its actual button stays 44px high. */
+.page .switch {
+  height: 44px;
+  min-height: 44px;
+  border: 0;
+  background: transparent;
+}
+.page .switch::before {
+  inset: 8px 0;
+  background: var(--border-strong);
+  border-radius: var(--radius-full);
+}
+.page .switch[aria-checked="true"] {
+  background: transparent;
+}
+.page .switch[aria-checked="true"]::before {
+  background: var(--accent);
+}
+.switch span {
+  top: 12px;
+}
+
+.fields {
+  border: 0;
+  padding: 0;
+  margin: 0;
+  min-width: 0;
+}
