@@ -268,6 +268,9 @@ test("fresh login never exposes an empty graph; manual context is reviewed and r
     fullPage: true,
   });
   await page.goto("/settings");
+  await expect(
+    page.getByRole("region", { name: "Account", exact: true }),
+  ).toHaveAttribute("aria-busy", "false");
   expect(
     await page.evaluate(() =>
       document.documentElement.classList.contains("lenis"),
@@ -288,6 +291,9 @@ test("fresh login never exposes an empty graph; manual context is reviewed and r
   });
   await page.setViewportSize({ width: 1280, height: 800 });
   await page.goto("/settings");
+  await expect(
+    page.getByRole("region", { name: "Account", exact: true }),
+  ).toHaveAttribute("aria-busy", "false");
   await page.screenshot({
     path: ".test-output/ux-settings-desktop.png",
     fullPage: true,
@@ -970,6 +976,9 @@ test("settings persist profile and appearance, revoke sessions and keys, and exp
     data: { action: "commit", revision: draft.revision },
   });
   await page.goto("/settings");
+  await expect(
+    page.getByRole("region", { name: "Account", exact: true }),
+  ).toHaveAttribute("aria-busy", "false");
   await page.getByLabel("Display name", { exact: true }).fill("Profile Owner");
   await page
     .getByRole("button", { name: "Use orbit icon", exact: true })
@@ -977,6 +986,9 @@ test("settings persist profile and appearance, revoke sessions and keys, and exp
   await page.getByRole("button", { name: "Save profile", exact: true }).click();
   await expect(page.getByRole("status")).toContainText("Profile saved.");
   await page.reload();
+  await expect(
+    page.getByRole("region", { name: "Account", exact: true }),
+  ).toHaveAttribute("aria-busy", "false");
   await expect(page.getByLabel("Display name", { exact: true })).toHaveValue(
     "Profile Owner",
   );
@@ -1039,8 +1051,10 @@ test("settings persist profile and appearance, revoke sessions and keys, and exp
   await page
     .getByRole("button", { name: "Generate API key", exact: true })
     .click();
-  await expect(page.getByLabel("New API key")).toBeVisible();
-  const key = await page.getByLabel("New API key").inputValue();
+  await expect(page.getByLabel("New API key", { exact: true })).toBeVisible();
+  const key = await page
+    .getByLabel("New API key", { exact: true })
+    .inputValue();
   expect(key).toMatch(/^ctx_/);
   await page.getByRole("button", { name: "Hide key", exact: true }).click();
   await page

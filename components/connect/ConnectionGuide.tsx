@@ -46,11 +46,13 @@ export function ConnectionGuide({
       <div className={s.guideHeading}>
         <ProviderLogo provider={provider} />
         <h1>Connect {name}</h1>
-        <ConnectionState
-          name={name}
-          connected={connected}
-          error={refreshError}
-        />
+        {step === 0 && (
+          <ConnectionState
+            name={name}
+            connected={connected}
+            error={refreshError}
+          />
+        )}
       </div>
       <ol className={s.stepTabs} aria-label="Connection steps">
         {titles.map((title, i) => (

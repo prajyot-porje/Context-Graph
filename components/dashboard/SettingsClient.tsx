@@ -265,6 +265,28 @@ export default function SettingsClient({
               </a>
             ))}
           </nav>
+          <label className={s.mobileSections}>
+            Section
+            <select
+              aria-label="Settings section"
+              value={section}
+              disabled={!!busy}
+              onChange={(event) => {
+                const value = event.target.value as Section;
+                setSection(value);
+                setConfirmation(null);
+                setNotice("");
+                setError("");
+                window.history.replaceState(null, "", `#${value}`);
+              }}
+            >
+              {sections.map((item) => (
+                <option key={item.id} value={item.id}>
+                  {item.name}
+                </option>
+              ))}
+            </select>
+          </label>
           <div className={s.sidebarProfile}>
             <UserAvatar name={profile.name} image={profile.image} size={32} />
             <span>
@@ -276,7 +298,7 @@ export default function SettingsClient({
         <section
           className={s.content}
           aria-label={current.name}
-          aria-busy={!!busy}
+          aria-busy={!!busy || !loaded}
         >
           <fieldset
             className={s.fields}

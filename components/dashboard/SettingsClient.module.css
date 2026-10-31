@@ -486,3 +486,37 @@
   margin: 0;
   min-width: 0;
 }
+
+.sidebarProfile > :first-child {
+  flex: 0 0 32px;
+  min-width: 32px;
+  width: 32px;
+  height: 32px;
+}
+.mobileSections {
+  display: none;
+}
+.back {
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-md);
+  padding: var(--space-3) var(--space-4);
+}
+.back:hover {
+  background: var(--surface);
+}
+@media (max-width: 760px) {
+  .sidebar nav {
+    display: none;
+  }
+  .mobileSections {
+    display: grid;
+    gap: var(--space-2);
+    font-size: 13px;
+    color: var(--text-secondary);
+  }
+  .mobileSections select {
+    width: 100%;
+    font-size: 15px;
+    color: var(--text-primary);
+  }
+}
