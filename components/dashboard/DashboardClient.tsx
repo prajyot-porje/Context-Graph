@@ -104,8 +104,17 @@ export default function DashboardClient() {
             </p>
           ) : !nodes.length ? (
             <div className="p-6">
-              <Link href="/connect" className="cg-nav-button">
-                Create context graph
+              <h2 className="mb-4 text-heading-md">Your context starts here</h2>
+              <p className="mb-4 text-body-md text-[var(--text-secondary)]">
+                No saved notes yet. With capture enabled, your connected
+                assistant can submit useful facts as you chat. Notes appear
+                after processing; importing old memories is optional.
+              </p>
+              <Link href="/connect" className="cg-nav-button mr-4">
+                Manage connections & optional imports
+              </Link>
+              <Link href="/settings#capture" className="cg-nav-button mt-4">
+                Manage capture & processing queue
               </Link>
             </div>
           ) : listView ? (

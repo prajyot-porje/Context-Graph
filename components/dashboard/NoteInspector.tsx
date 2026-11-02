@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { ContextEntry, ContextNode } from "@/types";
 import { noteCategories } from "@/lib/graph-view";
 export function NoteInspector({
@@ -14,6 +14,8 @@ export function NoteInspector({
   onOpenContext: () => void;
 }) {
   const close = useRef<HTMLButtonElement>(null);
+  const [busy, setBusy] = useState(false),
+    [error, setError] = useState("");
   useEffect(() => {
     const previous = document.activeElement as HTMLElement | null;
     close.current?.focus();
@@ -55,6 +57,35 @@ export function NoteInspector({
       <button className="cg-nav-button" onClick={onOpenContext}>
         Open context & manage note
       </button>
+      <button
+        className="cg-nav-button mt-4"
+        disabled={busy}
+        onClick={async () => {
+          setBusy(true);
+          setError("");
+          try {
+            const response = await fetch(`/api/entries/${entry.id}`, {
+              method: "DELETE",
+            });
+            if (!response.ok)
+              throw new Error("Note could not be removed. Try again.");
+            window.dispatchEvent(new Event("context-updated"));
+            onClose();
+          } catch (e) {
+            setError(
+              e instanceof Error ? e.message : "Note could not be removed.",
+            );
+            setBusy(false);
+          }
+        }}
+      >
+        {busy ? "Removing…" : "Remove"}
+      </button>
+      {error && (
+        <p role="alert" className="mt-4 text-body-sm">
+          {error}
+        </p>
+      )}
     </aside>
   );
 }

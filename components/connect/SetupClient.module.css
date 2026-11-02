@@ -934,3 +934,22 @@
   border: 0;
   padding: var(--space-2);
 }
+
+.captureChoice {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-height: 44px;
+  cursor: pointer;
+  font-size: 15px;
+}
+.captureChoice input {
+  width: 20px;
+  height: 20px;
+  accent-color: var(--accent);
+}
+.captureChoice:focus-within {
+  outline: 2px solid var(--accent);
+  outline-offset: 4px;
+  border-radius: var(--radius-md);
+}

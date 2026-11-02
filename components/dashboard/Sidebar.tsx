@@ -416,7 +416,7 @@ export function Sidebar({
                 <p className="text-[13px] text-[var(--text-muted)] leading-[1.6]">
                   No nodes yet.
                   <br />
-                  Import context to get started.
+                  Chat with a connected assistant or import notes.
                 </p>
               </div>
             ) : (

@@ -14,7 +14,11 @@ export default function PrivacyPage() {
         </p>
         <p>
           Imports are drafts until you review and save them. Automatic capture
-          can be paused in Settings. Captured notes may be sent to Gemini
+          requires a one-time account opt-in, remembered across chats, devices
+          and reconnections. It saves useful facts only when your assistant calls
+          ContextGraph; it cannot observe every message or native-memory action.
+          Your host may still require tool approvals. Capture can be paused in
+          Settings, which also holds pending work until resumed. Captured notes may be sent to Gemini
           (Google) or OpenRouter and its selected model providers for filtering.
           Stored notes are sent to a connected AI when it requests context. Do
           not submit credentials or information you do not want shared.
@@ -45,7 +49,7 @@ export default function PrivacyPage() {
           and default dashboard view preferences are stored on this device. They
           do not change your AI provider’s own settings.
         </p>
-        <p>Last updated November 1, 2026.</p>
+        <p>Last updated November 2, 2026.</p>
         <Link
           href="/entry"
           className="inline-flex min-h-11 items-center underline"

@@ -18,17 +18,21 @@ export default function OAuthAction({
   clientName,
   scopes,
   userEmail,
+  capture,
 }: {
   query: string;
   consent: boolean;
   clientName?: string;
   scopes?: string;
   userEmail?: string;
+  capture?: { captureConsentedAt: string | null; captureEnabled: boolean };
 }) {
   const [error, setError] = useState(""),
     [busy, setBusy] = useState(false);
   const started = useRef(false);
   const pending = useRef(false);
+  const [autoCapture, setAutoCapture] = useState(false);
+  const requestsWrite = (scopes || "").split(" ").includes("context:write");
   const send = useCallback(
     async (accept = true) => {
       if (pending.current) return;
@@ -36,6 +40,23 @@ export default function OAuthAction({
       setBusy(true);
       setError("");
       try {
+        if (
+          consent &&
+          accept &&
+          requestsWrite &&
+          autoCapture &&
+          !capture?.captureConsentedAt
+        ) {
+          const optIn = await fetch("/api/setup/status", {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ consentCapture: true }),
+          });
+          if (!optIn.ok)
+            throw new Error(
+              "Capture permission could not be saved. Try again.",
+            );
+        }
         const response = await fetch(
           `/api/auth/oauth2/${consent ? "consent" : "continue"}`,
           {
@@ -61,7 +82,7 @@ export default function OAuthAction({
         pending.current = false;
       }
     },
-    [consent, query],
+    [consent, query, requestsWrite, autoCapture, capture],
   );
   useEffect(() => {
     if (!consent && !started.current) {
@@ -143,6 +164,35 @@ export default function OAuthAction({
                     </li>
                   ))}
               </ul>
+              {requestsWrite &&
+                (capture?.captureConsentedAt ? (
+                  <p className={s.small}>
+                    Automatic capture is{" "}
+                    {capture.captureEnabled ? "enabled" : "paused"}. Your
+                    account choice is remembered; this connection will not
+                    change it. Manage it in Settings.
+                  </p>
+                ) : (
+                  <div>
+                    <label className={s.captureChoice}>
+                      <input
+                        type="checkbox"
+                        checked={autoCapture}
+                        disabled={busy}
+                        onChange={(e) => setAutoCapture(e.target.checked)}
+                      />
+                      <span>Automatically save useful context</span>
+                    </label>
+                    <p className={s.small}>
+                      Save preferences, decisions, constraints, unresolved
+                      problems and tentative project ideas when your assistant
+                      calls ContextGraph. This is a one-time account choice
+                      across chats and devices. Pause or remove notes anytime.
+                      Historical imports still need review; your host may ask
+                      for tool approval.
+                    </p>
+                  </div>
+                ))}
               <p className={s.small}>
                 <ShieldCheck size={16} /> You can disconnect in Settings at any
                 time. Your AI account and native memories are not shared with

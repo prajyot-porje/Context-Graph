@@ -18,12 +18,12 @@ Google and email/password sign-in remain available. Signup verifies the email be
 
 ## Setup and return flow
 
-Sign in → choose Claude or ChatGPT → configure its connector → approve selected facts in that conversation → review/edit the received draft in ContextGraph → save → dashboard.
+Sign in → choose Claude or ChatGPT → configure its connector → optionally enable automatic capture once → start an empty graph and chat normally. Importing historical memories is optional: approve facts in the conversation, then review/edit and save the draft on the website.
 
-- New or empty accounts see guided setup, never a blank graph. Dashboard access depends on actual meaningful saved context, not a handshake or a stale onboarding flag.
+- New or empty accounts see guided setup, never a blank graph. Dashboard access requires meaningful saved context or recorded capture consent, including when paused. A handshake or stale onboarding flag alone never qualifies.
 - Existing populated accounts open the dashboard directly. Interrupted setup resumes from stored state. Switching providers preserves waiting attempts; only an explicit discard or expiry closes an import. A selected attempt is kept in the connection URL, and received drafts have a direct review link.
 - Connecting gives the AI tools it can call; it does not give ContextGraph access to the AI account. The website provides current instructions and a copyable natural-language setup prompt. It cannot command an idle external conversation to export memory.
-- The model must propose facts, allow corrections, and ask permission before transmitting. Drafts remain separate from the active graph; website review is the authoritative save boundary.
+- For historical imports, the model must propose facts, allow corrections, and ask permission before transmitting. Drafts remain separate from the active graph; website review is the authoritative save boundary.
 - No useful memories or unavailable connectors: use a compact Create context graph editor or paste a memory export, then review. No invented example profile is saved.
 - Import more from the dashboard without deleting existing context or replacing credentials. One graph per account in this release.
 
@@ -31,7 +31,7 @@ Sign in → choose Claude or ChatGPT → configure its connector → approve sel
 
 The dashboard presents the real graph, node content, saved notes, provenance, and context preview. A notes view provides an alternative to WebGL. Active saved notes appear as connected leaves grouped by their existing categories; selecting a leaf reveals the full note without creating duplicate stored facts. Existing context scopes support editing and deletion. The sidebar has no Add Node action; users add context through reviewed imports or manual setup. Notes can be deleted, and open problems marked resolved.
 
-get_context loads approved core content and active notes. Automatic capture can suggest decisions, preferences, constraints, and unresolved problems; Settings visibly enables/pauses it. Queued processing and failures are shown truthfully. Keyword recall is available; semantic recall is not yet implemented. Legacy save_context calls work for existing clients, but manual /save is not the required product path.
+get_context loads approved core content and active notes. Automatic capture saves useful decisions, preferences, constraints, unresolved problems and tentative future ideas after filtering, when the connected assistant invokes ContextGraph. One explicit account opt-in persists across chats, devices and reconnections; Settings enables/pauses it and notes can be removed. An existing pause is never reset by reconnecting. Host tool approvals may still be required. No user-supplied system prompt is needed. Future ideas appear under a known project’s future scope, or personal future scope when the project is unknown; they are not recorded as decisions. Queued processing and failures are shown truthfully. Keyword recall is available; semantic recall is not yet implemented. Legacy save_context calls work for existing clients, but manual /save is not the required product path.
 
 ## Connections and account controls
 

@@ -12,6 +12,6 @@ export const metadata: Metadata = {
 
 export default async function DashboardPage() {
   const user=await requireSessionUser()
-  if(!(await getSetupStatus(user.id)).ready)redirect('/connect')
+  if(!(await getSetupStatus(user.id)).dashboardAccessible)redirect('/connect')
   return <GraphProvider><DashboardShell><DashboardClient /></DashboardShell></GraphProvider>
 }

@@ -147,7 +147,8 @@ export function ConnectionGuide({
               {provider === "chatgpt"
                 ? "by typing @ and selecting the plugin"
                 : "from + → Connectors"}
-              . Paste the prompt below.
+              . With automatic capture enabled, chat normally to build new context.
+              The prompt below is only for an optional import of historical memories.
             </p>
             <div className={s.statusRefresh}>
               <ConnectionState

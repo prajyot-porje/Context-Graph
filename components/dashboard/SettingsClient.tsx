@@ -607,8 +607,9 @@ export default function SettingsClient({
                   <div>
                     <h3>Automatic context capture</h3>
                     <p>
-                      Let connected tools submit useful facts while you work.
-                      Initial imports always need review.
+                      Save useful facts when a connected assistant calls ContextGraph.
+                      Enabling records your account-wide permission once. Pause anytime;
+                      your choice survives reconnections. Historical imports need review.
                     </p>
                   </div>
                   <button

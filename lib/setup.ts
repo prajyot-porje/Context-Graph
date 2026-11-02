@@ -6,6 +6,7 @@ export const kinds = [
   "preference",
   "constraint",
   "open_problem",
+  "future_idea",
   "resolved",
   "note",
 ] as const;
@@ -46,10 +47,12 @@ export interface ImportRun {
 }
 export interface SetupStatus {
   ready: boolean;
+  dashboardAccessible: boolean;
   step: "choose" | "connect" | "import" | "review" | "ready";
   connections: Connection[];
   run: ImportRun | null;
   captureEnabled: boolean;
+  captureConsentedAt: string | null;
   pendingCount: number;
   failedCount: number;
 }

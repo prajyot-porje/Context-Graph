@@ -240,6 +240,8 @@ async function insertNote(
   source: string,
   score = 0.8,
 ) {
+  if (n.kind === "future_idea")
+    n = { ...n, scope: await futureScope(c, user, n.scope) };
   const node = await ensureNode(c, user, n.scope);
   const r = await c.query(
     `INSERT INTO context_entries(node_id,user_id,entry_text,kind,score,dedupe_hash,source_connection_id,import_id,source) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9) ON CONFLICT DO NOTHING RETURNING id`,
@@ -474,8 +476,8 @@ export async function getSetupStatus(
       "SELECT * FROM context_imports WHERE user_id=$1 AND status IN ('waiting','review','failed') AND expires_at>now() ORDER BY CASE WHEN id=$2::uuid THEN 0 WHEN status='review' THEN 1 ELSE 2 END,created_at DESC LIMIT 1",
       [user, attempt ?? null],
     ),
-    query<{ capture_enabled: boolean }>(
-      'SELECT capture_enabled FROM "user" WHERE id=$1',
+    query<{ capture_enabled: boolean; capture_consented_at: string | null }>(
+      'SELECT capture_enabled, capture_consented_at FROM "user" WHERE id=$1',
       [user],
     ),
     query<{ pending: string; failed: string }>(
@@ -490,10 +492,13 @@ export async function getSetupStatus(
     run = runs[0] ?? null;
   return json({
     ready,
+    dashboardAccessible: ready || !!users[0]?.capture_consented_at,
     run,
     connections,
     step: setupStep(ready, run, connections),
-    captureEnabled: users[0]?.capture_enabled ?? false,
+    captureEnabled:
+      !!users[0]?.capture_consented_at && !!users[0]?.capture_enabled,
+    captureConsentedAt: users[0]?.capture_consented_at ?? null,
     pendingCount: Number(counts[0].pending),
     failedCount: Number(counts[0].failed),
   });
@@ -707,10 +712,64 @@ export async function isOAuthSessionActive(
   );
 }
 export async function setCaptureEnabled(user: string, value: boolean) {
-  await query('UPDATE "user" SET capture_enabled=$2 WHERE id=$1', [
+  await transaction(async (c) => {
+    await lock(c, user);
+    await c.query(
+      'UPDATE "user" SET capture_enabled=$2, capture_consented_at=CASE WHEN $2 THEN COALESCE(capture_consented_at,now()) ELSE capture_consented_at END WHERE id=$1',
+      [user, value],
+    );
+  });
+}
+
+/** Pure read for MCP retrieval; does not expire or change import drafts. */
+export async function getCaptureStatus(user: string) {
+  const [row] = await query<{
+    capture_enabled: boolean;
+    capture_consented_at: string | null;
+  }>('SELECT capture_enabled,capture_consented_at FROM "user" WHERE id=$1', [
     user,
-    value,
   ]);
+  return json({
+    captureEnabled: !!row?.capture_consented_at && !!row.capture_enabled,
+    captureConsentedAt: row?.capture_consented_at ?? null,
+  });
+}
+
+/** Connection approval records a first opt-in, never resumes a paused account. */
+export async function consentCaptureOnce(user: string) {
+  await transaction(async (c) => {
+    await lock(c, user);
+    await c.query(
+      'UPDATE "user" SET capture_enabled=true,capture_consented_at=now() WHERE id=$1 AND capture_consented_at IS NULL',
+      [user],
+    );
+  });
+}
+
+async function captureAllowed(c: PoolClient, user: string) {
+  const { rows } = await c.query<{ allowed: boolean }>(
+    'SELECT capture_enabled AND capture_consented_at IS NOT NULL AS allowed FROM "user" WHERE id=$1',
+    [user],
+  );
+  return rows[0]?.allowed === true;
+}
+
+async function futureScope(c: PoolClient, user: string, scope: string) {
+  const base = scope.endsWith("/future-scope")
+    ? scope.slice(0, -"/future-scope".length)
+    : scope;
+  const { rows } = await c.query(
+    "SELECT id FROM context_nodes WHERE user_id=$1 AND scope=$2",
+    [user, base],
+  );
+  const target =
+    rows.length && base !== "me" && base !== "personal" && base !== "agency"
+      ? base
+      : "me";
+  const result = `${target}/future-scope`;
+  if (result.length > 120)
+    throw new DataError("Project scope is too long for future ideas.");
+  return result;
 }
 export async function stageEntry(p: {
   userId: string;
@@ -721,17 +780,22 @@ export async function stageEntry(p: {
   connectionId?: string;
 }) {
   const text = p.rawText.trim();
-  if (text.length < 10) return { staged: false, reason: "too short" };
-  const state = await getSetupStatus(p.userId);
-  if (!state.ready)
-    return { staged: false, reason: "Complete the reviewed setup first." };
-  if (!state.captureEnabled)
-    return { staged: false, reason: "Automatic capture is paused." };
+  if (!text.length) return { staged: false, reason: "empty note" };
   return transaction(async (c) => {
     await lock(c, p.userId);
+    if (!(await captureAllowed(c, p.userId)))
+      return {
+        staged: false,
+        reason:
+          "Automatic capture is paused or needs one-time consent in ContextGraph.",
+      };
+    const scope =
+      p.kindHint === "future_idea"
+        ? await futureScope(c, p.userId, p.scopeHint ?? "me")
+        : (p.scopeHint ?? "me");
     const dup = await c.query(
-      "SELECT id FROM staged_context_entries WHERE user_id=$1 AND raw_text=$2 UNION ALL SELECT id FROM context_entries WHERE user_id=$1 AND lower(regexp_replace(entry_text,'\\s+',' ','g'))=$3 LIMIT 1",
-      [p.userId, text, normalizedNote(text)],
+      "SELECT id FROM staged_context_entries WHERE user_id=$1 AND raw_text=$2 AND scope_hint=$4 UNION ALL SELECT e.id FROM context_entries e JOIN context_nodes n ON n.id=e.node_id AND n.user_id=e.user_id WHERE e.user_id=$1 AND lower(regexp_replace(e.entry_text,'\\s+',' ','g'))=$3 AND n.scope=$4 LIMIT 1",
+      [p.userId, text, normalizedNote(text), scope],
     );
     if (dup.rows.length)
       return { staged: false, reason: "already saved or queued" };
@@ -741,7 +805,7 @@ export async function stageEntry(p: {
         p.userId,
         text,
         p.kindHint ?? "note",
-        p.scopeHint ?? "me",
+        scope,
         p.source ?? null,
         p.connectionId ?? null,
       ],
@@ -757,7 +821,7 @@ export async function claimStagedEntries(limit: number) {
         source_connection_id: string | null;
       }
     >(
-      `WITH pending AS(SELECT id FROM staged_context_entries WHERE attempts<5 AND(state='pending' OR(state='processing' AND lease_until<now())) ORDER BY created_at FOR UPDATE SKIP LOCKED LIMIT $1) UPDATE staged_context_entries SET state='processing',lease_until=now()+interval '2 minutes',lease_id=gen_random_uuid(),attempts=attempts+1 WHERE id IN(SELECT id FROM pending) RETURNING *`,
+      `WITH pending AS(SELECT s.id FROM staged_context_entries s JOIN "user" u ON u.id=s.user_id WHERE u.capture_enabled AND u.capture_consented_at IS NOT NULL AND s.attempts<5 AND(s.state='pending' OR(s.state='processing' AND s.lease_until<now())) ORDER BY s.created_at FOR UPDATE OF s SKIP LOCKED LIMIT $1) UPDATE staged_context_entries SET state='processing',lease_until=now()+interval '2 minutes',lease_id=gen_random_uuid(),attempts=attempts+1 WHERE id IN(SELECT id FROM pending) RETURNING *`,
       [limit],
     ),
   );
@@ -777,6 +841,13 @@ export async function finishStagedEntry(
       [e.id, e.user_id, e.lease_id],
     );
     if (!owned.rows.length) return;
+    if (!(await captureAllowed(c, e.user_id))) {
+      await c.query(
+        "UPDATE staged_context_entries SET state='pending',lease_id=NULL,lease_until=NULL,attempts=greatest(0,attempts-1) WHERE id=$1 AND user_id=$2 AND lease_id=$3",
+        [e.id, e.user_id, e.lease_id],
+      );
+      return;
+    }
     if (note)
       await insertNote(
         c,

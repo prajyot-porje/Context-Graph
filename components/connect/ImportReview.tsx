@@ -7,6 +7,7 @@ import s from "./SetupClient.module.css";
 const labels: Record<ImportNote["kind"], string> = {
   note: "Notes",
   preference: "Preferences",
+  future_idea: "Future ideas (tentative)",
   decision: "Decisions",
   constraint: "Constraints",
   open_problem: "Open problems",
