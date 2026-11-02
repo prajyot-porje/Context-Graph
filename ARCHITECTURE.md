@@ -25,9 +25,9 @@ Keep proxy.ts: this is the Next.js 16 convention. It is complemented by server-p
 
 ## 4. Data Model
 
-Better Auth owns user/session/account/verification plus JWKS and OAuth provider tables. Preserve exact provider migration definitions when upgrading. The legacy onboarding_done flag is retained for compatibility but does not establish readiness. capture_enabled controls routine capture.
+Better Auth owns user/session/account/verification plus JWKS and OAuth provider tables. Preserve exact provider migration definitions when upgrading. The legacy onboarding_done flag is retained for compatibility but does not establish readiness. capture_consented_at records one-time account consent; capture_enabled controls pause/resume. Consent remains on pause. New accounts default off; a legacy true without consent is not permission.
 
-context_nodes stores scoped core content. context_entries stores source-attributed, typed notes with dedupe hashes, resolution state and timestamps. Readiness requires nonempty core content or an active saved note; an empty root does not qualify. Imports and routine capture ensure root/intermediate scopes exist.
+context_nodes stores scoped core content. context_entries stores source-attributed, typed notes with dedupe hashes, resolution state and timestamps. Saved-context readiness requires nonempty core content or a saved note; an empty root does not qualify. dashboardAccessible separately permits accounts with recorded capture consent, including paused empty accounts. Imports and routine capture ensure root/intermediate scopes exist.
 
 parent_scope is canonical. Edges are derived for reads and rebuilt transactionally on hierarchy changes; a stale context_edges row cannot override hierarchy. Parent validation rejects cycles and invalid parents. All reads and writes filter by authenticated user.
 
@@ -53,7 +53,7 @@ Official SDK streamable HTTP with JSON responses and negotiated protocol replace
 
 Connection does not import native ChatGPT/Claude memory. Setup returns a prompt; the client asks permission before sending a structured draft. Website review is the enforceable permanent-save boundary. A dashboard cannot command an idle external chat. Instructions therefore copy a prompt and open the appropriate client. No fake verification timer, invented facts, registered slash-command claim or full-memory claim is presented.
 
-get_context assembles core content and active entries, including ancestor scopes, within one approximate budget. Resolved problems are excluded. recall is keyword search, not semantic search. remember queues capture only after setup and when capture is enabled. Next.js after() awaits draining; daily cron is a safety net, not a promise of continuous processing.
+get_context assembles core content and active entries, including ancestor scopes, within one approximate budget. Resolved problems are excluded. recall is keyword search, not semantic search. remember queues ordinary facts when consent is recorded and capture enabled, without requiring initial content. get_context reports current permission through a pure read; discovery never captures facts. future_idea routes to an existing project’s future-scope or me/future-scope, preserving submitted uncertainty and returning tentative ideas with project context. Next.js after() awaits draining on remember and explicit resume/retry; reads do not trigger note persistence. Daily cron is a safety net, not a promise of continuous processing.
 
 ## 7. AI Judgment Layer
 
@@ -249,3 +249,20 @@ Export reads only the authenticated owner's saved nodes/notes within a repeatabl
 Extended the read-only recovery lookup to committed receipts when a newer active website-created attempt for the same provider and owner exists. The original receipt remains committed; canceled rows remain canceled. With no replacement, the original closed status is returned. Setup responses distinguish waiting attempts, drafts already received for review, and closed/saved receipts. Transport retries can reuse approval only for the exact same unchanged facts. No draft replacement or permanent save is authorized by this lookup.
 
 Isolated test database shutdown now waits for pg client removal callbacks after pool.end() before stopping PostgreSQL, so successful assertions cannot be followed by an administrator-termination race. Unexpected database errors are not suppressed. Production connection handling is unchanged.
+
+
+### 2026-11-02 — One-time capture consent and tentative project memory
+
+Added account capture_consented_at and changed capture defaults to off through the snapshot and additive 2026-11-02-capture-consent.sql. Legacy default-enabled values are not backfilled as consent. OAuth approval offers opt-in only for write clients; a tenant/session/Origin-authorized settings mutation records first consent idempotently without resuming an already-paused account. Standard settings enable is an explicit opt-in/resume. OAuth scopes, signed continuation, token refresh and revocation remain unchanged.
+
+Separated saved-content readiness from dashboard access for consented empty accounts. Historical import remains optional, draft-only until website review, with no silent memory extraction. Server instructions and tool descriptions encourage ordinary capture without a save command or pasted system prompt, subject to host invocation and approval policies. Read-only retrieval reports permission without writing notes, draining the queue or modifying import drafts; queue draining remains on remember, explicit resume/retry and the daily safety net.
+
+Added future_idea as an additive kind. Typed helpers route it to a known project child or me/future-scope, never create a guessed project, preserve source text/kind and canonical parent_scope, and rebuild edges transactionally. Project retrieval includes its direct future-scope branch and labels it tentative. Queue claims exclude paused/unconsented accounts; enqueue, pause/resume and completion serialize through the account lock. If paused during processing, completion returns the item to pending without saving it. Resume triggers a drain. Newly saved notes expose Remove. Existing dedupe remains scope-aware; the filter does not rewrite submitted facts.
+
+Migration and application verification use isolated databases and local model/email fixtures. No production migration or deployment is implied. Real hosted-client automatic invocation and approval friction require separate target-account tests.
+
+Local verification completed 2026-11-03: 71 unit/database tests pass; optimized build and strict TypeScript pass; lint has zero errors and one pre-existing Settings cleanup-ref warning. Ten browser scenarios passed in the full run; the remaining legacy redirect assertion was updated for consented empty-dashboard access, and that scenario plus the complete capture scenario passed again against the final build. Settled desktop dark and mobile light renders were inspected. These are fixture clients, not hosted ChatGPT/Claude invocation measurements. No production migration or deployment was performed.
+
+### 2026-11-03 — Capture consent migration applied for release
+
+At the owner's explicit request, applied only the checked-in 2026-11-02-capture-consent.sql to the configured Supabase database after a successful rollback-only rehearsal. The operator command scripts/prepare-capture.mts verifies unchanged account/session/context/note/key/connection counts in the same transaction, the disabled default, consent timestamp type, future_idea constraint and absence of unconsented enabled capture. Certificate-validated TLS is checked on the actual client socket: pg_stat_ssl behind the Supabase pooler describes the separate pooler-to-database connection. No older auth/provider migration was rerun, no credentials were rotated, and no existing consent was fabricated. Release deployment follows the existing GitHub–Vercel integration through a reviewed PR and passing checks.

@@ -77,6 +77,9 @@ await database.query(await readFile("supabase/2026-10-30-oauth.sql", "utf8"));
 await database.query(
   await readFile("supabase/2026-10-31-auth-hardening.sql", "utf8"),
 );
+await database.query(
+  await readFile("supabase/2026-11-02-capture-consent.sql", "utf8"),
+);
 // Real email signup/verification is exercised with a local capture-only sender below.
 // Browser tests can retrieve OTPs from this isolated fixture server, never the app.
 const smtp = await mailFixture(3102);

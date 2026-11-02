@@ -50,7 +50,14 @@ async function signup(page: Page) {
   expect(login.ok(), await login.text()).toBeTruthy();
   return email;
 }
-async function oauth(page: Page, name: string) {
+async function oauth(
+  page: Page,
+  name: string,
+  scopes = "context:read context:write offline_access",
+) {
+  const priorCapture = await (
+    await page.request.get("/api/setup/status")
+  ).json();
   const external = await externalRequest.newContext({ baseURL: origin });
   const registration = await external.post("/api/auth/oauth2/register", {
     data: {
@@ -60,7 +67,7 @@ async function oauth(page: Page, name: string) {
       application_type: "native",
       grant_types: ["authorization_code", "refresh_token"],
       response_types: ["code"],
-      scope: "context:read context:write offline_access",
+      scope: scopes,
     },
   });
   expect(registration.ok(), await registration.text()).toBeTruthy();
@@ -71,7 +78,7 @@ async function oauth(page: Page, name: string) {
     client_id: client.client_id,
     redirect_uri: `${origin}/oauth-test-callback`,
     response_type: "code",
-    scope: "context:read context:write offline_access",
+    scope: scopes,
     state: "fixture-state",
     resource: `${origin}/api/mcp`,
     code_challenge: challenge,
@@ -81,10 +88,32 @@ async function oauth(page: Page, name: string) {
   await expect(
     page.getByRole("button", { name: "Allow connection" }),
   ).toBeVisible();
+  if (!scopes.split(" ").includes("context:write"))
+    await expect(
+      page.getByRole("checkbox", { name: "Automatically save useful context" }),
+    ).toHaveCount(0);
   await page.screenshot({
     path: ".test-output/oauth-consent-desktop.png",
     fullPage: true,
   });
+  const optIn = page.getByRole("checkbox", {
+    name: "Automatically save useful context",
+  });
+  if (priorCapture.captureConsentedAt) {
+    await expect(optIn).toHaveCount(0);
+    await expect(
+      page.getByText(
+        `Automatic capture is ${priorCapture.captureEnabled ? "enabled" : "paused"}.`,
+        { exact: false },
+      ),
+    ).toBeVisible();
+  }
+  if (await optIn.count()) await optIn.check();
+  if (await optIn.count())
+    await page.screenshot({
+      path: ".test-output/capture-consent-choice.png",
+      fullPage: true,
+    });
   await page.getByRole("button", { name: "Allow connection" }).click();
   await page.waitForURL((url) => url.pathname === "/oauth-test-callback");
   const callback = new URL(page.url());
@@ -376,7 +405,11 @@ test("real OAuth and MCP round trip: reviewed import, second client recall, dele
     page.getByRole("heading", { name: "Choose what to remember" }),
   ).toBeVisible();
   await page.goto("/dashboard");
-  await expect(page).toHaveURL(/connect/);
+  await expect(page).toHaveURL(/dashboard/);
+  const beforeReview = await (await page.request.get("/api/context")).json();
+  expect(beforeReview.ready).toBe(false);
+  expect(beforeReview.entries).toHaveLength(0);
+  await page.goto(`/connect?attempt=${attempt}`);
   await page.getByRole("button", { name: /Prefers verbose answers/ }).click();
   await page
     .getByLabel("Note 2", { exact: true })
@@ -1057,6 +1090,11 @@ test("settings persist profile and appearance, revoke sessions and keys, and exp
     page.getByRole("heading", { name: "Your context", exact: true }),
   ).toBeVisible();
   await page.goto("/settings#capture");
+  await page.request.patch("/api/setup/status", {
+    headers: { Origin: origin },
+    data: { captureEnabled: true },
+  });
+  await page.reload();
   await page
     .getByRole("switch", { name: "Automatic context capture", exact: true })
     .click();
@@ -1164,4 +1202,146 @@ test("settings persist profile and appearance, revoke sessions and keys, and exp
   });
   expect(stolen.status()).toBe(404);
   await other.close();
+});
+
+test("one-time capture starts empty, persists across clients and pauses, and saves tentative project ideas", async ({
+  page,
+}) => {
+  await signup(page);
+  const readOnly = await oauth(
+    page,
+    "Read-only fixture",
+    "context:read offline_access",
+  );
+  expect(
+    (await (await page.request.get("/api/setup/status")).json())
+      .captureConsentedAt,
+  ).toBeNull();
+  const denied = await readOnly.call("tools/call", {
+    name: "remember",
+    arguments: { text: "I love Spider-Man.", kind: "preference" },
+  });
+  expect(denied.result.isError).toBe(true);
+  const writer = await oauth(page, "Capture fixture");
+  const first = await (await page.request.get("/api/setup/status")).json();
+  expect(first.captureEnabled).toBe(true);
+  expect(first.ready).toBe(false);
+  expect(first.dashboardAccessible).toBe(true);
+  await page.goto("/entry");
+  await expect(page).toHaveURL(/dashboard/);
+  await expect(
+    page.getByRole("heading", { name: "Your context starts here" }),
+  ).toBeVisible();
+  await expect(page.locator(".cg-main")).toHaveCSS("opacity", "1");
+  await page.screenshot({
+    path: ".test-output/capture-empty-desktop.png",
+    fullPage: true,
+  });
+  const toDark = page.getByRole("button", { name: "Switch to dark mode", exact: true });
+  if (await toDark.count()) await toDark.click();
+  await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
+  await page.screenshot({
+    path: ".test-output/capture-empty-dark.png",
+    fullPage: true,
+  });
+  await page
+    .getByRole("button", { name: "Switch to light mode", exact: true })
+    .click();
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.screenshot({
+    path: ".test-output/capture-empty-mobile.png",
+    fullPage: true,
+  });
+  const before = await page.request.post("/api/imports", {
+    headers: { Origin: origin },
+    data: {
+      provider: "manual",
+      notes: [{ text: "Historical draft stays unapproved." }],
+    },
+  });
+  expect(before.ok()).toBeTruthy();
+  const lookup = await writer.call("tools/call", {
+    name: "get_context",
+    arguments: {},
+  });
+  expect(JSON.stringify(lookup)).toContain("Capture status: enabled");
+  expect(JSON.stringify(lookup)).not.toContain(
+    "Historical draft stays unapproved",
+  );
+  expect(
+    (await (await page.request.get("/api/setup/status")).json()).run.status,
+  ).toBe("review");
+  const project = await page.request.post("/api/context", {
+    headers: { Origin: origin },
+    data: {
+      scope: "personal/project-x",
+      title: "Project X",
+      content: "A project",
+      parent_scope: null,
+    },
+  });
+  expect(project.ok()).toBeTruthy();
+  const queued = await writer.call("tools/call", {
+    name: "remember",
+    arguments: { text: "I love Spider-Man.", kind: "preference" },
+  });
+  expect(JSON.stringify(queued)).toContain("Queued for processing");
+  await writer.call("tools/call", {
+    name: "remember",
+    arguments: {
+      text: "I might turn Project X into a budgeting app.",
+      kind: "future_idea",
+      scope: "personal/project-x",
+    },
+  });
+  await expect
+    .poll(async () =>
+      JSON.stringify(await (await page.request.get("/api/context")).json()),
+    )
+    .toContain("I might turn Project X");
+  const recall = await writer.call("tools/call", {
+    name: "get_context",
+    arguments: { scope: "personal/project-x" },
+  });
+  expect(JSON.stringify(recall)).toContain(
+    "Tentative future idea (not a decision)",
+  );
+  await page.request.patch("/api/setup/status", {
+    headers: { Origin: origin },
+    data: { captureEnabled: false },
+  });
+  const second = await oauth(page, "Second capture fixture");
+  const paused = await (await page.request.get("/api/setup/status")).json();
+  expect(paused.captureEnabled).toBe(false);
+  expect(paused.captureConsentedAt).toBe(first.captureConsentedAt);
+  const skipped = await second.call("tools/call", {
+    name: "remember",
+    arguments: { text: "A note that must remain unsaved." },
+  });
+  expect(JSON.stringify(skipped)).toContain("Skipped:");
+  await page.goto("/dashboard");
+  await page.reload();
+  const notesButton = page.getByRole("button", {
+    name: "Notes view",
+    exact: true,
+  });
+  if (await notesButton.count()) await notesButton.click();
+  await page
+    .getByRole("button")
+    .filter({ hasText: "I love Spider-Man." })
+    .click();
+  await page.getByRole("button", { name: "Remove", exact: true }).click();
+  await expect
+    .poll(async () =>
+      JSON.stringify(await (await page.request.get("/api/context")).json()),
+    )
+    .not.toContain("I love Spider-Man.");
+  await page.request.patch("/api/setup/status", {
+    headers: { Origin: origin },
+    data: { captureEnabled: true },
+  });
+  expect(
+    (await (await page.request.get("/api/setup/status")).json())
+      .captureConsentedAt,
+  ).toBe(first.captureConsentedAt);
 });

@@ -13,6 +13,7 @@ import {
   DataError,
   forgetEntry,
   getSetupImport,
+  getCaptureStatus,
   getUserEntries,
   getUserNodes,
   observeConnection,
@@ -93,6 +94,7 @@ const tools = [
                   "preference",
                   "constraint",
                   "open_problem",
+                  "future_idea",
                   "note",
                 ],
               },
@@ -113,19 +115,36 @@ const tools = [
   {
     name: "get_context",
     description:
-      "Call at session start. Read approved context and active notes. Optional project scope, defaults to me.",
+      "Use when beginning relevant work to read saved context and capture permission. Empty graphs may grow through normal conversation after opt-in. Optional project scope, defaults to me.",
     inputSchema: objectSchema({ scope: string }),
     annotations: { readOnlyHint: true },
   },
   {
     name: "remember",
     description:
-      "After setup and with automatic capture enabled, call when a decision, preference, constraint or unresolved problem arises. Never use for an initial memory import.",
+      "Use automatically when capture is enabled and the user states a useful preference, decision, constraint, unresolved problem or tentative future idea. No save command needed. Preserve uncertainty and project names. Exclude secrets, hypotheticals, third-party quotes and do-not-remember content. Never use for historical imports.",
     inputSchema: objectSchema(
       {
         text: { type: "string", maxLength: 2000 },
-        kind: string,
-        scope: string,
+        kind: {
+          type: "string",
+          enum: [
+            "decision",
+            "preference",
+            "constraint",
+            "open_problem",
+            "future_idea",
+            "resolved",
+            "note",
+          ],
+          description:
+            "future_idea for tentative plans, never a confirmed decision.",
+        },
+        scope: {
+          type: "string",
+          description:
+            "Exact known project scope, or me when unknown. Future ideas are routed to future-scope by the server.",
+        },
       },
       ["text"],
     ),
@@ -269,16 +288,17 @@ export async function POST(request: Request) {
         }
         if (name === "get_context") {
           const scope = z.string().max(120).default("me").parse(args.scope);
-          const [nodes, entries] = await Promise.all([
+          const [nodes, entries, status] = await Promise.all([
             getUserNodes(user),
             getUserEntries(user),
+            getCaptureStatus(user),
           ]);
-          after(triggerBackgroundDrain);
           return text(
             buildGetContextReply(
               assembleContext(nodes, scope, 4000, entries),
               nodes.length,
               entries.length,
+              status,
             ),
           );
         }

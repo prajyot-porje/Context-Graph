@@ -50,7 +50,7 @@ export function GraphProvider({ children }: { children: React.ReactNode }) {
       setEntries(data.entries);
       setEdges(data.edges);
       setError("");
-      if (!data.ready) router.replace("/connect");
+      if (!data.dashboardAccessible) router.replace("/connect");
     } catch (e) {
       if (mounted.current)
         setError(

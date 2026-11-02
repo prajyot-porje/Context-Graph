@@ -55,6 +55,9 @@ export async function testDatabase(port?: number) {
   await database.query(
     await readFile("supabase/2026-10-31-auth-hardening.sql", "utf8"),
   );
+  await database.query(
+    await readFile("supabase/2026-11-02-capture-consent.sql", "utf8"),
+  );
   return {
     database,
     async stop() {

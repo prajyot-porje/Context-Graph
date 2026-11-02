@@ -8,6 +8,10 @@ export function assembleContext(
   entries: ContextEntry[] = [],
 ): string {
   const wanted = new Set(["me", scope]);
+  // Include future ideas for the requested context, without unrelated projects.
+  for (const n of nodes)
+    if (n.parent_scope === scope && n.scope === `${scope}/future-scope`)
+      wanted.add(n.scope);
   let current = nodes.find((n) => n.scope === scope);
   while (current?.parent_scope && !wanted.has(current.parent_scope)) {
     wanted.add(current.parent_scope);
@@ -15,7 +19,7 @@ export function assembleContext(
   }
   const selected = nodes.filter((n) => wanted.has(n.scope));
   if (!selected.length)
-    return "No approved context yet. Complete the reviewed ContextGraph setup.";
+    return "No saved context for this scope yet. Ordinary conversation can build it when automatic capture is enabled; importing old memories is optional.";
   const budget = Math.max(0, Math.floor(maxTokens * 4));
   const parts: string[] = [];
   let used = 0;
@@ -38,6 +42,7 @@ export function assembleContext(
     constraint: 1,
     decision: 2,
     preference: 3,
+    future_idea: 4,
     note: 4,
     resolved: 5,
   };
@@ -49,6 +54,9 @@ export function assembleContext(
         priority[a.kind] - priority[b.kind] ||
         b.created_at.localeCompare(a.created_at),
     );
-  for (const e of active) add(`[${e.id}] ${e.kind}: ${e.entry_text}`);
+  for (const e of active)
+    add(
+      `[${e.id}] ${e.kind === "future_idea" ? "Tentative future idea (not a decision)" : e.kind}: ${e.entry_text}`,
+    );
   return parts.join("\n\n").slice(0, budget);
 }

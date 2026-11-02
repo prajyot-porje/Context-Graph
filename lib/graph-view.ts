@@ -7,6 +7,7 @@ import type {
 
 export const noteCategories: Record<ContextEntryKind, string> = {
   preference: "Preferences",
+  future_idea: "Future ideas (tentative)",
   decision: "Decisions",
   constraint: "Constraints",
   open_problem: "Open problems",

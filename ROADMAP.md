@@ -693,3 +693,8 @@ App routes now scroll natively, with Lenis confined to the landing page and its 
 Verification: 45 unit/database tests pass; the five-scenario optimized browser suite covers existing auth/import/OAuth behavior plus grouped graph items, note selection, 22-note scrolling, mobile drawer behavior, setup/settings native scrolling, navigation button styling, shared brand/type across public pages, and dark/light accent values. Screenshots and logs are in ignored .test-output/ux-* files. The final visual pass adjusts graph labels to remain outside spheres and matches app heading weight to the settings reference. No database migration is required for this release.
 
 Final local evidence: ux-tests-final.log (45 passing tests), ux-e2e-ship.log (five complete browser scenarios), ux-e2e-complete.log (two focused final visual scenarios), ux-e2e-brand-final.log (light CTA contrast and 44px target), ux-build-release.log, ux-types-complete.log and ux-lint-complete.log. Existing accounts receive the graph projection on refresh; no re-import or database migration is needed.
+
+
+### 2026-11-02 — Automatic memory follow-up
+
+Implemented one-time account capture consent, optional historical imports, empty-start dashboard access, and tentative future-scope capture. MCP guidance is best effort; no native-memory hook or every-message visibility is claimed. Hosted ChatGPT/Claude invocation tests remain a release check. See ARCHITECTURE.md for persistence and consent details.

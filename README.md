@@ -53,16 +53,22 @@ The canonical remote endpoint is `{BETTER_AUTH_URL}/api/mcp`. Set BETTER_AUTH_UR
 
 Do not put API keys in query strings. That legacy authentication path was retired; migrate those clients to OAuth or header auth and replace previously exposed keys. A masked prefix cannot be copied as a working credential.
 
-Official client setup instructions are linked in the app and were checked October 30, 2026. The local test suite verifies actual OAuth and MCP protocol exchanges using fixture clients, not the vendors' hosted chat UIs. Hosted Claude/ChatGPT compatibility must also be smoke-tested on the target account and a reachable HTTPS deployment before calling that deployment verified.
+Official client setup instructions are linked in the app. MCP instruction/approval guidance was checked November 2, 2026. The local test suite verifies actual OAuth and MCP protocol exchanges using fixture clients, not the vendors' hosted chat UIs. Hosted Claude/ChatGPT compatibility must also be smoke-tested on the target account and a reachable HTTPS deployment before calling that deployment verified.
 
 OAuth uses authorization code + PKCE, exact registered callbacks, resource/audience-bound tokens, read/write scopes, refresh, and revocation. Dynamic registration is enabled for external clients and binds registrations to the ContextGraph MCP resource. Read-only discovery metadata is public; tool execution never accepts browser cookies as MCP authorization. Client names are self-reported, not verified vendor identities.
+
+Capture is an explicit one-time account opt-in on the OAuth consent screen or Connect/Settings. Subsequent connections preserve that choice, including pauses. Historical imports are optional and still require approval and website review. No system-prompt copy/paste is needed for ongoing capture. Hosts decide whether to invoke tools and may require their own approvals; OAuth cannot observe all messages or synchronize native memories.
+
+The upgrade applies `supabase/2026-11-02-capture-consent.sql` before running the new application. It adds consent timestamps, disables legacy capture without recorded consent, and extends the note-kind constraint. It preserves all saved notes. Do not infer opt-in from the previous default-enabled value.
+
+For an otherwise up-to-date database, `node --env-file=.env.local --import tsx scripts/prepare-capture.mts` rehearses only this migration and rolls back. Add `--apply` to commit it. The command verifies certificate-validated client TLS, schema changes and preserved row counts; reports contain no credentials or private note text.
 
 ## Tools and memory
 
 - `contextgraph_setup(attempt_id)` returns reviewed-import instructions without receiving facts.
 - `submit_context_import(attempt_id, notes)` receives a bounded draft only after the model has obtained permission; website review is the enforceable commit boundary.
 - `get_context(scope?)` returns approved core context and active notes within one approximate token budget.
-- `remember(text, kind?, scope?)` queues routine capture after setup; the user can pause it.
+- `remember(text, kind?, scope?)` queues ordinary facts after one-time account capture consent, even with an empty graph; the user can pause it. `future_idea` preserves tentative plans under a known project’s `future-scope`, or `me/future-scope` when unknown.
 - `recall(query)` performs keyword search and returns note IDs.
 - `resolve(entry_id)` removes an open problem from active context while retaining its history.
 - `forget(entry_id)` deletes a note. The dashboard supports note and node deletion too.

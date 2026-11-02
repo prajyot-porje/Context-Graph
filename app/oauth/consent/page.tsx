@@ -3,6 +3,7 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import OAuthAction from "@/components/connect/OAuthAction";
 import { oauthQuery } from "@/lib/oauth-query";
+import { getCaptureStatus } from "@/lib/db";
 export default async function OAuthConsent({
   searchParams,
 }: {
@@ -25,6 +26,7 @@ export default async function OAuthConsent({
       clientName={client.client_name || client.client_id}
       scopes={parameters.get("scope") || ""}
       userEmail={session.user.email}
+      capture={await getCaptureStatus(session.user.id)}
     />
   );
 }

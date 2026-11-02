@@ -27,6 +27,165 @@ async function seed(text = "Prefers concise technical answers.") {
   return db.commitImport("alice", run.id, draft.revision);
 }
 describe("real PostgreSQL memory lifecycle", () => {
+  it("requires recorded consent even for a legacy default-enabled account, and remembers it across connections and pauses", async () => {
+    await fixture.database.query(
+      'UPDATE "user" SET capture_enabled=true WHERE id=$1',
+      ["alice"],
+    );
+    expect((await db.getCaptureStatus("alice")).captureEnabled).toBe(false);
+    expect(
+      (
+        await db.stageEntry({
+          userId: "alice",
+          rawText: "I love Spider-Man.",
+          kindHint: "preference",
+        })
+      ).staged,
+    ).toBe(false);
+    await db.consentCaptureOnce("alice");
+    const first = await db.getSetupStatus("alice");
+    expect(first.ready).toBe(false);
+    expect(first.dashboardAccessible).toBe(true);
+    expect(first.captureEnabled).toBe(true);
+    expect(
+      (
+        await db.stageEntry({
+          userId: "alice",
+          rawText: "I love Spider-Man.",
+          kindHint: "preference",
+        })
+      ).staged,
+    ).toBe(true);
+    await db.observeConnection("alice", "oauth:first", "Claude");
+    await db.observeConnection("alice", "oauth:second", "ChatGPT");
+    await db.setCaptureEnabled("alice", false);
+    await db.consentCaptureOnce("alice");
+    const paused = await db.getSetupStatus("alice");
+    expect(paused.captureEnabled).toBe(false);
+    expect(paused.captureConsentedAt).toBe(first.captureConsentedAt);
+    expect(paused.dashboardAccessible).toBe(true);
+    expect(await db.claimStagedEntries(20)).toHaveLength(0);
+    expect((await db.getSetupStatus("bob")).dashboardAccessible).toBe(false);
+    await db.setCaptureEnabled("alice", true);
+    expect((await db.getCaptureStatus("alice")).captureConsentedAt).toBe(
+      first.captureConsentedAt,
+    );
+    expect(await db.claimStagedEntries(20)).toHaveLength(1);
+  });
+  it("holds an in-flight note when paused, then resumes without losing it or saving twice", async () => {
+    await db.consentCaptureOnce("alice");
+    await db.stageEntry({
+      userId: "alice",
+      rawText: "I prefer brief answers.",
+      kindHint: "preference",
+    });
+    const [entry] = await db.claimStagedEntries(1);
+    await db.setCaptureEnabled("alice", false);
+    const note = {
+      text: entry.raw_text,
+      kind: "preference" as const,
+      scope: "me",
+      selected: true,
+    };
+    await db.finishStagedEntry(entry, note, 0.8);
+    expect(await db.countUserEntries("alice")).toBe(0);
+    expect((await db.getSetupStatus("alice")).pendingCount).toBe(1);
+    await db.setCaptureEnabled("alice", true);
+    const [resumed] = await db.claimStagedEntries(1);
+    await db.finishStagedEntry(resumed, note, 0.8);
+    await db.finishStagedEntry(resumed, note, 0.8);
+    expect(await db.countUserEntries("alice")).toBe(1);
+    const saved = (await db.getUserEntries("alice"))[0];
+    await expect(db.forgetEntry(saved.id, "bob")).rejects.toThrow();
+    await db.forgetEntry(saved.id, "alice");
+    expect(await db.countUserEntries("alice")).toBe(0);
+  });
+  it("routes tentative ideas only to known projects and retrieves their future scope without unrelated projects", async () => {
+    await seed();
+    await db.consentCaptureOnce("alice");
+    await db.createNode("alice", {
+      scope: "personal/project-x",
+      title: "Project X",
+      content: "Project X context",
+      tags: [],
+      parent_scope: "me",
+    });
+    await db.createNode("bob", {
+      scope: "personal/bob-only",
+      title: "Bob project",
+      content: "Private",
+      tags: [],
+      parent_scope: null,
+    });
+    for (const [scope, text] of [
+      ["personal/project-x", "I might turn Project X into a budgeting app."],
+      ["personal/bob-only", "I might change an unrecognized project."],
+    ]) {
+      expect(
+        (
+          await db.stageEntry({
+            userId: "alice",
+            rawText: text,
+            kindHint: "future_idea",
+            scopeHint: scope,
+          })
+        ).staged,
+      ).toBe(true);
+    }
+    const entries = await db.claimStagedEntries(20);
+    for (const entry of entries)
+      await db.finishStagedEntry(
+        entry,
+        {
+          text: entry.raw_text,
+          kind: "future_idea",
+          scope: entry.scope_hint!,
+          selected: true,
+        },
+        0.8,
+      );
+    const nodes = await db.getUserNodes("alice"),
+      saved = await db.getUserEntries("alice");
+    expect(
+      nodes.find((n) => n.scope === "personal/project-x/future-scope")
+        ?.parent_scope,
+    ).toBe("personal/project-x");
+    expect(nodes.find((n) => n.scope === "me/future-scope")?.parent_scope).toBe(
+      "me",
+    );
+    expect(nodes.some((n) => n.scope === "personal/bob-only")).toBe(false);
+    const context = assembleContext(nodes, "personal/project-x", 4000, saved);
+    expect(context).toContain("Tentative future idea (not a decision)");
+    expect(context).toContain("I might turn Project X");
+    expect(context).not.toContain("unrecognized project");
+    expect(
+      (
+        await db.stageEntry({
+          userId: "alice",
+          rawText: "I might turn Project X into a budgeting app.",
+          kindHint: "future_idea",
+          scopeHint: "personal/project-x",
+        })
+      ).staged,
+    ).toBe(false);
+    const edges = await db.getUserEdges("alice");
+    expect(edges.every((e) => e.source_node_id !== e.target_node_id)).toBe(
+      true,
+    );
+  });
+  it("applies the consent migration repeatedly without opting users in or resetting a paused choice", async () => {
+    await db.consentCaptureOnce("alice");
+    await db.setCaptureEnabled("alice", false);
+    const before = await db.getCaptureStatus("alice");
+    const sql = await readFile(
+      "supabase/2026-11-02-capture-consent.sql",
+      "utf8",
+    );
+    await fixture.database.query(sql);
+    await fixture.database.query(sql);
+    expect(await db.getCaptureStatus("alice")).toEqual(before);
+    expect((await db.getCaptureStatus("bob")).captureConsentedAt).toBeNull();
+  });
   it("upgrades legacy schemas without scope/key-owner uniqueness before using upserts", async () => {
     await fixture.database.query(
       "ALTER TABLE context_nodes DROP CONSTRAINT IF EXISTS context_nodes_user_id_scope_key",
@@ -74,6 +233,7 @@ describe("real PostgreSQL memory lifecycle", () => {
   });
   it("caps processing retries, recovers a failed queue, and retains revocation cutoffs after reconnect", async () => {
     await seed();
+    await db.setCaptureEnabled("alice", true);
     await db.stageEntry({
       userId: "alice",
       rawText: "A meaningful note for retry verification.",
@@ -205,6 +365,7 @@ describe("real PostgreSQL memory lifecycle", () => {
       "oauth:test",
       "Claude",
     );
+    await db.setCaptureEnabled("alice", true);
     await db.stageEntry({
       userId: "alice",
       rawText: "Authentication is still broken after multiple attempts.",

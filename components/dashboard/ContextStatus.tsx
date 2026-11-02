@@ -32,7 +32,10 @@ export function ContextStatus() {
             {state.failedCount} notes need retry
           </Link>
         ) : state?.pendingCount ? (
-          `${state.pendingCount} notes processing`
+          <Link href="/settings#capture" className="underline">
+            {state.pendingCount} notes{" "}
+            {state.captureEnabled ? "processing" : "waiting · capture paused"}
+          </Link>
         ) : state ? (
           `${connected} AI connection${connected === 1 ? "" : "s"}`
         ) : (

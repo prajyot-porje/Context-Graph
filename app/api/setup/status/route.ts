@@ -3,6 +3,7 @@ import {
   getSetupStatus,
   retryStagedEntries,
   setCaptureEnabled,
+  consentCaptureOnce,
 } from "@/lib/db";
 import { requireMutationUser } from "@/lib/api/session";
 import { handleRouteError } from "@/lib/api/errors";
@@ -27,11 +28,20 @@ export async function PATCH(request: Request) {
     const body = z
       .object({
         captureEnabled: z.boolean().optional(),
+        consentCapture: z.literal(true).optional(),
         retry: z.boolean().optional(),
       })
+      .refine(
+        (value) =>
+          !(value.consentCapture && value.captureEnabled !== undefined),
+        "Choose either first consent or a capture setting update.",
+      )
       .parse(await request.json());
     if (body.captureEnabled !== undefined)
       await setCaptureEnabled(user.id, body.captureEnabled);
+    if (body.consentCapture) await consentCaptureOnce(user.id);
+    if (body.captureEnabled === true || body.consentCapture)
+      after(triggerBackgroundDrain);
     if (body.retry) {
       await retryStagedEntries(user.id);
       after(triggerBackgroundDrain);

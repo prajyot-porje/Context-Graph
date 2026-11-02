@@ -46,7 +46,7 @@ CREATE TABLE IF NOT EXISTS context_entries (
   entry_text  TEXT NOT NULL,
   score       NUMERIC NOT NULL DEFAULT 0 CHECK (score >= 0 AND score <= 1),
   kind        TEXT NOT NULL DEFAULT 'note'
-              CHECK (kind IN ('decision', 'preference', 'constraint', 'open_problem', 'resolved', 'note')),
+              CHECK (kind IN ('decision', 'preference', 'constraint', 'open_problem', 'future_idea', 'resolved', 'note')),
   created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
@@ -163,7 +163,7 @@ ALTER TABLE staged_context_entries ENABLE ROW LEVEL SECURITY;
 -- Recovery schema snapshot (2026-10-30)
 -- Additive recovery migration. Apply after schema.sql / existing application schema.
 BEGIN;
-ALTER TABLE "user" ADD COLUMN IF NOT EXISTS capture_enabled boolean NOT NULL DEFAULT true;
+ALTER TABLE "user" ADD COLUMN IF NOT EXISTS capture_enabled boolean NOT NULL DEFAULT false;
 CREATE TABLE IF NOT EXISTS client_connections (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id text NOT NULL REFERENCES "user"(id) ON DELETE CASCADE,
@@ -235,3 +235,5 @@ CREATE TABLE IF NOT EXISTS auth_request_limits (
 CREATE INDEX IF NOT EXISTS auth_request_limits_expiry ON auth_request_limits(expires_at);
 ALTER TABLE auth_request_limits ENABLE ROW LEVEL SECURITY;
 COMMIT;
+
+ALTER TABLE "user" ADD COLUMN IF NOT EXISTS capture_consented_at timestamptz;

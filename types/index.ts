@@ -31,7 +31,7 @@ export interface ContextEdge {
   created_at: string
 }
 
-export type ContextEntryKind = 'decision' | 'preference' | 'constraint' | 'open_problem' | 'resolved' | 'note'
+export type ContextEntryKind = 'decision' | 'preference' | 'constraint' | 'open_problem' | 'future_idea' | 'resolved' | 'note'
 
 export interface ContextEntry {
   id: string

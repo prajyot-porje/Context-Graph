@@ -257,11 +257,16 @@ export default function SetupClient({
         }}
         inert={busy}
       >
-        <Link href={status.ready ? "/dashboard" : "/"} className={s.logo}>
+        <Link
+          href={status.dashboardAccessible ? "/dashboard" : "/"}
+          className={s.logo}
+        >
           <Brand />
         </Link>
         <div className={s.headerActions}>
-          {status.ready && <Link href="/dashboard">Back to dashboard</Link>}
+          {status.dashboardAccessible && (
+            <Link href="/dashboard">Back to dashboard</Link>
+          )}
           <ThemeToggle minimal />
         </div>
       </header>
@@ -292,6 +297,51 @@ export default function SetupClient({
             <div className={s.notice} role="status" aria-live="polite">
               {notice}
             </div>
+            {!review && (
+              <div>
+                {status.captureConsentedAt ? (
+                  <p className={s.small}>
+                    Automatic capture is{" "}
+                    {status.captureEnabled ? "enabled" : "paused"}. Your account
+                    choice is remembered. Importing old memories below is
+                    optional.
+                  </p>
+                ) : (
+                  <>
+                    <p className={s.small}>
+                      Start empty and let your connected assistant save useful
+                      preferences, decisions, constraints, problems and
+                      tentative ideas when it calls ContextGraph. Enable once
+                      across chats and devices; pause or remove notes anytime.
+                      Host approvals may still apply.
+                    </p>
+                    <button
+                      disabled={busy}
+                      onClick={() =>
+                        void act(async () => {
+                          setStatus(
+                            await api<SetupStatus>(
+                              "/api/setup/status",
+                              { consentCapture: true },
+                              "PATCH",
+                            ),
+                          );
+                          navigating.current = true;
+                          router.push("/dashboard");
+                        })
+                      }
+                    >
+                      Enable automatic capture & start empty
+                    </button>
+                  </>
+                )}
+                {status.dashboardAccessible && (
+                  <Link className={s.link} href="/dashboard">
+                    Continue to dashboard
+                  </Link>
+                )}
+              </div>
+            )}
             {review ? (
               <>
                 <h1>Choose what to remember</h1>
@@ -465,12 +515,6 @@ export default function SetupClient({
                     </button>
                   ))}
                 </div>
-                {status.ready && (
-                  <Link className={s.link} href="/dashboard">
-                    Continue to dashboard
-                    <ArrowRight size={16} />
-                  </Link>
-                )}
                 <div className={s.simpleAlternatives}>
                   <span>Prefer to start with your own notes?</span>
                   <button disabled={busy} onClick={() => choose("manual")}>
@@ -491,7 +535,10 @@ export default function SetupClient({
               if (busy) event.preventDefault();
             }}
           >
-            <span>Only notes you approve become saved context.</span>
+            <span>
+              Historical imports need review. Ongoing capture follows your
+              account choice.
+            </span>
             <Link href="/privacy">How your context is processed</Link>
           </footer>
         </section>
